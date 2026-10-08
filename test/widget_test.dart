@@ -7,6 +7,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mystery/audio/lines.dart';
 import 'package:mystery/audio/voice.dart';
 import 'package:mystery/data/cases.dart';
+import 'package:mystery/data/hints.dart';
 import 'package:mystery/data/house.dart';
 import 'package:mystery/data/models.dart';
 import 'package:mystery/game_state.dart';
@@ -493,6 +494,104 @@ void main() {
     expect(player.played, hasLength(2));
     voice.toggleMute();
     expect(player.mutes, [true, false]);
+  });
+
+  group('Watsonut', () {
+    test('checks that the first hint of a game was meant', () {
+      final g = GameState(random: Random(2))..newGame(caseIndex: 0, skipIntro: true);
+      final clue = g.evidence.firstWhere((e) => e.id == 'rack');
+      g.inspect(clue);
+      g.askHint(about: clue);
+      expect(g.hintPrompt, isTrue);
+      expect(g.hintsUsed, 0);
+      // Declining gives nothing, and he will ask again next time.
+      g.answerHintPrompt(wanted: false);
+      expect(g.hintsUsed, 0);
+      expect(g.dialogue!.speaker.id, 'churlock');
+      g.askHint(about: clue);
+      expect(g.hintPrompt, isTrue);
+      g.answerHintPrompt(wanted: true);
+      expect(g.hintsUsed, 1);
+      expect(g.dialogue!.speaker.id, 'watsonut');
+      expect(g.dialogue!.text, contains("Penny's kitchen"));
+      // After the first, hints come without the question.
+      g.askHint(about: g.evidence.firstWhere((e) => e.id == 'boots'));
+      expect(g.hintPrompt, isFalse);
+      expect(g.hintsUsed, 2);
+    });
+
+    test('points to who can explain a red herring', () {
+      final g = GameState(random: Random(2))..newGame(caseIndex: 0, skipIntro: true);
+      final will = allCases[0].herrings.firstWhere((e) => e.id == 'will');
+      expect(hintFor(g.mystery, will), contains('Tira Misu'));
+      final stain = allCases[0].herrings.firstWhere((e) => e.id == 'berrystain');
+      expect(hintFor(g.mystery, stain), contains('Penny Cotta and Barry Tart'));
+    });
+
+    test('says the same of a document whether or not it is forged', () {
+      String onNote(int caseIndex) => hintFor(
+            allCases[caseIndex],
+            allCases[caseIndex].gifts.firstWhere((e) => e.id == 'extension'),
+          );
+      expect(onNote(0), onNote(1));
+    });
+
+    test('gives four hints on the accusation screen, one at a time', () {
+      final g = GameState(random: Random(2))..newGame(caseIndex: 2, skipIntro: true);
+      g.openPanel(Panel.accuse);
+      g.askHint();
+      expect(g.hintPrompt, isTrue);
+      g.answerHintPrompt(wanted: true);
+      for (var i = 1; i <= 4; i++) {
+        expect(g.accuseHintsGiven, i);
+        expect(g.dialogue!.text, g.mystery.accuseHints[i - 1]);
+        expect(g.dialogue!.note, 'Hint $i of 4');
+        g.closeDialogue();
+        g.askHint();
+      }
+      // A fifth request does nothing.
+      expect(g.moreAccuseHints, isFalse);
+      expect(g.dialogue, isNull);
+      expect(g.hintsUsed, 4);
+      expect(g.panel, Panel.accuse);
+    });
+
+    testWidgets('speaks up when Churlock stands idle, and follows him', (tester) async {
+      final g = GameState(random: Random(2));
+      await tester.pumpWidget(MysteryApp(state: g, voice: Voice(SilentPlayer())));
+      g.newGame(caseIndex: 0, skipIntro: true);
+      await tester.pump();
+      expect(_key('watsonut'), findsOneWidget);
+      expect(_key('watsonut-remark'), findsNothing);
+      await tester.pump(const Duration(seconds: 39));
+      expect(_key('watsonut-remark'), findsNothing);
+      await tester.pump(const Duration(seconds: 2));
+      await tester.pump();
+      expect(_key('watsonut-remark'), findsOneWidget);
+      expect(find.text(idleRemarks.first), findsOneWidget);
+      // It clears by itself, and the next one waits another forty seconds.
+      await tester.pump(const Duration(seconds: 8));
+      expect(_key('watsonut-remark'), findsNothing);
+
+      // He stays at Churlock's heel when they go to look at something.
+      final before = tester.getCenter(_key('watsonut'));
+      await tester.tap(_key('nook-closet'));
+      await approach(tester);
+      expect(g.panel, Panel.nook);
+      expect(tester.getCenter(_key('watsonut')).dx, greaterThan(before.dx + 20));
+      g.closePanel();
+      await tester.pump();
+
+      // Asking about a find goes through the one-time confirmation.
+      g.inspect(g.evidenceHere.first);
+      await tester.pump();
+      await tester.tap(_key('ask-watsonut'));
+      await tester.pump();
+      expect(find.text('Ask Watsonut for a hint?'), findsOneWidget);
+      await tester.tap(_key('hint-yes'));
+      await tester.pump();
+      expect(g.dialogue!.speaker.id, 'watsonut');
+    });
   });
 
   test('a closing screen does not silence the next one', () {

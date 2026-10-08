@@ -19,6 +19,7 @@ import tempfile
 VOICES = {
     "narrator": ("en_US-ryan-high", 1.12, 0.96),
     "churlock": ("en_US-hfc_male-medium", 1.0, 1.0),
+    "watsonut": ("en_US-john-medium", 1.05, 0.97),
     "penny": ("en_GB-alba-medium", 1.0, 1.0),
     "graham": ("en_GB-alan-medium", 1.12, 1.0),
     "cannoli": ("en_US-norman-medium", 1.0, 0.93),
@@ -28,17 +29,13 @@ VOICES = {
     "glaze": ("en_US-bryce-medium", 1.0, 1.05),
 }
 
-# Lines that get a rising four-note chime under them, and are delivered
-# louder, higher and with a little echo.
+# Lines that open with a bright ding, and are then delivered louder, higher
+# and with a little echo.
 FANFARE = {"Eureka!"}
-CHIME = (
-    "aevalsrc=0.22*("
-    "sin(2*PI*523*t)*exp(-6*t)"
-    "+sin(2*PI*659*(t-0.1))*exp(-6*(t-0.1))*gte(t\\,0.1)"
-    "+sin(2*PI*784*(t-0.2))*exp(-6*(t-0.2))*gte(t\\,0.2)"
-    "+sin(2*PI*1047*(t-0.3))*exp(-3.5*(t-0.3))*gte(t\\,0.3)"
-    "+0.5*sin(2*PI*1568*(t-0.3))*exp(-5*(t-0.3))*gte(t\\,0.3)"
-    "):d=1.9:s=22050"
+DING = (
+    "aevalsrc=0.3*exp(-7*t)*("
+    "sin(2*PI*1568*t)+0.45*sin(2*PI*3136*t)+0.2*sin(2*PI*4704*t)"
+    "):d=1.0:s=22050"
 )
 
 KEEP_CAPS = {"PM", "AM", "IOU"}
@@ -118,11 +115,11 @@ def main():
                     subprocess.run(
                         [ffmpeg, "-nostdin", "-y", "-loglevel", "error",
                          "-i", os.path.join(tmp, l["file"] + ".wav"),
-                         "-f", "lavfi", "-i", CHIME,
+                         "-f", "lavfi", "-i", DING,
                          "-filter_complex",
                          f"[0:a]asetrate={RATE * lift:.0f},aresample={RATE},"
                          f"atempo={1 / lift:.4f},loudnorm=I=-13:TP=-1.5,"
-                         "aecho=0.8:0.7:70|140:0.3|0.15,adelay=420[v];"
+                         "aecho=0.8:0.7:70|140:0.3|0.15,adelay=520[v];"
                          "[1:a][v]amix=inputs=2:normalize=0:duration=longest,"
                          "alimiter=limit=0.95[out]",
                          "-map", "[out]", "-ac", "1", "-ar", str(RATE),

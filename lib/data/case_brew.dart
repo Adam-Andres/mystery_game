@@ -168,6 +168,53 @@ const brewCase = MysteryCase(
     icon: Icons.fingerprint, color: Color(0xFFB2EBF2),
   ),
   deskCode: '1892',
+  hints: {
+    ...commonHints,
+    'souffle': souffleHint,
+    'phone': "The operator's own record. I should call that one alibi we "
+        "need not worry about.",
+    'urn': "I tried to lift it. I could not. I should like to know how many "
+        "hands it took, and the sergeant has a chart for that.",
+    'tracks': "Two sets, side by side. So we are not looking for one "
+        "dessert, Churlock. Who in this house was with somebody else last "
+        "night?",
+    'wetprints': "Two sets, side by side. So we are not looking for one "
+        "dessert, Churlock. Who in this house was with somebody else last "
+        "night?",
+    'newwill': "Two names in it. Two who would lose everything by morning. "
+        "I should ask each of them, separately, whether they knew.",
+    'solicitor': "Two names in it. Two who would lose everything by "
+        "morning. I should ask each of them, separately, whether they knew.",
+    'planner': "Tell them afterwards, not before. So she feared what they "
+        "might do if they knew. Did they know?",
+    'silver': "Then what were they doing in there for an hour? Ask the one "
+        "who works on the other side of that wall.",
+    'candles': "Then what were they doing in there for an hour, in the "
+        "dark? Ask the one who works on the other side of that wall.",
+    'gloves': "Soaked right through, not splashed. That is no spilled cup.",
+    'tickets': "One way, for tonight, and two of them. People who mean to "
+        "come back buy returns.",
+    'note': "Unsigned, but paper has a way of telling you where it came "
+        "from. Whose pad is that?",
+    'notepad': "Now why would a butler tear off that one sheet? Ask him. "
+        "Then see whether his answer fits the hour.",
+    'tally': "I never trust a total I have not added up myself.",
+    'prints': "Three sets. One of them belongs there. Ask the other two "
+        "what business they had with it, and then ask the housekeeper "
+        "whether it is true.",
+  },
+  accuseHints: [
+    "First, how was it done? Look hard at that urn, and at whatever tracks "
+        "lead away from it. Could one dessert have managed it alone?",
+    "If it took two, look for two who were together. The telephone log, the "
+        "soufflé and the boots each put one dessert somewhere alone. Who "
+        "does that leave?",
+    "Their story is the silver. Go and stand in the dining room. Look at "
+        "the cabinet, the candles, the notepad. Then ask Penny what she "
+        "heard through the wall.",
+    "Find out what was to be signed this morning, and who stood to lose by "
+        "it. And add up that tally sheet yourself, Churlock.",
+  ],
   topics: {
     'sprinkles': [
       Topic(

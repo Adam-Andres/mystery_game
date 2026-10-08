@@ -25,6 +25,34 @@ const whereQ = 'Where were you around 11 last night?';
 const aboutQ = 'Tell me about Mrs. Senclair.';
 const suspectQ = 'Who do you suspect?';
 
+const phoneHint =
+    "That is the operator's word, not the caller's. An alibi that somebody "
+    "else wrote down is worth ten that are merely spoken.";
+
+const souffleHint =
+    "If that log is honest, Penny never left her oven. I should ask to see "
+    "the log itself.";
+
+/// Watsonut's thoughts on evidence that turns up in every mystery. He says
+/// the same of a document whether it is genuine or forged.
+const commonHints = <String, String>{
+  'watch': "Five past eleven, then. Never mind who had a reason, Churlock. "
+      "Who can prove where they stood at five past eleven? And I mean prove, "
+      "not say.",
+  'clock': "Five past eleven, then. Never mind who had a reason, Churlock. "
+      "Who can prove where they stood at five past eleven? And I mean prove, "
+      "not say.",
+  'boots': "Locked out until midnight, by the look of it. Who latches the "
+      "doors in this house, and when?",
+  'chart': "Splendid. Now all we want is the weapon.",
+  'cellarbook': "Useful for knowing who had honest business in the cellar, "
+      "and when. Compare it with whatever you find down there.",
+  'ovenlog': "Read it line by line against the clock, Churlock. Every entry "
+      "ought to be possible.",
+  'extension': "Read it again, slowly, as she would have written it. Every "
+      "word.",
+};
+
 // Time of death
 
 const watch = Evidence(

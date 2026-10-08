@@ -82,6 +82,16 @@ class DialoguePanel extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 6),
+                if (d.evidence != null) ...[
+                  GoldButton(
+                    key: const ValueKey('ask-watsonut'),
+                    label: 'Ask Watsonut',
+                    icon: Icons.lightbulb,
+                    color: const Color(0xFF5D3A1A),
+                    onPressed: () => g.askHint(about: d.evidence),
+                  ),
+                  const SizedBox(height: 6),
+                ],
                 GoldButton(
                   key: const ValueKey('close-dialogue'),
                   label: d.talk ? 'Goodbye' : 'Continue',
@@ -355,15 +365,25 @@ class AccusePanel extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 12),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
+          Wrap(
+            alignment: WrapAlignment.center,
+            spacing: 14,
+            runSpacing: 8,
             children: [
               GoldButton(
                 key: const ValueKey('close-panel'),
                 label: 'Keep investigating',
                 onPressed: g.closePanel,
               ),
-              const SizedBox(width: 16),
+              GoldButton(
+                key: const ValueKey('accuse-hint'),
+                label: g.moreAccuseHints
+                    ? 'Ask Watsonut (${g.accuseHintsGiven}/${g.mystery.accuseHints.length})'
+                    : 'Watsonut has said his piece',
+                icon: Icons.lightbulb,
+                color: const Color(0xFF5D3A1A),
+                onPressed: g.moreAccuseHints ? g.askHint : null,
+              ),
               GoldButton(
                 key: const ValueKey('arrest'),
                 label: g.accused.isEmpty
@@ -416,30 +436,39 @@ class _SuspectCard extends StatelessWidget {
                 width: selected ? 3 : 1,
               ),
             ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                DessertFigure(person.dessert, width: 104, jailed: selected),
-                const SizedBox(height: 8),
-                Text(
-                  person.name,
-                  style: kBody.copyWith(
-                    color: kGold,
-                    fontWeight: FontWeight.bold,
-                  ),
-                  textAlign: TextAlign.center,
+            // Shrinks to fit if the buttons below take a second row.
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: SizedBox(
+                width: 134,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    DessertFigure(person.dessert, width: 104, jailed: selected),
+                    const SizedBox(height: 8),
+                    Text(
+                      person.name,
+                      style: kBody.copyWith(
+                        color: kGold,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    Text(
+                      person.role,
+                      style: kBody.copyWith(fontSize: 12),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 4),
+                    Icon(
+                      selected
+                          ? Icons.check_box
+                          : Icons.check_box_outline_blank,
+                      color: selected ? kGold : Colors.white54,
+                    ),
+                  ],
                 ),
-                Text(
-                  person.role,
-                  style: kBody.copyWith(fontSize: 12),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 4),
-                Icon(
-                  selected ? Icons.check_box : Icons.check_box_outline_blank,
-                  color: selected ? kGold : Colors.white54,
-                ),
-              ],
+              ),
             ),
           ),
         ),
@@ -574,6 +603,74 @@ class _ItemTile extends StatelessWidget {
                 textAlign: TextAlign.center,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Shown before the first hint of a game, in case it was asked for by
+/// accident.
+class HintPrompt extends StatelessWidget {
+  const HintPrompt(this.g, {super.key});
+
+  final GameState g;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: SizedBox(
+        width: 600,
+        child: Plaque(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                children: [
+                  const DessertFigure(
+                    Dessert.donutChocolate,
+                    width: 72,
+                    animate: true,
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('Ask Watsonut for a hint?', style: kHeading),
+                        const SizedBox(height: 6),
+                        Text(
+                          'You have not used any hints yet. Are you sure you '
+                          'want one? He will not ask again.',
+                          style: kBody.copyWith(fontSize: 14),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 14),
+              Wrap(
+                alignment: WrapAlignment.center,
+                spacing: 14,
+                runSpacing: 8,
+                children: [
+                  GoldButton(
+                    key: const ValueKey('hint-no'),
+                    label: 'No, I can manage',
+                    onPressed: () => g.answerHintPrompt(wanted: false),
+                  ),
+                  GoldButton(
+                    key: const ValueKey('hint-yes'),
+                    label: 'Yes, give me the hint',
+                    icon: Icons.lightbulb,
+                    color: const Color(0xFF5D3A1A),
+                    onPressed: () => g.answerHintPrompt(wanted: true),
+                  ),
+                ],
               ),
             ],
           ),

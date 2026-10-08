@@ -1,12 +1,18 @@
 import 'dart:math';
-import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 
 import '../data/models.dart';
-import 'pixel.dart';
 
-/// A dessert character, drawn as a pixel-art sprite. [jailed] puts them
+Paint fill(Color c) => Paint()..color = c;
+
+Paint stroke(Color c, double w) => Paint()
+  ..color = c
+  ..style = PaintingStyle.stroke
+  ..strokeWidth = w
+  ..strokeCap = StrokeCap.round;
+
+/// A dessert character, drawn in code. [jailed] puts them
 /// behind bars; [animate] gives them their idle animation.
 class DessertFigure extends StatefulWidget {
   const DessertFigure(
@@ -15,21 +21,12 @@ class DessertFigure extends StatefulWidget {
     this.width = 100,
     this.jailed = false,
     this.animate = false,
-    this.inScene = false,
   });
 
   final Dessert dessert;
   final double width;
   final bool jailed;
   final bool animate;
-
-  /// True when this sits inside a scene that is already drawn as pixel art,
-  /// so the figure need not pixelate itself.
-  final bool inScene;
-
-  /// Sprites are about this many art pixels wide, whatever size they are
-  /// shown at.
-  static const double spriteWidth = 34;
 
   @override
   State<DessertFigure> createState() => _DessertFigureState();
@@ -74,45 +71,29 @@ class _DessertFigureState extends State<DessertFigure>
   @override
   Widget build(BuildContext context) {
     final size = Size(widget.width, widget.width * 1.3);
-    final factor = widget.width / DessertFigure.spriteWidth;
-    // Very small figures (notebook icons) are left smooth: at that size a
-    // sprite would be a smudge.
-    final selfPixelate = !widget.inScene && factor >= 1.5;
-    final px = widget.inScene ? pixel : (selfPixelate ? factor : 1.0);
 
     Widget paint(double? time) => CustomPaint(
           size: size,
-          painter: _DessertPainter(widget.dessert, px: px, time: time),
-          foregroundPainter: widget.jailed ? _BarsPainter(px) : null,
+          painter: _DessertPainter(widget.dessert, time: time),
+          foregroundPainter: widget.jailed ? _BarsPainter() : null,
         );
 
-    final figure = !widget.animate
-        ? paint(null)
-        : AnimatedBuilder(
-            animation: _idle,
-            builder: (context, _) {
-              // Each dessert starts at a different point in the loop, and
-              // time moves in steps, like the frames of a sprite sheet.
-              final offset = widget.dessert.index * 1.7;
-              final t = ((_idle.value * _loop + offset) % _loop * 10).floor() / 10;
-              return paint(t);
-            },
-          );
-    return SizedBox.fromSize(
-      size: size,
-      child: selfPixelate ? Pixelate(factor: factor, child: figure) : figure,
+    if (!widget.animate) return paint(null);
+    return AnimatedBuilder(
+      animation: _idle,
+      builder: (context, _) {
+        // Each dessert starts at a different point in the loop.
+        final offset = widget.dessert.index * 1.7;
+        return paint((_idle.value * _loop + offset) % _loop);
+      },
     );
   }
 }
 
 class _BarsPainter extends CustomPainter {
-  _BarsPainter(this.px);
-
-  final double px;
-
   @override
   void paint(Canvas c, Size s) {
-    final bar = stroke(const Color(0xFF37474F), s.width * .06, minWidth: px);
+    final bar = stroke(const Color(0xFF37474F), s.width * .06);
     for (var i = 0; i < 5; i++) {
       final x = s.width * (.1 + i * .2);
       c.drawLine(Offset(x, 0), Offset(x, s.height), bar);
@@ -126,18 +107,14 @@ class _BarsPainter extends CustomPainter {
 }
 
 class _DessertPainter extends CustomPainter {
-  _DessertPainter(this.dessert, {required this.px, required this.time});
+  _DessertPainter(this.dessert, {required this.time});
 
   final Dessert dessert;
-
-  /// The size of one art pixel, in this painter's units.
-  final double px;
 
   /// Seconds into the idle loop, or null for a still pose.
   final double? time;
 
   static const _dark = Color(0xFF3B2314);
-  static const _outline = Color(0xFF24130A);
 
   late Canvas c;
   late double w, h;
@@ -151,7 +128,7 @@ class _DessertPainter extends CustomPainter {
   /// True for a moment every few seconds.
   bool get _blinking => time != null && (_t % 4) > 3.8;
 
-  Paint _line(Color color, double width) => stroke(color, width, minWidth: px);
+  Paint _line(Color color, double width) => stroke(color, width);
 
   Offset o(double x, double y) => Offset(w * x, h * y);
 
@@ -208,33 +185,7 @@ class _DessertPainter extends CustomPainter {
 
     c.save();
     _pose();
-    // A dark outline: the same drawing, fattened by a pixel and blacked out.
-    c.saveLayer(
-      null,
-      Paint()
-        ..imageFilter = ui.ImageFilter.dilate(radiusX: px, radiusY: px)
-        ..colorFilter = const ColorFilter.mode(_outline, BlendMode.srcIn),
-    );
     _draw();
-    c.restore();
-    // The sprite itself, with a band of shadow down its right-hand side.
-    c.saveLayer(null, Paint());
-    _draw();
-    c.drawRect(
-      r(.6, 0, 1.2, 1),
-      Paint()
-        ..blendMode = BlendMode.srcATop
-        ..color = const Color(0x24000000)
-        ..isAntiAlias = false,
-    );
-    c.drawRect(
-      r(-.2, 0, .3, 1),
-      Paint()
-        ..blendMode = BlendMode.srcATop
-        ..color = const Color(0x14FFFFFF)
-        ..isAntiAlias = false,
-    );
-    c.restore();
     c.restore();
   }
 
@@ -248,8 +199,8 @@ class _DessertPainter extends CustomPainter {
         // She wobbles.
         c.skew(_wave(1.5) * .05, 0);
         c.scale(1 - breath * .01, 1 + breath * .02);
-      case Dessert.donutPink || Dessert.donutGlazed:
-        // The officers rock on their heels.
+      case Dessert.donutPink || Dessert.donutGlazed || Dessert.donutChocolate:
+        // The donuts rock on their heels.
         c.translate(0, -(_wave(3).abs()) * h * .02);
         c.rotate(_wave(3) * .03);
       case Dessert.cracker:
@@ -269,6 +220,8 @@ class _DessertPainter extends CustomPainter {
         _donut(const Color(0xFFF48FB1), sprinkles: true);
       case Dessert.donutGlazed:
         _donut(const Color(0xFFFFF1CC), sprinkles: false);
+      case Dessert.donutChocolate:
+        _donut(const Color(0xFF5D3A1A), sprinkles: false, doctor: true);
       case Dessert.pannaCotta:
         _pannaCotta();
       case Dessert.tart:
@@ -295,7 +248,7 @@ class _DessertPainter extends CustomPainter {
       (.62, .56), (.46, .58),
     ];
     for (final (x, y) in sugar) {
-      c.drawRect(Rect.fromCenter(center: o(x, y), width: px, height: px), fill(Colors.white));
+      c.drawCircle(o(x, y), w * .013, fill(Colors.white));
     }
     // Deerstalker hat.
     const tweed = Color(0xFF7A5C3E);
@@ -331,7 +284,9 @@ class _DessertPainter extends CustomPainter {
     c.drawLine(o(.83, .41 + lift), o(.86, .39 + lift), _line(Colors.white70, w * .02));
   }
 
-  void _donut(Color icing, {required bool sprinkles}) {
+  /// A donut: one of the officers, or, with [doctor], Watsonut in his
+  /// bowler hat, monocle and moustache.
+  void _donut(Color icing, {required bool sprinkles, bool doctor = false}) {
     feet(.95);
     final centre = o(.5, .58);
     final radius = w * .4;
@@ -360,6 +315,36 @@ class _DessertPainter extends CustomPainter {
         c.drawCircle(e, w * .055, fill(Colors.white));
         c.drawCircle(e.translate(w * .01, w * .005), w * .028, fill(_dark));
       }
+    }
+    if (doctor) {
+      // A doctor's moustache, a bowler hat, and a chocolate drizzle.
+      final drizzle = _line(const Color(0xFF3B2314), w * .03);
+      for (final x in [-.5, -.15, .2, .55]) {
+        c.drawLine(
+          centre.translate(radius * x, -radius * .62),
+          centre.translate(radius * (x - .12), -radius * .38),
+          drizzle,
+        );
+      }
+      final tache = _line(const Color(0xFFF5E6C8), w * .045);
+      c.drawArc(Rect.fromCenter(center: centre.translate(-radius * .2, radius * .02), width: w * .16, height: w * .1), 0, pi, false, tache);
+      c.drawArc(Rect.fromCenter(center: centre.translate(radius * .2, radius * .02), width: w * .16, height: w * .1), 0, pi, false, tache);
+      // Monocle over his right eye, on a fine chain.
+      final monocle = centre.translate(radius * .3, -radius * .22);
+      c.drawCircle(monocle, w * .085, _line(const Color(0xFFFFD54F), w * .022));
+      c.drawLine(
+        monocle.translate(w * .07, w * .05),
+        centre.translate(radius * .62, radius * .5),
+        _line(const Color(0xFFFFD54F), w * .012),
+      );
+      if (time != null && (_t % 5) > 4.6) {
+        c.drawLine(monocle.translate(-w * .04, -w * .04), monocle.translate(w * .01, -w * .06), _line(Colors.white, w * .02));
+      }
+      const felt = Color(0xFF1E1E22);
+      c.drawArc(r(.3, .04, .7, .36), pi, pi, true, fill(felt));
+      c.drawRRect(rr(.2, .19, .8, .24, .03), fill(felt));
+      c.drawRect(r(.3, .16, .7, .195), fill(const Color(0xFF6D1B1B)));
+      return;
     }
     // Police cap.
     const navy = Color(0xFF1A2A5E);
@@ -408,10 +393,7 @@ class _DessertPainter extends CustomPainter {
       final (x, y, colour) = fruit[i];
       final bob = _wave(2, i * .13) * .008;
       c.drawCircle(o(x, y + bob), w * .085, fill(colour));
-      c.drawRect(
-        Rect.fromCenter(center: o(x - .025, y - .018 + bob), width: px, height: px),
-        fill(Colors.white70),
-      );
+      c.drawCircle(o(x - .02, y - .015 + bob), w * .02, fill(Colors.white54));
     }
     c.drawCircle(o(.52, .37), w * .03, fill(const Color(0xFF388E3C)));
     c.drawOval(
@@ -440,7 +422,7 @@ class _DessertPainter extends CustomPainter {
     const cream = Color(0xFFF7EBD0);
     const sponge = Color(0xFF9A6233);
     c.save();
-    c.clipRRect(rr(.2, .26, .8, .93, .06), doAntiAlias: false);
+    c.clipRRect(rr(.2, .26, .8, .93, .06));
     c.drawRect(r(.2, .26, .8, .93), fill(cream));
     c.drawRect(r(.2, .26, .8, .33), fill(const Color(0xFF4E2C14)));
     c.drawRect(r(.2, .58, .8, .66), fill(sponge));
@@ -532,5 +514,5 @@ class _DessertPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(_DessertPainter old) =>
-      old.dessert != dessert || old.time != time || old.px != px;
+      old.dessert != dessert || old.time != time;
 }

@@ -150,6 +150,52 @@ const flatCase = MysteryCase(
     icon: Icons.fingerprint, color: Color(0xFFB2EBF2),
   ),
   deskCode: '1887',
+  hints: {
+    ...commonHints,
+    'phone': phoneHint,
+    'souffle': souffleHint,
+    'ricotta': "Not hers, you say. Then ask the one dessert who knows every "
+        "filling in this house: the housekeeper.",
+    'flakes': "Fried, not baked. Penny does all the cooking here. She would "
+        "know who under this roof ever saw a frying pan.",
+    'rack': "To take that pin, somebody walked straight through Penny's "
+        "kitchen while she was in it. Ask her what she noticed. And what "
+        "she didn't.",
+    'pinboiler': "Wiped, but in a hurry. If only we could see who had "
+        "handled it. Didn't the sergeant say something about fingerprints?",
+    'pinpantry': "Wiped, but in a hurry. If only we could see who had "
+        "handled it. Didn't the sergeant say something about fingerprints?",
+    'ledger': "A motive, certainly. But half this house has one of those. "
+        "Does the Colonel's account of his debt agree with hers?",
+    'notice': "A motive, certainly. But half this house has one of those. "
+        "Does the Colonel's account of his debt agree with hers?",
+    'receipt': "Chocolate medals! A man might do a great deal to keep that "
+        "quiet. Still, shame is a reason. It is not proof.",
+    'regiment': "No such colonel! A man might do a great deal to keep that "
+        "quiet. Still, shame is a reason. It is not proof.",
+    'scoresheet': "A meticulous chap, Graham. So why is there a gap in a "
+        "record like that? Ask the two who sat at that board.",
+    'decanter': "Undisturbed since Christmas. Remember that, the next time "
+        "somebody tells you where they went for a drink.",
+    'notepad': "An appointment, and kept. Dull, but dull is useful: it "
+        "tells us where two of them meant to be.",
+    'planner': "No more extensions, whatever he says. Her own hand, this "
+        "very week. Has anyone shown you something that says otherwise?",
+    'prints': "A print tells you who touched it, not when. One of those two "
+        "has every reason to have touched it. What reason has the other?",
+  },
+  accuseHints: [
+    "Before you name anyone, Churlock: do we know the very minute she died? "
+        "Find that, and then find where each of the five was at that minute.",
+    "Four of them were somewhere they can prove. Go over the telephone log, "
+        "the muddy boots and the soufflé once more. Whose story rests on "
+        "nothing but another dessert's word?",
+    "Look at what was left beside the body, and at what the weapon tells "
+        "you once it is dusted. Then ask Penny who it could belong to.",
+    "The chess game, old chap. Two players, but did both of them stay in "
+        "the room? Ask each what the other did at a quarter to eleven. And "
+        "read that note about the debt very carefully indeed.",
+  ],
   topics: {
     'sprinkles': [
       Topic(

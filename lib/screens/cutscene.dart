@@ -9,7 +9,6 @@ import '../data/house.dart';
 import '../data/models.dart';
 import '../widgets/dessert_figure.dart';
 import '../widgets/exterior_painter.dart';
-import '../widgets/pixel.dart';
 import '../widgets/ui.dart';
 
 enum CutsceneKind {
@@ -147,11 +146,9 @@ class _CutsceneState extends State<Cutscene> with TickerProviderStateMixin {
           top: -_lift,
           width: sceneW,
           height: sceneH,
-          child: Pixelate(
-            child: AnimatedBuilder(
-              animation: Listenable.merge([_scene, _rain]),
-              builder: (context, _) => _stage(_scene.value),
-            ),
+          child: AnimatedBuilder(
+            animation: Listenable.merge([_scene, _rain]),
+            builder: (context, _) => _stage(_scene.value),
           ),
         ),
         Positioned(
@@ -225,9 +222,16 @@ class _CutsceneState extends State<Cutscene> with TickerProviderStateMixin {
     );
   }
 
-  /// Churlock, drawn with his feet at [feet] and shrunk by [scale].
-  Widget _detective(Offset feet, {double scale = 1, double sway = 0, double opacity = 1}) {
-    const width = 92.0;
+  /// Churlock, or with [partner] Watsonut, drawn with his feet at [feet] and
+  /// shrunk by [scale].
+  Widget _detective(
+    Offset feet, {
+    double scale = 1,
+    double sway = 0,
+    double opacity = 1,
+    bool partner = false,
+  }) {
+    final width = partner ? 78.0 : 92.0;
     return Positioned(
       left: feet.dx - width / 2,
       top: feet.dy - width * 1.3,
@@ -238,7 +242,10 @@ class _CutsceneState extends State<Cutscene> with TickerProviderStateMixin {
           transform: Matrix4.identity()
             ..rotateZ(sway)
             ..scaleByDouble(scale, scale, 1, 1),
-          child: const DessertFigure(Dessert.churro, width: width, inScene: true),
+          child: DessertFigure(
+            partner ? Dessert.donutChocolate : Dessert.churro,
+            width: width,
+          ),
         ),
       ),
     );
@@ -252,8 +259,20 @@ class _CutsceneState extends State<Cutscene> with TickerProviderStateMixin {
     final step = t * 2 * pi * 34;
     final walking = walk > 0 && walk < 1;
     final feet = Offset.lerp(const Offset(350, 506), const Offset(681, 404), walk)!;
+    // Watsonut climbs out after him, dawdles, then hurries to catch up.
+    final follow = Curves.easeOut.transform(_span(t, .5, .77));
+    final following = follow > 0 && follow < 1;
+    final heel = Offset.lerp(const Offset(300, 506), const Offset(681, 404), follow)!;
     return [
       _car(carX, roll: drive * 22, lights: true),
+      if (t > .29)
+        _detective(
+          heel.translate(0, following ? -cos(step * 1.7).abs() * 5 : 0),
+          scale: 1 - .5 * follow,
+          sway: following ? cos(step * 1.7) * .08 : 0,
+          opacity: _span(t, .29, .33) * (1 - _span(t, .79, .85)),
+          partner: true,
+        ),
       if (t > .25)
         _detective(
           feet.translate(0, walking ? -sin(step).abs() * 5 : 0),
@@ -273,6 +292,7 @@ class _CutsceneState extends State<Cutscene> with TickerProviderStateMixin {
     final hop = happy ? -sin(t * 2 * pi * 12).abs() * 6 : 0.0;
     return [
       _car(90, roll: 0, lights: false),
+      _detective(const Offset(300, 506), partner: true),
       _detective(Offset(370, 506 + hop), sway: happy ? 0 : -.1),
       Positioned(
         left: wagonX,
@@ -293,7 +313,7 @@ class _CutsceneState extends State<Cutscene> with TickerProviderStateMixin {
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
                     for (final p in widget.prisoners)
-                      DessertFigure(p.dessert, width: 40, jailed: true, inScene: true),
+                      DessertFigure(p.dessert, width: 40, jailed: true),
                   ],
                 ),
               ),

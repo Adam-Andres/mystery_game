@@ -1,4 +1,5 @@
 import '../data/cases.dart';
+import '../data/hints.dart';
 import '../data/house.dart';
 
 /// One spoken line: who says it, and what they say.
@@ -103,8 +104,11 @@ List<VoiceLine> allVoiceLines() {
   for (final l in [...introLines, eurekaLine, ...winLines, ...loseAgainLines, ...loseHalfLines]) {
     add(l.voice, l.text);
   }
-  for (final p in [...residents, ...police]) {
+  for (final p in [watsonut, ...residents, ...police]) {
     add(p.id, p.greeting);
+  }
+  for (final remark in idleRemarks) {
+    add(watsonut.id, remark);
   }
   for (final nook in nooks) {
     for (final junk in nook.junk) {
@@ -119,6 +123,13 @@ List<VoiceLine> allVoiceLines() {
       add(churlock.id, e.description);
     }
     add(churlock.id, certificateText(mystery.deskCode));
+    // Watsonut has something to say about every piece of evidence.
+    for (final e in [...mystery.pool, ...mystery.gifts, mystery.prints]) {
+      add(watsonut.id, hintFor(mystery, e));
+    }
+    for (final hint in mystery.accuseHints) {
+      add(watsonut.id, hint);
+    }
     for (final entry in mystery.topics.entries) {
       for (final t in entry.value) {
         add(entry.key, t.answer);

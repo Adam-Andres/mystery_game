@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:flutter/foundation.dart';
 
 import 'data/cases.dart';
+import 'data/hints.dart';
 import 'data/house.dart';
 import 'data/models.dart';
 
@@ -22,6 +23,7 @@ class Dialogue {
     required this.text,
     this.talk = false,
     this.note,
+    this.evidence,
   });
 
   final Person speaker;
@@ -33,6 +35,9 @@ class Dialogue {
 
   /// A line shown beneath the text, such as what was just handed over.
   final String? note;
+
+  /// The evidence being examined, about which Watsonut can be asked.
+  final Evidence? evidence;
 }
 
 class GameState extends ChangeNotifier {
@@ -66,6 +71,16 @@ class GameState extends ChangeNotifier {
 
   /// Statements already heard, as `person/topicId`.
   final asked = <String>{};
+
+  /// How many hints Watsonut has given this game, of either kind.
+  int hintsUsed = 0;
+
+  /// How many of his nudges on the accusation screen have been heard.
+  int accuseHintsGiven = 0;
+
+  /// True while the game is checking that the first hint was meant.
+  bool hintPrompt = false;
+  Evidence? _hintAbout;
 
   /// Suspects ticked in the accusation panel; the final verdict once ended.
   final accused = <String>{};
@@ -104,6 +119,9 @@ class GameState extends ChangeNotifier {
       ..clear()
       ..add(roomId);
     unlocked.clear();
+    hintsUsed = 0;
+    accuseHintsGiven = 0;
+    hintPrompt = false;
     asked.clear();
     accused.clear();
     panel = Panel.none;
@@ -122,7 +140,7 @@ class GameState extends ChangeNotifier {
   }
 
   /// True while a dialogue or a panel has the player's attention.
-  bool get busy => dialogue != null || panel != Panel.none;
+  bool get busy => dialogue != null || panel != Panel.none || hintPrompt;
 
   /// Where [d] leads from here, or null if Churlock cannot go that way now.
   Room? destination(Dir d) {
@@ -168,6 +186,7 @@ class GameState extends ChangeNotifier {
       speaker: churlock,
       title: isNew ? 'New evidence: ${e.name}' : e.name,
       text: e.description,
+      evidence: e,
     );
     notifyListeners();
   }
@@ -218,6 +237,52 @@ class GameState extends ChangeNotifier {
       title: junk.name,
       text: junkText(junk),
     );
+    notifyListeners();
+  }
+
+  bool get moreAccuseHints => accuseHintsGiven < mystery.accuseHints.length;
+
+  /// Asks Watsonut for a hint: about [about] if given, otherwise his next
+  /// nudge on the accusation screen. The very first request of a game is
+  /// confirmed first, in case the button was pressed by accident.
+  void askHint({Evidence? about}) {
+    if (about == null && !moreAccuseHints) return;
+    if (hintsUsed == 0) {
+      _hintAbout = about;
+      hintPrompt = true;
+      notifyListeners();
+      return;
+    }
+    _giveHint(about);
+  }
+
+  void answerHintPrompt({required bool wanted}) {
+    hintPrompt = false;
+    if (wanted) {
+      _giveHint(_hintAbout);
+    } else {
+      notifyListeners();
+    }
+  }
+
+  void _giveHint(Evidence? about) {
+    hintsUsed++;
+    final String text;
+    final String note;
+    if (about != null) {
+      text = hintFor(mystery, about);
+      note = 'On: ${about.name}';
+    } else {
+      text = mystery.accuseHints[accuseHintsGiven++];
+      note = 'Hint $accuseHintsGiven of ${mystery.accuseHints.length}';
+    }
+    dialogue = Dialogue(speaker: watsonut, title: watsonut.name, text: text, note: note);
+    notifyListeners();
+  }
+
+  /// Watsonut says [text] of his own accord.
+  void watsonSays(String text) {
+    dialogue = Dialogue(speaker: watsonut, title: watsonut.name, text: text);
     notifyListeners();
   }
 

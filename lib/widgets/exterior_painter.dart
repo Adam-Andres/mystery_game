@@ -3,7 +3,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 
 import '../data/house.dart';
-import 'pixel.dart';
+import 'dessert_figure.dart' show fill, stroke;
 
 const _gingerbread = Color(0xFF9A5B2A);
 const _darkBread = Color(0xFF6E3B17);
@@ -48,17 +48,18 @@ class ExteriorPainter extends CustomPainter {
   }
 
   void _sky() {
-    // The sky in flat bands, top to horizon, as a pixel artist would lay it.
-    final (top, horizon) = gloomy
-        ? (const Color(0xFF17131F), const Color(0xFF4B4257))
-        : (const Color(0xFF3A4668), const Color(0xFFF0AE6E));
-    const bands = 9;
-    for (var i = 0; i < bands; i++) {
-      c.drawRect(
-        Rect.fromLTWH(0, i * (ground + 10) / bands, sceneW, (ground + 10) / bands + 1),
-        fill(Color.lerp(top, horizon, i / (bands - 1))!),
-      );
-    }
+    const sky = Rect.fromLTWH(0, 0, sceneW, ground + 10);
+    c.drawRect(
+      sky,
+      Paint()
+        ..shader = LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: gloomy
+              ? const [Color(0xFF17131F), Color(0xFF4B4257)]
+              : const [Color(0xFF3A4668), Color(0xFFF0AE6E)],
+        ).createShader(sky),
+    );
     if (!gloomy) {
       c.drawCircle(const Offset(210, ground), 120, fill(const Color(0x33FFE9B0)));
       c.drawCircle(const Offset(210, ground), 62, fill(const Color(0xFFFFE9B0)));

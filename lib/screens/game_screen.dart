@@ -10,7 +10,6 @@ import '../data/house.dart';
 import '../data/models.dart';
 import '../game_state.dart';
 import '../widgets/dessert_figure.dart';
-import '../widgets/pixel.dart';
 import '../widgets/room_painter.dart';
 import '../widgets/ui.dart';
 import 'minigames.dart';
@@ -20,23 +19,26 @@ import 'panels.dart';
 const double _standY = 478;
 
 /// Where Churlock stands (top-left of his figure) when he is not walking.
-const _home = Offset(38, _standY - 143);
+const _home = Offset(104, _standY - 143);
+
+/// Where Watsonut stands relative to Churlock: just behind his shoulder.
+const _heel = Offset(-74, -4);
 
 /// Where he walks to when leaving in each direction: off the side of the
 /// room, up the stairs, or down through the cellar hatch.
 Offset _exitPoint(Dir d) => switch (d) {
-      Dir.left => const Offset(-130, _standY - 143),
-      Dir.right => const Offset(sceneW + 20, _standY - 143),
-      Dir.up => const Offset(425, -40),
-      Dir.down => const Offset(425, sceneH - 110),
-    };
+  Dir.left => const Offset(-130, _standY - 143),
+  Dir.right => const Offset(sceneW + 20, _standY - 143),
+  Dir.up => const Offset(425, -40),
+  Dir.down => const Offset(425, sceneH - 110),
+};
 
 Dir _opposite(Dir d) => switch (d) {
-      Dir.left => Dir.right,
-      Dir.right => Dir.left,
-      Dir.up => Dir.down,
-      Dir.down => Dir.up,
-    };
+  Dir.left => Dir.right,
+  Dir.right => Dir.left,
+  Dir.up => Dir.down,
+  Dir.down => Dir.up,
+};
 
 class GameScreen extends StatefulWidget {
   const GameScreen(this.g, {super.key, required this.voice});
@@ -48,18 +50,18 @@ class GameScreen extends StatefulWidget {
   State<GameScreen> createState() => _GameScreenState();
 }
 
-class _GameScreenState extends State<GameScreen>
-    with TickerProviderStateMixin {
+class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
   // First half: Churlock walks out and the room fades to black. Second half:
   // the next room fades in as he walks to his usual spot.
-  late final AnimationController _walk = AnimationController(
-    vsync: this,
-    duration: const Duration(milliseconds: 1500),
-  )
-    ..addListener(_onTick)
-    ..addStatusListener((status) {
-      if (status == AnimationStatus.completed) setState(() => _dir = null);
-    });
+  late final AnimationController _walk =
+      AnimationController(
+          vsync: this,
+          duration: const Duration(milliseconds: 1500),
+        )
+        ..addListener(_onTick)
+        ..addStatusListener((status) {
+          if (status == AnimationStatus.completed) setState(() => _dir = null);
+        });
 
   // A short walk across the room to whatever was clicked.
   late final AnimationController _approach = AnimationController(vsync: this)
@@ -105,12 +107,50 @@ class _GameScreenState extends State<GameScreen>
   void initState() {
     super.initState();
     _scheduleFlicker();
+    _idleTimer = Timer(_idleAfter, _onIdle);
+    // Anything the game does counts as activity, not only clicks.
+    g.addListener(_onGameChanged);
+  }
+
+  void _onGameChanged() {
+    _idleTimer?.cancel();
+    _idleTimer = Timer(_idleAfter, _onIdle);
   }
 
   /// How dark the flicker makes the room at point [t] of its run.
   static double _dimming(double t) {
     const steps = [.0, .6, .15, .7, .1, .0, .45, .0];
     return steps[(t * steps.length).floor().clamp(0, steps.length - 1)];
+  }
+
+  // Watsonut pipes up when nothing has been clicked for a while.
+  static const _idleAfter = Duration(seconds: 40);
+  Timer? _idleTimer;
+  Timer? _remarkTimer;
+  String? _remark;
+  int _remarks = 0;
+
+  void _resetIdle() {
+    _idleTimer?.cancel();
+    _idleTimer = Timer(_idleAfter, _onIdle);
+    if (_remark != null) {
+      _remarkTimer?.cancel();
+      widget.voice.release(this);
+      setState(() => _remark = null);
+    }
+  }
+
+  void _onIdle() {
+    if (!mounted) return;
+    _idleTimer = Timer(_idleAfter, _onIdle);
+    if (g.busy || _moving) return;
+    final remark = idleRemarks[_remarks++ % idleRemarks.length];
+    setState(() => _remark = remark);
+    widget.voice.say((voice: watsonut.id, text: remark), owner: this);
+    _remarkTimer?.cancel();
+    _remarkTimer = Timer(const Duration(seconds: 7), () {
+      if (mounted) setState(() => _remark = null);
+    });
   }
 
   Dir? _dir;
@@ -120,6 +160,10 @@ class _GameScreenState extends State<GameScreen>
 
   @override
   void dispose() {
+    g.removeListener(_onGameChanged);
+    _idleTimer?.cancel();
+    _remarkTimer?.cancel();
+    widget.voice.release(this);
     _nextFlicker?.cancel();
     _flicker.dispose();
     _walk.dispose();
@@ -157,7 +201,9 @@ class _GameScreenState extends State<GameScreen>
       _onArrive = then;
     });
     final distance = (target - _spot).distance;
-    _approach.duration = Duration(milliseconds: (160 + distance * 1.5).round().clamp(200, 900));
+    _approach.duration = Duration(
+      milliseconds: (160 + distance * 1.5).round().clamp(200, 900),
+    );
     _approach.forward(from: 0);
   }
 
@@ -174,7 +220,9 @@ class _GameScreenState extends State<GameScreen>
     if (event is! KeyDownEvent) return KeyEventResult.ignored;
     final key = event.logicalKey;
     if (key == LogicalKeyboardKey.escape) {
-      if (g.dialogue != null) {
+      if (g.hintPrompt) {
+        g.answerHintPrompt(wanted: false);
+      } else if (g.dialogue != null) {
         g.closeDialogue();
       } else if (g.panel == Panel.puzzle) {
         g.cancelTask();
@@ -200,149 +248,199 @@ class _GameScreenState extends State<GameScreen>
     return Focus(
       autofocus: true,
       onKeyEvent: _onKey,
-      child: AbsorbPointer(
-        absorbing: _moving,
-        child: Stack(
-          children: [
-            // The room is a still picture, so it is drawn to pixels once.
-            Positioned.fill(
-              child: Pixelate(
-                child: CustomPaint(painter: RoomPainter(room, caseId: g.mystery.id)),
+      child: Listener(
+        onPointerDown: (_) => _resetIdle(),
+        child: AbsorbPointer(
+          absorbing: _moving,
+          child: Stack(
+            children: [
+              Positioned.fill(
+                child: RepaintBoundary(
+                  child: CustomPaint(
+                    painter: RoomPainter(room, caseId: g.mystery.id),
+                  ),
+                ),
               ),
-            ),
-            // Everything that moves shares a second pixel layer.
-            Positioned.fill(
-              child: Pixelate(
-                child: Stack(
-                  children: [
-                    if (roomWindows.containsKey(room.id))
-                      Positioned.fill(
-                        child: IgnorePointer(
-                          child: AnimatedBuilder(
-                            animation: _rain,
-                            builder: (context, _) => CustomPaint(
-                              painter: WindowRainPainter(room.id, _rain.value),
+              Positioned.fill(
+                child: RepaintBoundary(
+                  child: Stack(
+                    children: [
+                      if (roomWindows.containsKey(room.id))
+                        Positioned.fill(
+                          child: IgnorePointer(
+                            child: AnimatedBuilder(
+                              animation: _rain,
+                              builder: (context, _) => CustomPaint(
+                                painter: WindowRainPainter(
+                                  room.id,
+                                  _rain.value,
+                                ),
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                    for (final e in g.evidenceHere)
-                      Positioned(
-                        left: evidencePos(e).dx - 24,
-                        top: evidencePos(e).dy - 24,
-                        child: _EvidenceSpot(
-                          key: ValueKey('evidence-${e.id}'),
-                          evidence: e,
-                          found: g.found.contains(e.id) && !g.canDust(e),
-                          dust: g.canDust(e),
-                          onTap: () => _walkTo(evidencePos(e), () => g.inspect(e)),
-                        ),
-                      ),
-                    for (final (id, x) in placements[room.id] ?? const <(String, double)>[])
-                      Positioned(
-                        left: x - 50,
-                        top: _standY - 130,
-                        child: IgnorePointer(
-                          child: DessertFigure(
-                            personById(id).dessert,
-                            animate: true,
-                            inScene: true,
+                      for (final e in g.evidenceHere)
+                        Positioned(
+                          left: evidencePos(e).dx - 24,
+                          top: evidencePos(e).dy - 24,
+                          child: _EvidenceSpot(
+                            key: ValueKey('evidence-${e.id}'),
+                            evidence: e,
+                            found: g.found.contains(e.id) && !g.canDust(e),
+                            dust: g.canDust(e),
+                            onTap: () =>
+                                _walkTo(evidencePos(e), () => g.inspect(e)),
                           ),
                         ),
+                      for (final (id, x)
+                          in placements[room.id] ?? const <(String, double)>[])
+                        Positioned(
+                          left: x - 50,
+                          top: _standY - 130,
+                          child: IgnorePointer(
+                            child: DessertFigure(
+                              personById(id).dessert,
+                              animate: true,
+                            ),
+                          ),
+                        ),
+                      AnimatedBuilder(
+                        animation: Listenable.merge([_walk, _approach]),
+                        builder: (context, _) => Stack(
+                          children: [
+                            _walker(partner: true),
+                            _walker(partner: false),
+                          ],
+                        ),
                       ),
-                    AnimatedBuilder(
-                      animation: Listenable.merge([_walk, _approach]),
-                      builder: (context, _) => _churlock(),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
-            ),
-            if (room.level == 0)
-              Positioned.fill(
-                child: IgnorePointer(
-                  child: AnimatedBuilder(
-                    animation: _flicker,
-                    builder: (context, _) => ColoredBox(
-                      color: Colors.black.withValues(
-                        alpha: _flicker.isAnimating ? _dimming(_flicker.value) : 0,
+              if (room.level == 0)
+                Positioned.fill(
+                  child: IgnorePointer(
+                    child: AnimatedBuilder(
+                      animation: _flicker,
+                      builder: (context, _) => ColoredBox(
+                        color: Colors.black.withValues(
+                          alpha: _flicker.isAnimating
+                              ? _dimming(_flicker.value)
+                              : 0,
+                        ),
                       ),
                     ),
                   ),
                 ),
-              ),
-            // Labels and buttons are kept crisp, above the pixel art.
-            for (final (id, x) in placements[room.id] ?? const <(String, double)>[])
-              _character(personById(id), x),
-            for (final n in g.nooksHere) _nook(n),
-            for (final d in Dir.values)
-              if (neighbor(room, d) case final Room next) _arrow(d, next),
-            Positioned(left: 14, top: 12, child: _RoomLabel(room)),
-            Positioned(right: 14, top: 12, child: _Hud(g, widget.voice)),
-            if (room.id == 'entrance')
-              Positioned(
-                left: 60,
-                bottom: 16,
-                child: GoldButton(
-                  key: const ValueKey('solve'),
-                  label: 'I solved the case',
-                  icon: Icons.gavel,
-                  color: kRed,
-                  onPressed: () {
-                    widget.voice.say(eurekaLine);
-                    g.openPanel(Panel.accuse);
-                  },
-                ),
-              ),
-            // The fade between rooms, darkest at the moment of the switch.
-            if (_dir != null)
-              Positioned.fill(
-                child: IgnorePointer(
-                  child: FadeTransition(
-                    opacity: _walk.drive(
-                      TweenSequence([
-                        TweenSequenceItem(tween: ConstantTween(0.0), weight: 20),
-                        TweenSequenceItem(tween: Tween(begin: 0.0, end: 1.0), weight: 28),
-                        TweenSequenceItem(tween: ConstantTween(1.0), weight: 4),
-                        TweenSequenceItem(tween: Tween(begin: 1.0, end: 0.0), weight: 28),
-                        TweenSequenceItem(tween: ConstantTween(0.0), weight: 20),
-                      ]),
-                    ),
-                    child: const ColoredBox(color: Colors.black),
+              for (final (id, x)
+                  in placements[room.id] ?? const <(String, double)>[])
+                _character(personById(id), x),
+              for (final n in g.nooksHere) _nook(n),
+              for (final d in Dir.values)
+                if (neighbor(room, d) case final Room next) _arrow(d, next),
+              if (_remark != null && !_moving) _remarkBubble(_remark!),
+              Positioned(left: 14, top: 12, child: _RoomLabel(room)),
+              Positioned(right: 14, top: 12, child: _Hud(g, widget.voice)),
+              if (room.id == 'entrance')
+                Positioned(
+                  left: 60,
+                  bottom: 16,
+                  child: GoldButton(
+                    key: const ValueKey('solve'),
+                    label: 'I solved the case',
+                    icon: Icons.gavel,
+                    color: kRed,
+                    onPressed: () {
+                      widget.voice.say(eurekaLine);
+                      g.openPanel(Panel.accuse);
+                    },
                   ),
                 ),
-              ),
-            if (g.panel != Panel.none) ...[
-              Scrim(onTap: g.panel == Panel.puzzle ? null : g.closePanel),
-              Positioned.fill(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 30),
-                  child: switch (g.panel) {
-                    Panel.notebook => NotebookPanel(g),
-                    Panel.accuse => AccusePanel(g),
-                    Panel.nook => NookPanel(g),
-                    _ => PuzzlePanel(g),
-                  },
+              // The fade between rooms, darkest at the moment of the switch.
+              if (_dir != null)
+                Positioned.fill(
+                  child: IgnorePointer(
+                    child: FadeTransition(
+                      opacity: _walk.drive(
+                        TweenSequence([
+                          TweenSequenceItem(
+                            tween: ConstantTween(0.0),
+                            weight: 20,
+                          ),
+                          TweenSequenceItem(
+                            tween: Tween(begin: 0.0, end: 1.0),
+                            weight: 28,
+                          ),
+                          TweenSequenceItem(
+                            tween: ConstantTween(1.0),
+                            weight: 4,
+                          ),
+                          TweenSequenceItem(
+                            tween: Tween(begin: 1.0, end: 0.0),
+                            weight: 28,
+                          ),
+                          TweenSequenceItem(
+                            tween: ConstantTween(0.0),
+                            weight: 20,
+                          ),
+                        ]),
+                      ),
+                      child: const ColoredBox(color: Colors.black),
+                    ),
+                  ),
                 ),
-              ),
+              if (g.panel != Panel.none) ...[
+                Scrim(onTap: g.panel == Panel.puzzle ? null : g.closePanel),
+                Positioned.fill(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 50,
+                      vertical: 30,
+                    ),
+                    child: switch (g.panel) {
+                      Panel.notebook => NotebookPanel(g),
+                      Panel.accuse => AccusePanel(g),
+                      Panel.nook => NookPanel(g),
+                      _ => PuzzlePanel(g),
+                    },
+                  ),
+                ),
+              ],
+              // Dialogue sits above the panels, so finds inside furniture can
+              // be read without closing it.
+              if (g.dialogue != null) ...[
+                Scrim(onTap: g.closeDialogue, opacity: .25),
+                Positioned(
+                  left: 20,
+                  right: 20,
+                  bottom: 14,
+                  height: 236,
+                  child: DialoguePanel(g),
+                ),
+              ],
+              if (g.hintPrompt) ...[
+                Scrim(onTap: () => g.answerHintPrompt(wanted: false)),
+                Positioned.fill(child: HintPrompt(g)),
+              ],
             ],
-            // Dialogue sits above the panels, so finds inside furniture can
-            // be read without closing it.
-            if (g.dialogue != null) ...[
-              Scrim(onTap: g.closeDialogue, opacity: .25),
-              Positioned(left: 20, right: 20, bottom: 14, height: 236, child: DialoguePanel(g)),
-            ],
-          ],
+          ),
         ),
       ),
     );
   }
 
-  /// Churlock: standing where he last stopped, crossing the room to
-  /// something, or waddling off to the next room.
-  Widget _churlock() {
+  /// Churlock, or with [partner] Watsonut at his heel: standing where they
+  /// last stopped, crossing the room to something, or waddling off to the
+  /// next room.
+  Widget _walker({required bool partner}) {
+    // Churlock is off before Watsonut has noticed. Watsonut stands a moment
+    // longer, then scurries after him at twice the pace to catch up.
+    double pace(double t) => partner
+        ? Curves.easeOut.transform(((t - .42) / .58).clamp(0.0, 1.0))
+        : Curves.easeInOut.transform(t);
+    final heel = partner ? _heel : Offset.zero;
     final d = _dir;
-    var pos = _spot;
+    var pos = _spot + heel;
     var facingLeft = false;
     var stairs = 1.0;
     var sway = 0.0;
@@ -350,46 +448,89 @@ class _GameScreenState extends State<GameScreen>
     if (d != null) {
       final t = _walk.value;
       final leaving = t < .5;
-      final part = Curves.easeInOut.transform(leaving ? t * 2 : t * 2 - 1);
-      // He arrives through the side opposite the one he left by.
-      final from = leaving ? _from : _exitPoint(_opposite(d));
-      final to = leaving ? _exitPoint(d) : _home;
+      final part = pace(leaving ? t * 2 : t * 2 - 1);
+      // They arrive through the side opposite the one they left by.
+      final from = (leaving ? _from : _exitPoint(_opposite(d))) + heel;
+      final to = (leaving ? _exitPoint(d) : _home) + heel;
       pos = Offset.lerp(from, to, part)!;
       facingLeft = to.dx < from.dx;
-      // Stairs lead away from the viewer, so he shrinks as he climbs.
+      // Stairs lead away from the viewer, so they shrink as they climb.
       final depth = leaving ? part : 1 - part;
       final vertical = leaving ? d : _opposite(d);
       if (vertical == Dir.up) stairs = 1 - .45 * depth;
-      final step = t * 2 * pi * 9;
+      // Watsonut's steps follow his own progress: none while he dithers,
+      // then a flurry of short ones.
+      final step = partner ? part * 2 * pi * 8 : t * 2 * pi * 9;
       sway = sin(step) * .09;
       bob = -sin(step).abs() * 7;
     } else if (_approach.isAnimating) {
-      final t = Curves.easeInOut.transform(_approach.value);
-      pos = Offset.lerp(_from, _target, t)!;
+      final t = pace(_approach.value);
+      pos = Offset.lerp(_from + heel, _target + heel, t)!;
       facingLeft = _target.dx < _from.dx;
-      final step = _approach.value * (_target - _from).distance / 26;
+      final step = (partner ? t : _approach.value) * (_target - _from).distance / 20;
       sway = sin(step) * .09;
       bob = -sin(step).abs() * 6;
     }
-    // Further back in the room he is drawn a little smaller.
+    // Further back in the room they are drawn a little smaller.
     final feet = pos.dy + 143;
-    final depthScale = stairs < 1 ? 1.0 : (.8 + .2 * (feet - floorY - 70) / (_standY - floorY - 70)).clamp(.8, 1.0);
+    final depthScale = stairs < 1
+        ? 1.0
+        : (.8 + .2 * (feet - floorY - 70) / (_standY - floorY - 70)).clamp(
+            .8,
+            1.0,
+          );
     final scale = stairs * depthScale;
+    final width = partner ? 92.0 : 110.0;
+    final figure = Transform(
+      alignment: Alignment.bottomCenter,
+      transform: Matrix4.identity()
+        ..rotateZ(sway)
+        ..scaleByDouble(facingLeft ? -scale : scale, scale, 1, 1),
+      child: DessertFigure(
+        partner ? Dessert.donutChocolate : Dessert.churro,
+        width: width,
+        // They stop fidgeting while they walk.
+        animate: !_moving,
+      ),
+    );
     return Positioned(
-      left: pos.dx,
-      top: pos.dy + bob,
+      // Both stand on the same line, whatever their height.
+      left: pos.dx + (110 - width) / 2,
+      top: pos.dy + bob + (143 - width * 1.3),
+      child: partner
+          ? MouseRegion(
+              cursor: SystemMouseCursors.click,
+              child: GestureDetector(
+                key: const ValueKey('watsonut'),
+                onTap: () {
+                  if (!g.busy) g.watsonSays(watsonut.greeting);
+                },
+                child: figure,
+              ),
+            )
+          : IgnorePointer(child: figure),
+    );
+  }
+
+  /// Watsonut's unprompted remark, in a bubble over his head.
+  Widget _remarkBubble(String remark) {
+    final head = _spot + _heel;
+    return Positioned(
+      left: max(8, head.dx - 30),
+      bottom: sceneH - head.dy - 14,
+      width: 250,
       child: IgnorePointer(
-        child: Transform(
-          alignment: Alignment.bottomCenter,
-          transform: Matrix4.identity()
-            ..rotateZ(sway)
-            ..scaleByDouble(facingLeft ? -scale : scale, scale, 1, 1),
-          child: DessertFigure(
-            Dessert.churro,
-            width: 110,
-            // He stops fidgeting while he walks.
-            animate: !_moving,
-            inScene: true,
+        child: Container(
+          key: const ValueKey('watsonut-remark'),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+          decoration: BoxDecoration(
+            color: kCream,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: kInk, width: 2),
+          ),
+          child: Text(
+            remark,
+            style: const TextStyle(color: kInk, fontSize: 13, height: 1.25),
           ),
         ),
       ),
@@ -423,12 +564,18 @@ class _GameScreenState extends State<GameScreen>
                 ),
                 const SizedBox(height: 2),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 1,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.black54,
                     borderRadius: BorderRadius.circular(6),
                   ),
-                  child: Text(n.name, style: const TextStyle(color: kCream, fontSize: 11)),
+                  child: Text(
+                    n.name,
+                    style: const TextStyle(color: kCream, fontSize: 11),
+                  ),
                 ),
               ],
             ),
@@ -439,7 +586,7 @@ class _GameScreenState extends State<GameScreen>
   }
 
   /// The name tag over a character, and the area that can be clicked to
-  /// talk to them. The figure itself is drawn in the pixel layer.
+  /// talk to them.
   Widget _character(Person p, double x) {
     return Positioned(
       left: x - 70,
@@ -451,7 +598,8 @@ class _GameScreenState extends State<GameScreen>
         child: GestureDetector(
           key: ValueKey('person-${p.id}'),
           behavior: HitTestBehavior.opaque,
-          onTap: () => _walkTo(Offset(x, _standY - 60), () => g.talkTo(p), reach: 100),
+          onTap: () =>
+              _walkTo(Offset(x, _standY - 60), () => g.talkTo(p), reach: 100),
           child: Align(
             alignment: Alignment.topCenter,
             child: Container(
@@ -462,7 +610,11 @@ class _GameScreenState extends State<GameScreen>
               ),
               child: Text(
                 p.name,
-                style: const TextStyle(color: kGold, fontSize: 12, fontWeight: FontWeight.bold),
+                style: const TextStyle(
+                  color: kGold,
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
           ),
@@ -505,7 +657,10 @@ class _GameScreenState extends State<GameScreen>
                   color: Colors.black54,
                   borderRadius: BorderRadius.circular(6),
                 ),
-                child: Text(next.name, style: const TextStyle(color: kCream, fontSize: 11)),
+                child: Text(
+                  next.name,
+                  style: const TextStyle(color: kCream, fontSize: 11),
+                ),
               ),
             ],
           ),
@@ -528,7 +683,10 @@ class _RoomLabel extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(room.name, style: kHeading),
-          Text(room.levelName, style: const TextStyle(color: kCream, fontSize: 12)),
+          Text(
+            room.levelName,
+            style: const TextStyle(color: kCream, fontSize: 12),
+          ),
         ],
       ),
     );
@@ -593,7 +751,10 @@ class _Hud extends StatelessWidget {
       width: 16,
       height: 10,
       margin: const EdgeInsets.all(1.5),
-      decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(2)),
+      decoration: BoxDecoration(
+        color: color,
+        borderRadius: BorderRadius.circular(2),
+      ),
     );
   }
 }
@@ -646,10 +807,18 @@ class _EvidenceSpotState extends State<_EvidenceSpot>
               ? Stack(
                   alignment: Alignment.center,
                   children: [
-                    Icon(e.icon, color: e.color.withValues(alpha: .45), size: 28),
+                    Icon(
+                      e.icon,
+                      color: e.color.withValues(alpha: .45),
+                      size: 28,
+                    ),
                     const Align(
                       alignment: Alignment.bottomRight,
-                      child: Icon(Icons.check_circle, color: Color(0xFF81C784), size: 18),
+                      child: Icon(
+                        Icons.check_circle,
+                        color: Color(0xFF81C784),
+                        size: 18,
+                      ),
                     ),
                   ],
                 )
@@ -660,7 +829,9 @@ class _EvidenceSpotState extends State<_EvidenceSpot>
                       shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
-                          color: e.color.withValues(alpha: .25 + .35 * _pulse.value),
+                          color: e.color.withValues(
+                            alpha: .25 + .35 * _pulse.value,
+                          ),
                           blurRadius: 10 + 10 * _pulse.value,
                         ),
                       ],

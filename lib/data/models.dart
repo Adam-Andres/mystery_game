@@ -4,6 +4,7 @@ enum Dessert {
   churro,
   donutPink,
   donutGlazed,
+  donutChocolate,
   pannaCotta,
   tart,
   tiramisu,
@@ -163,6 +164,8 @@ class MysteryCase {
     required this.prints,
     required this.printsOn,
     required this.deskCode,
+    required this.hints,
+    required this.accuseHints,
     required this.topics,
     required this.solution,
     required this.nextVictims,
@@ -186,6 +189,12 @@ class MysteryCase {
 
   /// The four-digit combination of the study desk in this mystery.
   final String deskCode;
+
+  /// Evidence id -> what Watsonut makes of it, when asked.
+  final Map<String, String> hints;
+
+  /// Watsonut's nudges on the accusation screen, gentlest first.
+  final List<String> accuseHints;
 
   /// Person id -> everything they can be asked in this case.
   final Map<String, List<Topic>> topics;

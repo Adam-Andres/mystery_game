@@ -145,6 +145,51 @@ const cakeCase = MysteryCase(
     icon: Icons.fingerprint, color: Color(0xFFB2EBF2),
   ),
   deskCode: '1879',
+  hints: {
+    ...commonHints,
+    'phone': phoneHint,
+    'souffle': "Everybody else's alibi is somebody's word. This one is a "
+        "pudding. Can a pudding lie, Churlock?",
+    'tin': "Somebody lifted that down who knew just where it was kept. Mind "
+        "you, in this house, that is everyone.",
+    'scoresheet': "No gaps at all, and each man watching the other. Can "
+        "anyone outside that room say the same of them?",
+    'underdrip': "Timing, Churlock. When did that get there? Officer Glaze "
+        "handled the body. Ask him.",
+    'drydrip': "Timing, Churlock. When did that get there? Officer Glaze "
+        "knows how such things dry. Ask him.",
+    'eggs': "A soufflé takes eggs. Count them again. Then ask her where "
+        "hers came from.",
+    'ovenash': "Cold, and the coal untouched. Barry fills that scuttle. Ask "
+        "him how much an hour's baking burns.",
+    'recipe': "Thirty years is a long time to be owed. But she had waited "
+        "thirty years already. Why last night, of all nights?",
+    'retire': "So that is what was coming. The question is whether the "
+        "housekeeper knew it was coming.",
+    'planner': "Tell her after breakfast. So today was to be the day. Did "
+        "she know?",
+    'cakesack': "Hidden in a hurry, by someone who knows the nooks of this "
+        "house. I should dust it.",
+    'cakecrate': "Hidden in a hurry, by someone who knows the nooks of this "
+        "house. I should dust it.",
+    'notepad': "A shopping note. But notice what it says about the larder, "
+        "Churlock.",
+    'prints': "Sharp, you say? After twelve years in a tin? Ask Officer "
+        "Glaze how long a print stays sharp.",
+  },
+  accuseHints: [
+    "Start with the clock, Churlock. When did she die? And then: who can "
+        "show where they were, with something better than their own say-so?",
+    "The chess players vouch for each other, which is worth little, unless "
+        "somebody else heard them. Ask Miss Tira what came up the stairs "
+        "while she was on the telephone.",
+    "That leaves one alibi which is not a person at all. Go back to the "
+        "kitchen. Look at the oven, the eggs, the coal. Ask Barry what he "
+        "saw through the window.",
+    "Now the cellar floor. Something was dropped there, and it matters very "
+        "much when. Ask Officer Glaze. And read that oven log against the "
+        "time of death.",
+  ],
   topics: {
     'sprinkles': [
       Topic(

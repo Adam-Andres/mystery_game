@@ -23,6 +23,10 @@ them alone, or two of them together.
 - **Get your hands dirty.** Borrow the police fingerprint chart, then dust the
   murder weapon and match the prints. Shade the butler's notepad with a pencil
   to raise what was written on the missing page. Piece torn letters together.
+- **Ask Watsonut.** Churlock's partner, a chocolate donut, trails after him
+  and pipes up if you stand idle. While examining any evidence you can ask
+  what he makes of it, and on the accusation screen he will give up to four
+  hints, one at a time. The first hint of a game asks you to confirm.
 - **Check the notebook** for everything found and said so far.
 - When you are sure, return to the **Entrance Hall**, press
   **I solved the case**, and accuse one or two residents.
@@ -46,10 +50,7 @@ flutter run -d linux   # or: -d chrome, -d windows, -d macos
 flutter test
 ```
 
-All artwork is drawn in code, so there are no image assets. Scenes and
-characters are rendered to a 320x180 canvas with hard edges and scaled up
-without smoothing, which is what makes them pixel art; the text and buttons
-over the top are left crisp.
+All artwork is drawn in code, so there are no image assets.
 
 ## Voices
 

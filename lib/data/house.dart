@@ -64,6 +64,30 @@ const churlock = Person(
   dessert: Dessert.churro,
 );
 
+const watsonut = Person(
+  id: 'watsonut',
+  name: 'Dr. Watsonut',
+  role: "Churlock's partner",
+  dessert: Dessert.donutChocolate,
+  greeting: "If you want my opinion of anything, Churlock, examine it and "
+      "ask me. I shan't volunteer. You know how you get.",
+);
+
+/// What Watsonut says when Churlock has stood about doing nothing.
+const idleRemarks = [
+  "Shall we get on, Churlock? The trail isn't getting any warmer.",
+  "I say, are you thinking, or have you gone stale?",
+  "If you're stuck, old chap, you need only ask. Examine something, and "
+      "I'll tell you what I make of it.",
+  "Have we looked in all the cupboards? One never finds anything by "
+      "standing about.",
+  "I could murder a cup of tea. Poor choice of words. Sorry.",
+  "Perhaps one of them has more to say, now that we know a little more.",
+  "You have that look again. The one you get just before you say Eureka. "
+      "No? Not yet?",
+  "My feet hurt, and I haven't any.",
+];
+
 const residents = <Person>[
   Person(
     id: 'penny',
@@ -120,7 +144,7 @@ const police = <Person>[
 ];
 
 Person personById(String id) =>
-    [churlock, ...residents, ...police].firstWhere((p) => p.id == id);
+    [churlock, watsonut, ...residents, ...police].firstWhere((p) => p.id == id);
 
 /// Who stands where: room id -> (person id, x of their centre).
 const placements = <String, List<(String, double)>>{
