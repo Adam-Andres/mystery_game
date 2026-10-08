@@ -26,7 +26,12 @@ class DialoguePanel extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          DessertFigure(d.speaker.dessert, width: 96, animate: true),
+          DessertFigure(
+            d.speaker.dessert,
+            width: 96,
+            animate: true,
+            speaker: d.speaker.id,
+          ),
           const SizedBox(width: 14),
           Expanded(
             child: Column(

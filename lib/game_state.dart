@@ -88,8 +88,9 @@ class GameState extends ChangeNotifier {
   Room get room => roomById(roomId);
 
   /// Evidence lying out in the open in the current room.
-  Iterable<Evidence> get evidenceHere => evidence
-      .where((e) => e.room == roomId && e.inside == null && e.from == null);
+  Iterable<Evidence> get evidenceHere => evidence.where(
+    (e) => e.room == roomId && e.inside == null && e.from == null,
+  );
 
   Iterable<Nook> get nooksHere => nooks.where((n) => n.room == roomId);
 
@@ -276,13 +277,12 @@ class GameState extends ChangeNotifier {
       text = mystery.accuseHints[accuseHintsGiven++];
       note = 'Hint $accuseHintsGiven of ${mystery.accuseHints.length}';
     }
-    dialogue = Dialogue(speaker: watsonut, title: watsonut.name, text: text, note: note);
-    notifyListeners();
-  }
-
-  /// Watsonut says [text] of his own accord.
-  void watsonSays(String text) {
-    dialogue = Dialogue(speaker: watsonut, title: watsonut.name, text: text);
+    dialogue = Dialogue(
+      speaker: watsonut,
+      title: watsonut.name,
+      text: text,
+      note: note,
+    );
     notifyListeners();
   }
 
@@ -314,9 +314,9 @@ class GameState extends ChangeNotifier {
 
   /// Everything [personId] has told Churlock so far.
   List<Topic> statementsOf(String personId) => [
-        for (final t in mystery.topics[personId] ?? const <Topic>[])
-          if (hasAsked(personId, t)) t,
-      ];
+    for (final t in mystery.topics[personId] ?? const <Topic>[])
+      if (hasAsked(personId, t)) t,
+  ];
 
   void ask(Person p, Topic topic) {
     asked.add(keyOf(p.id, topic));

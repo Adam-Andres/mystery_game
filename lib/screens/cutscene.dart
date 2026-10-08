@@ -259,8 +259,9 @@ class _CutsceneState extends State<Cutscene> with TickerProviderStateMixin {
     final step = t * 2 * pi * 34;
     final walking = walk > 0 && walk < 1;
     final feet = Offset.lerp(const Offset(350, 506), const Offset(681, 404), walk)!;
-    // Watsonut climbs out after him, dawdles, then hurries to catch up.
-    final follow = Curves.easeOut.transform(_span(t, .5, .77));
+    // Watsonut climbs out a moment after him and has to step a little
+    // quicker to keep up.
+    final follow = Curves.easeInOut.transform(_span(t, .35, .74));
     final following = follow > 0 && follow < 1;
     final heel = Offset.lerp(const Offset(300, 506), const Offset(681, 404), follow)!;
     return [

@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
 
 import 'lines.dart';
 import 'player_stub.dart'
@@ -40,23 +40,53 @@ class Voice extends ChangeNotifier {
 
   Object? _owner;
 
+  // Who is talking, for the sake of their mouth.
+  String? _speaker;
+  bool _playing = false;
+  bool _guessing = false;
+  int _turn = 0;
+  final _clock = Stopwatch();
+  Duration _length = Duration.zero;
+
+  /// True while the character whose voice is [id] is saying something,
+  /// whether or not the sound is muted.
+  bool isSpeaking(String id) =>
+      _speaker == id && (_playing || (_guessing && _clock.elapsed < _length));
+
   /// Speaks [line], cutting off whatever was being said before. [owner]
   /// identifies who asked, so that it alone can [release] the line later.
   Future<void> say(VoiceLine line, {Object? owner}) async {
     _player.stop();
     _owner = owner;
+    final turn = ++_turn;
+    _speaker = line.voice;
+    _playing = true;
+    _guessing = false;
+    _length = Duration(milliseconds: 500 + line.text.length * 62);
+    _clock
+      ..reset()
+      ..start();
     // Lines are played even when muted, only silently, so that narration
     // keeps its place and its timing.
     await _player.play(clipAsset(line));
+    if (turn != _turn) return;
+    _playing = false;
+    // A clip that ends at once never played: the browser refused it, or
+    // there is no sound here at all. Go by the length of the line instead.
+    _guessing = _clock.elapsed < const Duration(milliseconds: 400);
   }
 
-  void stop() => _player.stop();
+  void stop() {
+    _turn++;
+    _speaker = null;
+    _player.stop();
+  }
 
   /// Stops speaking, but only if [owner] started the current line. A screen
   /// calls this as it closes; by then the next screen may already be talking,
   /// and must not be cut off.
   void release(Object owner) {
-    if (identical(_owner, owner)) _player.stop();
+    if (identical(_owner, owner)) stop();
   }
 
   void toggleMute() {
@@ -64,4 +94,18 @@ class Voice extends ChangeNotifier {
     _player.setMuted(_muted);
     notifyListeners();
   }
+}
+
+/// Makes the game's [Voice] available to the characters drawn beneath it, so
+/// that they can move their mouths while they speak.
+class VoiceScope extends InheritedWidget {
+  const VoiceScope({super.key, required this.voice, required super.child});
+
+  final Voice voice;
+
+  static Voice? maybeOf(BuildContext context) =>
+      context.dependOnInheritedWidgetOfExactType<VoiceScope>()?.voice;
+
+  @override
+  bool updateShouldNotify(VoiceScope old) => old.voice != voice;
 }

@@ -24,14 +24,44 @@ const _home = Offset(104, _standY - 143);
 /// Where Watsonut stands relative to Churlock: just behind his shoulder.
 const _heel = Offset(-74, -4);
 
-/// Where he walks to when leaving in each direction: off the side of the
-/// room, up the stairs, or down through the cellar hatch.
-Offset _exitPoint(Dir d) => switch (d) {
-  Dir.left => const Offset(-130, _standY - 143),
-  Dir.right => const Offset(sceneW + 20, _standY - 143),
-  Dir.up => const Offset(425, -40),
-  Dir.down => const Offset(425, sceneH - 110),
+/// From a point under his feet to the top-left corner of his figure.
+const _feet = Offset(55, 143);
+
+/// The way out of [room] in direction [d], as the points his feet pass
+/// over: off the side of the room, to the foot of the stairs and up them, or
+/// onto the hatch in the floor and down through it.
+List<Offset> _wayOut(String room, Dir d) => switch (d) {
+  Dir.left => const [Offset(-75, _standY)],
+  Dir.right => const [Offset(sceneW + 75, _standY)],
+  // The cellar steps climb to the left, the hall's to the right.
+  Dir.up =>
+    room == 'cellar'
+        ? const [Offset(315, 392), Offset(-60, -38)]
+        : const [Offset(625, 392), Offset(sceneW + 40, -38)],
+  Dir.down => const [Offset(480, _standY + 10), Offset(480, sceneH + 33)],
 };
+
+/// The point a fraction [t] of the way along [path], and whether the walker
+/// is heading left there.
+(Offset, bool) _along(List<Offset> path, double t) {
+  var total = 0.0;
+  for (var i = 1; i < path.length; i++) {
+    total += (path[i] - path[i - 1]).distance;
+  }
+  var left = t * total;
+  var facingLeft = false;
+  for (var i = 1; i < path.length; i++) {
+    final a = path[i - 1], b = path[i];
+    final length = (b - a).distance;
+    // Straight up or down, he keeps facing the way he was.
+    if ((b.dx - a.dx).abs() > 1) facingLeft = b.dx < a.dx;
+    if (left <= length || i == path.length - 1) {
+      return (Offset.lerp(a, b, length == 0 ? 1 : left / length)!, facingLeft);
+    }
+    left -= length;
+  }
+  return (path.last, facingLeft);
+}
 
 Dir _opposite(Dir d) => switch (d) {
   Dir.left => Dir.right,
@@ -56,7 +86,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
   late final AnimationController _walk =
       AnimationController(
           vsync: this,
-          duration: const Duration(milliseconds: 1500),
+          duration: const Duration(milliseconds: 2400),
         )
         ..addListener(_onTick)
         ..addStatusListener((status) {
@@ -110,11 +140,20 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     _idleTimer = Timer(_idleAfter, _onIdle);
     // Anything the game does counts as activity, not only clicks.
     g.addListener(_onGameChanged);
+    // Watsonut explains himself once, as they come through the door.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && !g.busy) _say(watsonut.greeting, seconds: 10);
+    });
   }
 
   void _onGameChanged() {
     _idleTimer?.cancel();
     _idleTimer = Timer(_idleAfter, _onIdle);
+    // Whoever is talking now has the floor.
+    if (g.busy && _remark != null) {
+      _remarkTimer?.cancel();
+      setState(() => _remark = null);
+    }
   }
 
   /// How dark the flicker makes the room at point [t] of its run.
@@ -144,11 +183,15 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     if (!mounted) return;
     _idleTimer = Timer(_idleAfter, _onIdle);
     if (g.busy || _moving) return;
-    final remark = idleRemarks[_remarks++ % idleRemarks.length];
+    _say(idleRemarks[_remarks++ % idleRemarks.length]);
+  }
+
+  /// Watsonut says [remark] aloud, in a bubble over his head.
+  void _say(String remark, {int seconds = 7}) {
     setState(() => _remark = remark);
     widget.voice.say((voice: watsonut.id, text: remark), owner: this);
     _remarkTimer?.cancel();
-    _remarkTimer = Timer(const Duration(seconds: 7), () {
+    _remarkTimer = Timer(Duration(seconds: seconds), () {
       if (mounted) setState(() => _remark = null);
     });
   }
@@ -301,6 +344,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                             child: DessertFigure(
                               personById(id).dessert,
                               animate: true,
+                              speaker: id,
                             ),
                           ),
                         ),
@@ -365,11 +409,11 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                         TweenSequence([
                           TweenSequenceItem(
                             tween: ConstantTween(0.0),
-                            weight: 20,
+                            weight: 34,
                           ),
                           TweenSequenceItem(
                             tween: Tween(begin: 0.0, end: 1.0),
-                            weight: 28,
+                            weight: 14,
                           ),
                           TweenSequenceItem(
                             tween: ConstantTween(1.0),
@@ -377,11 +421,11 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                           ),
                           TweenSequenceItem(
                             tween: Tween(begin: 1.0, end: 0.0),
-                            weight: 28,
+                            weight: 14,
                           ),
                           TweenSequenceItem(
                             tween: ConstantTween(0.0),
-                            weight: 20,
+                            weight: 34,
                           ),
                         ]),
                       ),
@@ -434,30 +478,30 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
   /// next room.
   Widget _walker({required bool partner}) {
     // Churlock is off before Watsonut has noticed. Watsonut stands a moment
-    // longer, then scurries after him at twice the pace to catch up.
+    // longer, then hurries after him to catch up.
     double pace(double t) => partner
-        ? Curves.easeOut.transform(((t - .42) / .58).clamp(0.0, 1.0))
+        ? Curves.easeOut.transform(((t - .25) / .75).clamp(0.0, 1.0))
         : Curves.easeInOut.transform(t);
     final heel = partner ? _heel : Offset.zero;
     final d = _dir;
     var pos = _spot + heel;
     var facingLeft = false;
-    var stairs = 1.0;
     var sway = 0.0;
     var bob = 0.0;
     if (d != null) {
       final t = _walk.value;
       final leaving = t < .5;
       final part = pace(leaving ? t * 2 : t * 2 - 1);
-      // They arrive through the side opposite the one they left by.
-      final from = (leaving ? _from : _exitPoint(_opposite(d))) + heel;
-      final to = (leaving ? _exitPoint(d) : _home) + heel;
-      pos = Offset.lerp(from, to, part)!;
-      facingLeft = to.dx < from.dx;
-      // Stairs lead away from the viewer, so they shrink as they climb.
-      final depth = leaving ? part : 1 - part;
-      final vertical = leaving ? d : _opposite(d);
-      if (vertical == Dir.up) stairs = 1 - .45 * depth;
+      // They arrive through the side opposite the one they left by, and
+      // Watsonut takes the same way as Churlock rather than keeping to heel.
+      final way = [
+        for (final p in _wayOut(g.roomId, leaving ? d : _opposite(d)))
+          p - _feet,
+      ];
+      final path = leaving
+          ? [_from + heel, ...way]
+          : [...way.reversed, _home + heel];
+      (pos, facingLeft) = _along(path, part);
       // Watsonut's steps follow his own progress: none while he dithers,
       // then a flurry of short ones.
       final step = partner ? part * 2 * pi * 8 : t * 2 * pi * 9;
@@ -467,19 +511,15 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
       final t = pace(_approach.value);
       pos = Offset.lerp(_from + heel, _target + heel, t)!;
       facingLeft = _target.dx < _from.dx;
-      final step = (partner ? t : _approach.value) * (_target - _from).distance / 20;
+      final step =
+          (partner ? t : _approach.value) * (_target - _from).distance / 20;
       sway = sin(step) * .09;
       bob = -sin(step).abs() * 6;
     }
     // Further back in the room they are drawn a little smaller.
     final feet = pos.dy + 143;
-    final depthScale = stairs < 1
-        ? 1.0
-        : (.8 + .2 * (feet - floorY - 70) / (_standY - floorY - 70)).clamp(
-            .8,
-            1.0,
-          );
-    final scale = stairs * depthScale;
+    final scale = (.8 + .2 * (feet - floorY - 70) / (_standY - floorY - 70))
+        .clamp(.8, 1.0);
     final width = partner ? 92.0 : 110.0;
     final figure = Transform(
       alignment: Alignment.bottomCenter,
@@ -491,6 +531,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
         width: width,
         // They stop fidgeting while they walk.
         animate: !_moving,
+        speaker: partner ? watsonut.id : churlock.id,
       ),
     );
     return Positioned(
@@ -503,7 +544,9 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
               child: GestureDetector(
                 key: const ValueKey('watsonut'),
                 onTap: () {
-                  if (!g.busy) g.watsonSays(watsonut.greeting);
+                  if (!g.busy) {
+                    _say(idleRemarks[_remarks++ % idleRemarks.length]);
+                  }
                 },
                 child: figure,
               ),

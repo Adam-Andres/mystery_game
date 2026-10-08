@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -37,7 +38,11 @@ void main() {
       test('${mystery.title} is consistent', () {
         final residentIds = residents.map((p) => p.id).toSet();
         final poolIds = mystery.pool.map((e) => e.id).toSet();
-        expect(poolIds.length, mystery.pool.length, reason: 'duplicate evidence id');
+        expect(
+          poolIds.length,
+          mystery.pool.length,
+          reason: 'duplicate evidence id',
+        );
         final allIds = {
           ...poolIds,
           ...mystery.gifts.map((e) => e.id),
@@ -57,7 +62,9 @@ void main() {
           } else {
             expect(slots[e.room]!.length, greaterThan(e.slot), reason: e.id);
           }
-          if (e.puzzle != Puzzle.none) expect(e.pieces, isNotEmpty, reason: e.id);
+          if (e.puzzle != Puzzle.none) {
+            expect(e.pieces, isNotEmpty, reason: e.id);
+          }
         }
 
         // Two clues may share a spot only if they can never appear together.
@@ -65,7 +72,11 @@ void main() {
         void claim(Evidence e, int group) {
           if (e.inside != null) return;
           final spot = '${e.room}#${e.slot}';
-          expect(spots[spot] ?? group, group, reason: '${e.id} overlaps at $spot');
+          expect(
+            spots[spot] ?? group,
+            group,
+            reason: '${e.id} overlaps at $spot',
+          );
           spots[spot] = group;
         }
 
@@ -83,7 +94,11 @@ void main() {
         final statements = <String>{};
         for (final p in [...residents, ...police]) {
           final topics = mystery.topics[p.id]!;
-          expect(topics.map((t) => t.id).toSet().length, topics.length, reason: p.id);
+          expect(
+            topics.map((t) => t.id).toSet().length,
+            topics.length,
+            reason: p.id,
+          );
           statements.addAll(topics.map((t) => GameState.keyOf(p.id, t)));
           expect(
             placements.values.any((l) => l.any((pl) => pl.$1 == p.id)),
@@ -103,7 +118,8 @@ void main() {
         final index = allCases.indexOf(mystery);
         final draws = <String>{};
         for (var seed = 0; seed < 40; seed++) {
-          final g = GameState(random: Random(seed))..newGame(caseIndex: index, skipIntro: true);
+          final g = GameState(random: Random(seed))
+            ..newGame(caseIndex: index, skipIntro: true);
           final ids = g.evidence.map((e) => e.id).toSet();
           expect(ids.length, mystery.evidenceCount);
           expect(g.evidence.length, mystery.evidenceCount);
@@ -120,7 +136,8 @@ void main() {
         final index = allCases.indexOf(mystery);
         final reached = <String>{};
         for (var seed = 0; seed < 60; seed++) {
-          final g = GameState(random: Random(seed))..newGame(caseIndex: index, skipIntro: true);
+          final g = GameState(random: Random(seed))
+            ..newGame(caseIndex: index, skipIntro: true);
           g.found.addAll(g.evidence.map((e) => e.id));
           var before = -1;
           while (g.asked.length != before) {
@@ -241,8 +258,8 @@ void main() {
   /// Lets a room-to-room walk run to its end.
   Future<void> walk(WidgetTester tester) async {
     await tester.pump();
-    await tester.pump(const Duration(milliseconds: 800));
-    await tester.pump(const Duration(milliseconds: 800));
+    await tester.pump(const Duration(milliseconds: 1300));
+    await tester.pump(const Duration(milliseconds: 1300));
     await tester.pump();
   }
 
@@ -346,7 +363,8 @@ void main() {
   });
 
   test('statements unlock questions for other characters', () {
-    final g = GameState(random: Random(1))..newGame(caseIndex: 0, skipIntro: true);
+    final g = GameState(random: Random(1))
+      ..newGame(caseIndex: 0, skipIntro: true);
     bool offered(String person, String id) =>
         g.topicsFor(person).any((t) => t.id == id);
     Topic topic(String person, String id) =>
@@ -371,7 +389,10 @@ void main() {
     expect(gift(0, 'extension').description, contains('Sinclair'));
     expect(gift(1, 'extension').description, contains('Senclair'));
     // The tally adds up to 146, not the 144 it claims.
-    expect(gift(1, 'tally').description, contains('Forks, 48. Knives, 48. Spoons, 50. Total, 144'));
+    expect(
+      gift(1, 'tally').description,
+      contains('Forks, 48. Knives, 48. Spoons, 50. Total, 144'),
+    );
     // Penny's log has Madam alive after the time of death only in her case.
     expect(gift(2, 'ovenlog').description, contains('11:20'));
     expect(gift(0, 'ovenlog').description, isNot(contains('11:20')));
@@ -381,7 +402,8 @@ void main() {
     final g = GameState(random: Random(4));
     await tester.pumpWidget(MysteryApp(state: g, voice: Voice(SilentPlayer())));
     g.newGame(caseIndex: 1, skipIntro: true);
-    g.evidence = allCases[1].pool.toList()..addAll([...allCases[1].gifts, allCases[1].prints]);
+    g.evidence = allCases[1].pool.toList()
+      ..addAll([...allCases[1].gifts, allCases[1].prints]);
     await tester.pump();
 
     // Pencil rubbing on the butler's notepad.
@@ -414,7 +436,14 @@ void main() {
       final want = letter.pieces[slot];
       final at = [
         for (var i = 0; i < letter.pieces.length; i++)
-          tester.widget<Text>(find.descendant(of: _key('strip-$i'), matching: find.byType(Text))).data,
+          tester
+              .widget<Text>(
+                find.descendant(
+                  of: _key('strip-$i'),
+                  matching: find.byType(Text),
+                ),
+              )
+              .data,
       ].indexOf(want);
       if (at != slot) {
         await tester.tap(_key('strip-$slot'));
@@ -434,7 +463,8 @@ void main() {
     await tester.tap(_key('try-lock'));
     await tester.pump();
     expect(g.isOpen(desk), isFalse);
-    for (final (wheel, digit) in g.mystery.deskCode.split('').map(int.parse).indexed) {
+    for (final (wheel, digit)
+        in g.mystery.deskCode.split('').map(int.parse).indexed) {
       for (var i = 0; i < digit; i++) {
         await tester.tap(_key('wheel-up-$wheel'));
       }
@@ -460,7 +490,11 @@ void main() {
     // The stage is scaled to the window, so scale the brush strokes with it.
     final surface = tester.getRect(_key('dust-surface'));
     final scale = surface.width / 600;
-    for (final spot in const [Offset(130, 120), Offset(310, 90), Offset(480, 140)]) {
+    for (final spot in const [
+      Offset(130, 120),
+      Offset(310, 90),
+      Offset(480, 140),
+    ]) {
       final brush = await tester.startGesture(surface.topLeft + spot * scale);
       for (var i = 0; i < 14; i++) {
         await brush.moveBy(Offset(i.isEven ? 4 : -4, 0));
@@ -498,7 +532,8 @@ void main() {
 
   group('Watsonut', () {
     test('checks that the first hint of a game was meant', () {
-      final g = GameState(random: Random(2))..newGame(caseIndex: 0, skipIntro: true);
+      final g = GameState(random: Random(2))
+        ..newGame(caseIndex: 0, skipIntro: true);
       final clue = g.evidence.firstWhere((e) => e.id == 'rack');
       g.inspect(clue);
       g.askHint(about: clue);
@@ -521,23 +556,27 @@ void main() {
     });
 
     test('points to who can explain a red herring', () {
-      final g = GameState(random: Random(2))..newGame(caseIndex: 0, skipIntro: true);
+      final g = GameState(random: Random(2))
+        ..newGame(caseIndex: 0, skipIntro: true);
       final will = allCases[0].herrings.firstWhere((e) => e.id == 'will');
       expect(hintFor(g.mystery, will), contains('Tira Misu'));
-      final stain = allCases[0].herrings.firstWhere((e) => e.id == 'berrystain');
+      final stain = allCases[0].herrings.firstWhere(
+        (e) => e.id == 'berrystain',
+      );
       expect(hintFor(g.mystery, stain), contains('Penny Cotta and Barry Tart'));
     });
 
     test('says the same of a document whether or not it is forged', () {
       String onNote(int caseIndex) => hintFor(
-            allCases[caseIndex],
-            allCases[caseIndex].gifts.firstWhere((e) => e.id == 'extension'),
-          );
+        allCases[caseIndex],
+        allCases[caseIndex].gifts.firstWhere((e) => e.id == 'extension'),
+      );
       expect(onNote(0), onNote(1));
     });
 
     test('gives four hints on the accusation screen, one at a time', () {
-      final g = GameState(random: Random(2))..newGame(caseIndex: 2, skipIntro: true);
+      final g = GameState(random: Random(2))
+        ..newGame(caseIndex: 2, skipIntro: true);
       g.openPanel(Panel.accuse);
       g.askHint();
       expect(g.hintPrompt, isTrue);
@@ -556,13 +595,45 @@ void main() {
       expect(g.panel, Panel.accuse);
     });
 
-    testWidgets('speaks up when Churlock stands idle, and follows him', (tester) async {
+    test('a speaker is known to be talking, even with no sound', () async {
+      final voice = Voice(SilentPlayer());
+      voice.toggleMute();
+      await voice.say((voice: 'penny', text: 'x' * 200), owner: voice);
+      expect(voice.isSpeaking('penny'), isTrue);
+      expect(voice.isSpeaking('graham'), isFalse);
+      voice.release(voice);
+      expect(voice.isSpeaking('penny'), isFalse);
+    });
+
+    testWidgets('explains himself once, on the way in', (tester) async {
       final g = GameState(random: Random(2));
-      await tester.pumpWidget(MysteryApp(state: g, voice: Voice(SilentPlayer())));
+      await tester.pumpWidget(
+        MysteryApp(state: g, voice: Voice(SilentPlayer())),
+      );
+      g.newGame(caseIndex: 0, skipIntro: true);
+      await tester.pump();
+      await tester.pump();
+      expect(find.text(watsonut.greeting), findsOneWidget);
+      await tester.pump(const Duration(seconds: 11));
+      expect(_key('watsonut-remark'), findsNothing);
+      // Prodding him afterwards gets a remark, not the explanation again.
+      await tester.tap(_key('watsonut'));
+      await tester.pump();
+      expect(find.text(watsonut.greeting), findsNothing);
+      expect(find.text(idleRemarks.first), findsOneWidget);
+      expect(g.dialogue, isNull);
+    });
+
+    testWidgets('speaks up when Churlock stands idle, and follows him', (
+      tester,
+    ) async {
+      final g = GameState(random: Random(2));
+      await tester.pumpWidget(
+        MysteryApp(state: g, voice: Voice(SilentPlayer())),
+      );
       g.newGame(caseIndex: 0, skipIntro: true);
       await tester.pump();
       expect(_key('watsonut'), findsOneWidget);
-      expect(_key('watsonut-remark'), findsNothing);
       await tester.pump(const Duration(seconds: 39));
       expect(_key('watsonut-remark'), findsNothing);
       await tester.pump(const Duration(seconds: 2));
@@ -578,7 +649,10 @@ void main() {
       await tester.tap(_key('nook-closet'));
       await approach(tester);
       expect(g.panel, Panel.nook);
-      expect(tester.getCenter(_key('watsonut')).dx, greaterThan(before.dx + 20));
+      expect(
+        tester.getCenter(_key('watsonut')).dx,
+        greaterThan(before.dx + 20),
+      );
       g.closePanel();
       await tester.pump();
 
@@ -612,7 +686,9 @@ void main() {
   testWidgets('every room lays out without errors', (tester) async {
     for (var i = 0; i < allCases.length; i++) {
       final g = GameState(random: Random(i));
-      await tester.pumpWidget(MysteryApp(key: UniqueKey(), state: g, voice: Voice(SilentPlayer())));
+      await tester.pumpWidget(
+        MysteryApp(key: UniqueKey(), state: g, voice: Voice(SilentPlayer())),
+      );
       g.newGame(caseIndex: i, skipIntro: true);
       // Show every possible clue at once.
       g.evidence = allCases[i].pool.toList();
@@ -651,7 +727,9 @@ void main() {
       }
       // With the chart in hand, every weapon in the pool can be dusted.
       g.found.add('chart');
-      final weapon = g.evidence.firstWhere((e) => g.mystery.weapons.contains(e.id));
+      final weapon = g.evidence.firstWhere(
+        (e) => g.mystery.weapons.contains(e.id),
+      );
       expect(g.canDust(weapon), isTrue);
       g.inspect(weapon);
       await tester.pump();
@@ -663,7 +741,8 @@ void main() {
       for (var pass = 0; pass < 4; pass++) {
         for (final room in rooms) {
           g.enter(room);
-          for (final (id, _) in placements[room.id] ?? const <(String, double)>[]) {
+          for (final (id, _)
+              in placements[room.id] ?? const <(String, double)>[]) {
             final p = personById(id);
             g.talkTo(p);
             await tester.pump();
@@ -679,7 +758,9 @@ void main() {
       await tester.pump();
       g.openPanel(Panel.accuse);
       await tester.pump();
-      final innocents = residents.map((p) => p.id).where((id) => !g.mystery.culprits.contains(id));
+      final innocents = residents
+          .map((p) => p.id)
+          .where((id) => !g.mystery.culprits.contains(id));
       g
         ..toggleAccused(innocents.first)
         ..toggleAccused(innocents.last)

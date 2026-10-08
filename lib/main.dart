@@ -72,8 +72,8 @@ class _MysteryAppState extends State<MysteryApp> {
         final (kind, lines) = g.won
             ? (CutsceneKind.solved, winLines)
             : g.nextVictim != null
-                ? (CutsceneKind.struckAgain, loseAgainLines)
-                : (CutsceneKind.halfBaked, loseHalfLines);
+            ? (CutsceneKind.struckAgain, loseAgainLines)
+            : (CutsceneKind.halfBaked, loseHalfLines);
         return Cutscene(
           kind: kind,
           lines: lines,
@@ -96,17 +96,18 @@ class _MysteryAppState extends State<MysteryApp> {
       home: Scaffold(
         backgroundColor: Colors.black,
         // The whole game is laid out on a fixed 960x540 stage and scaled to fit.
-        body: SizedBox.expand(
-          child: FittedBox(
-            child: SizedBox(
-              width: sceneW,
-              height: sceneH,
-              child: ClipRect(
-                child: ListenableBuilder(
-                  listenable: g,
-                  builder: (context, _) => KeyedSubtree(
-                    key: ValueKey(g.phase),
-                    child: _screen(),
+        body: VoiceScope(
+          voice: voice,
+          child: SizedBox.expand(
+            child: FittedBox(
+              child: SizedBox(
+                width: sceneW,
+                height: sceneH,
+                child: ClipRect(
+                  child: ListenableBuilder(
+                    listenable: g,
+                    builder: (context, _) =>
+                        KeyedSubtree(key: ValueKey(g.phase), child: _screen()),
                   ),
                 ),
               ),
