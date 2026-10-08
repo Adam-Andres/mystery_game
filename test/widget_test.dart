@@ -14,6 +14,16 @@ import 'package:mystery/main.dart';
 
 Finder _key(String k) => find.byKey(ValueKey(k));
 
+class _RecordingPlayer implements ClipPlayer {
+  int stops = 0;
+
+  @override
+  Future<void> play(String asset) async {}
+
+  @override
+  void stop() => stops++;
+}
+
 void main() {
   group('case data', () {
     for (final mystery in allCases) {
@@ -21,16 +31,32 @@ void main() {
         final residentIds = residents.map((p) => p.id).toSet();
         final poolIds = mystery.pool.map((e) => e.id).toSet();
         expect(poolIds.length, mystery.pool.length, reason: 'duplicate evidence id');
+        final allIds = {
+          ...poolIds,
+          ...mystery.gifts.map((e) => e.id),
+          mystery.prints.id,
+        };
+        expect(allIds.length, mystery.pool.length + mystery.gifts.length + 1);
+        expect(poolIds, containsAll(mystery.weapons));
+        expect(residentIds, containsAll(mystery.printsOn));
+        expect(mystery.deskCode, hasLength(4));
         expect(residentIds.containsAll(mystery.culprits), isTrue);
         expect({...mystery.culprits, ...mystery.nextVictims}, residentIds);
         expect(mystery.herrings.length, greaterThan(mystery.herringCount));
         for (final e in mystery.pool) {
-          expect(slots[e.room]!.length, greaterThan(e.slot), reason: e.id);
+          if (e.inside != null) {
+            // Hidden evidence lives in furniture in the same room.
+            expect(nookById(e.inside!).room, e.room, reason: e.id);
+          } else {
+            expect(slots[e.room]!.length, greaterThan(e.slot), reason: e.id);
+          }
+          if (e.puzzle != Puzzle.none) expect(e.pieces, isNotEmpty, reason: e.id);
         }
 
         // Two clues may share a spot only if they can never appear together.
         final spots = <String, int>{};
         void claim(Evidence e, int group) {
+          if (e.inside != null) return;
           final spot = '${e.room}#${e.slot}';
           expect(spots[spot] ?? group, group, reason: '${e.id} overlaps at $spot');
           spots[spot] = group;
@@ -60,7 +86,7 @@ void main() {
         }
         for (final topics in mystery.topics.values) {
           for (final t in topics) {
-            expect(poolIds, containsAll(t.needs), reason: t.id);
+            expect(allIds, containsAll(t.needs), reason: t.id);
             expect(statements, containsAll(t.heard), reason: t.id);
           }
         }
@@ -73,6 +99,7 @@ void main() {
           final g = GameState(random: Random(seed))..newGame(caseIndex: index, skipIntro: true);
           final ids = g.evidence.map((e) => e.id).toSet();
           expect(ids.length, mystery.evidenceCount);
+          expect(g.evidence.length, mystery.evidenceCount);
           expect(ids, containsAll(mystery.core.map((e) => e.id)));
           for (final variants in mystery.variants) {
             expect(variants.where((e) => ids.contains(e.id)), hasLength(1));
@@ -197,6 +224,13 @@ void main() {
     });
   });
 
+  /// Lets Churlock finish crossing the room to whatever was clicked.
+  Future<void> approach(WidgetTester tester) async {
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
+    await tester.pump();
+  }
+
   /// Lets a room-to-room walk run to its end.
   Future<void> walk(WidgetTester tester) async {
     await tester.pump();
@@ -232,18 +266,28 @@ void main() {
     await walk(tester);
     expect(g.roomId, 'cellar');
 
+    // Churlock walks over to a clue before he examines it.
     final clue = g.evidenceHere.first;
     await tester.tap(_key('evidence-${clue.id}'));
     await tester.pump();
+    expect(g.found, isNot(contains(clue.id)));
+    await approach(tester);
     expect(g.found, contains(clue.id));
     await tester.tap(_key('close-dialogue'));
     await tester.pump();
 
     await tester.tap(_key('person-sprinkles'));
-    await tester.pump();
+    await approach(tester);
     await tester.tap(_key('topic-what'));
     await tester.pump();
     expect(g.asked, contains('sprinkles/what'));
+    // The sergeant hands over the fingerprint chart when asked.
+    await tester.ensureVisible(_key('topic-chart'));
+    await tester.pump();
+    await tester.tap(_key('topic-chart'));
+    await tester.pump();
+    expect(g.found, contains('chart'));
+    expect(_key('dialogue-note'), findsOneWidget);
     await tester.tap(_key('close-dialogue'));
     await tester.pump();
 
@@ -290,6 +334,138 @@ void main() {
     expect(offered('penny', 'pin'), isTrue);
   });
 
+  test('the killer hands over a forgery with a flaw in it', () {
+    Evidence gift(int caseIndex, String id) =>
+        allCases[caseIndex].gifts.firstWhere((e) => e.id == id);
+    // The Colonel misspells her surname only when he is guilty.
+    expect(gift(0, 'extension').description, contains('Sinclair'));
+    expect(gift(1, 'extension').description, contains('Senclair'));
+    // The tally adds up to 146, not the 144 it claims.
+    expect(gift(1, 'tally').description, contains('Forks, 48. Knives, 48. Spoons, 50. Total, 144'));
+    // Penny's log has Madam alive after the time of death only in her case.
+    expect(gift(2, 'ovenlog').description, contains('11:20'));
+    expect(gift(0, 'ovenlog').description, isNot(contains('11:20')));
+  });
+
+  testWidgets('minigames can be completed by hand', (tester) async {
+    final g = GameState(random: Random(4));
+    await tester.pumpWidget(MysteryApp(state: g, voice: Voice(SilentPlayer())));
+    g.newGame(caseIndex: 1, skipIntro: true);
+    g.evidence = allCases[1].pool.toList()..addAll([...allCases[1].gifts, allCases[1].prints]);
+    await tester.pump();
+
+    // Pencil rubbing on the butler's notepad.
+    final notepad = g.evidence.firstWhere((e) => e.id == 'notepad');
+    g.inspect(notepad);
+    await tester.pump();
+    expect(g.task, Task.rubbing);
+    expect(g.found, isNot(contains('notepad')));
+    final page = tester.getTopLeft(_key('rubbing-page'));
+    for (var y = 80.0; y <= 220; y += 28) {
+      final stroke = await tester.startGesture(page + Offset(60, y));
+      for (var x = 60.0; x <= 500; x += 20) {
+        await stroke.moveTo(page + Offset(x, y));
+      }
+      await stroke.up();
+    }
+    await tester.pump();
+    await tester.tap(_key('puzzle-done'));
+    await tester.pump();
+    expect(g.found, contains('notepad'));
+    expect(find.textContaining('tonight, at eleven'), findsOneWidget);
+    g.closeDialogue();
+
+    // A torn letter: swap strips until they are in order.
+    final letter = g.evidence.firstWhere((e) => e.id == 'solicitor');
+    g.inspect(letter);
+    await tester.pump();
+    expect(g.task, Task.torn);
+    for (var slot = 0; slot < letter.pieces.length; slot++) {
+      final want = letter.pieces[slot];
+      final at = [
+        for (var i = 0; i < letter.pieces.length; i++)
+          tester.widget<Text>(find.descendant(of: _key('strip-$i'), matching: find.byType(Text))).data,
+      ].indexOf(want);
+      if (at != slot) {
+        await tester.tap(_key('strip-$slot'));
+        await tester.tap(_key('strip-$at'));
+        await tester.pump();
+      }
+    }
+    await tester.tap(_key('puzzle-done'));
+    await tester.pump();
+    expect(g.found, contains('solicitor'));
+    g.closeDialogue();
+
+    // The desk needs this mystery's combination.
+    final desk = nookById('desk');
+    g.search(desk);
+    await tester.pump();
+    await tester.tap(_key('try-lock'));
+    await tester.pump();
+    expect(g.isOpen(desk), isFalse);
+    for (final (wheel, digit) in g.mystery.deskCode.split('').map(int.parse).indexed) {
+      for (var i = 0; i < digit; i++) {
+        await tester.tap(_key('wheel-up-$wheel'));
+      }
+    }
+    await tester.pump();
+    await tester.tap(_key('try-lock'));
+    await tester.pump();
+    expect(g.isOpen(desk), isTrue);
+    await tester.tap(_key('evidence-planner'));
+    await tester.pump();
+    expect(g.found, contains('planner'));
+    g.closeDialogue();
+    g.closePanel();
+
+    // Dusting the urn: raise three prints, then name each owner.
+    final urn = g.evidence.firstWhere((e) => e.id == 'urn');
+    g.inspect(urn);
+    g.closeDialogue();
+    g.found.add('chart');
+    g.inspect(urn);
+    await tester.pump();
+    expect(g.task, Task.prints);
+    // The stage is scaled to the window, so scale the brush strokes with it.
+    final surface = tester.getRect(_key('dust-surface'));
+    final scale = surface.width / 600;
+    for (final spot in const [Offset(130, 120), Offset(310, 90), Offset(480, 140)]) {
+      final brush = await tester.startGesture(surface.topLeft + spot * scale);
+      for (var i = 0; i < 14; i++) {
+        await brush.moveBy(Offset(i.isEven ? 4 : -4, 0));
+      }
+      await brush.up();
+    }
+    await tester.pump();
+    await tester.tap(_key('lift-prints'));
+    await tester.pump();
+    await tester.tap(_key('chart-barry'));
+    await tester.pump();
+    expect(find.textContaining('Not a match'), findsOneWidget);
+    for (final owner in g.mystery.printsOn) {
+      await tester.tap(_key('chart-$owner'));
+      await tester.pump();
+    }
+    expect(g.found, contains('prints'));
+    expect(find.textContaining('Three sets of prints'), findsOneWidget);
+  });
+
+  test('a closing screen does not silence the next one', () {
+    final player = _RecordingPlayer();
+    final voice = Voice(player);
+    final outro = Object();
+    final verdict = Object();
+    voice.say(winLines.first, owner: outro);
+    // The verdict starts speaking before the outro is torn down.
+    voice.say((voice: narrator, text: allCases.first.solution), owner: verdict);
+    final stopsBefore = player.stops;
+    voice.release(outro);
+    expect(player.stops, stopsBefore);
+    voice.release(verdict);
+    expect(player.stops, stopsBefore + 1);
+  });
+
   testWidgets('every room lays out without errors', (tester) async {
     for (var i = 0; i < allCases.length; i++) {
       final g = GameState(random: Random(i));
@@ -301,12 +477,46 @@ void main() {
       for (final room in rooms) {
         g.enter(room);
         await tester.pump();
-        for (final e in g.evidenceHere.toList()) {
+        Future<void> examine(Evidence e) async {
           g.inspect(e);
           await tester.pump();
+          if (g.panel == Panel.puzzle) {
+            g.completeTask();
+            await tester.pump();
+          }
           g.closeDialogue();
         }
+
+        for (final e in g.evidenceHere.toList()) {
+          await examine(e);
+        }
+        for (final n in g.nooksHere) {
+          g.search(n);
+          await tester.pump();
+          expect(g.tryCode(n, g.mystery.deskCode), isTrue);
+          await tester.pump();
+          for (final e in g.evidenceIn(n).toList()) {
+            await examine(e);
+          }
+          for (final junk in n.junk) {
+            g.remark(junk);
+            await tester.pump();
+            g.closeDialogue();
+          }
+          g.closePanel();
+        }
       }
+      // With the chart in hand, every weapon in the pool can be dusted.
+      g.found.add('chart');
+      final weapon = g.evidence.firstWhere((e) => g.mystery.weapons.contains(e.id));
+      expect(g.canDust(weapon), isTrue);
+      g.inspect(weapon);
+      await tester.pump();
+      expect(g.task, Task.prints);
+      g.completeTask();
+      await tester.pump();
+      expect(g.found, contains('prints'));
+      g.closeDialogue();
       for (var pass = 0; pass < 4; pass++) {
         for (final room in rooms) {
           g.enter(room);

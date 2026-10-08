@@ -31,14 +31,25 @@ class Voice extends ChangeNotifier {
   bool _muted = false;
   bool get muted => _muted;
 
-  /// Speaks [line], cutting off whatever was being said before.
-  Future<void> say(VoiceLine line) async {
+  Object? _owner;
+
+  /// Speaks [line], cutting off whatever was being said before. [owner]
+  /// identifies who asked, so that it alone can [release] the line later.
+  Future<void> say(VoiceLine line, {Object? owner}) async {
     _player.stop();
+    _owner = owner;
     if (_muted) return;
     await _player.play(clipAsset(line));
   }
 
   void stop() => _player.stop();
+
+  /// Stops speaking, but only if [owner] started the current line. A screen
+  /// calls this as it closes; by then the next screen may already be talking,
+  /// and must not be cut off.
+  void release(Object owner) {
+    if (identical(_owner, owner)) _player.stop();
+  }
 
   void toggleMute() {
     _muted = !_muted;

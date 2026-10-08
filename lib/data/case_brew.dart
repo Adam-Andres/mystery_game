@@ -17,20 +17,31 @@ const brewCase = MysteryCase(
       "something independent, Tira and Graham vouch only for one another. "
       "Their silver inventory never happened: the dining room was dark and "
       "silent all evening. At eleven Tira lured her aunt downstairs while "
-      "Graham fetched the urn, and together they tipped it.",
+      "Graham fetched the urn, and together they tipped it. The tally sheet "
+      "they signed was written afterwards, in a hurry: its forks, knives and "
+      "spoons add up to 146, not 144.",
   core: [
     Evidence(
       'urn', 'Overturned Espresso Urn', 'cellar', 2,
       "The huge brass urn from the pantry, emptied over the victim. Its two "
       "handles are set far apart, one each side. There are no drag marks: it "
-      "was carried here level, then tipped.",
+      "was carried here level, then tipped. It wants dusting for fingerprints.",
     ),
     Evidence(
       'notepad', "Butler's Notepad", 'dining', 0,
       "Graham's household notepad: thick cream paper with a silver “S” "
-      "monogram. The top sheet has been torn off. Rubbing a pencil over the "
-      "next page raises the ghost of a few words: “...tonight, at eleven...”",
+      "monogram. The top sheet has been torn off, but the rubbing raises "
+      "what was written on it: “It must be tonight, at eleven.”",
       icon: Icons.sticky_note_2, color: paper,
+      puzzle: Puzzle.rubbing,
+      pieces: ['It must be', 'tonight,', 'at eleven.'],
+    ),
+    Evidence(
+      'planner', 'Appointment Book', 'study', 0,
+      "Mrs. Senclair's appointment book, kept under lock. Today's page: "
+      "“10 AM, Crumble and Crumble. Sign. Tell T. and G. afterwards, not "
+      "before.”",
+      icon: Icons.event_note, color: paper, inside: 'desk',
     ),
     souffle,
     boots,
@@ -74,6 +85,14 @@ const brewCase = MysteryCase(
         "Mr. Cracker without pension is ready. I shall bring it for your "
         "signature tomorrow at ten. — Crumble & Crumble.”",
         icon: Icons.mail, color: paper,
+        puzzle: Puzzle.torn,
+        pieces: [
+          'Madam, as instructed, the new will',
+          'disinheriting Miss Misu and dismissing',
+          'Mr. Cracker without pension is ready.',
+          'I shall bring it for your signature',
+          'tomorrow at ten. — Crumble & Crumble',
+        ],
       ),
     ],
     [
@@ -100,10 +119,10 @@ const brewCase = MysteryCase(
       ),
       Evidence(
         'tickets', 'Packed Suitcase', 'storage', 0,
-        "A suitcase hidden behind the trunks, initialled G.C. Inside: a spare "
+        "A suitcase at the bottom of a crate, initialled G.C. Inside: a spare "
         "collar and two one-way train tickets to Biscotti Bay for tonight — "
         "“Mr. G. Cracker” and “Miss T. Misu”.",
-        icon: Icons.luggage, color: Color(0xFFBCAAA4),
+        icon: Icons.luggage, color: Color(0xFFBCAAA4), inside: 'crates',
       ),
       Evidence(
         'note', 'Half-Burnt Note', 'boiler', 1,
@@ -111,12 +130,20 @@ const brewCase = MysteryCase(
         "tonight, at eleven. I shall fetch it up; you bring her down. Burn "
         "this.” Unsigned, on thick cream paper with a silver “S” monogram.",
         icon: Icons.local_fire_department, color: Color(0xFFFFAB40),
+        puzzle: Puzzle.torn,
+        pieces: [
+          '...she signs TOMORROW.',
+          'It must be tonight, at eleven.',
+          'I shall fetch it up;',
+          'you bring her down.',
+          'Burn this.',
+        ],
       ),
     ],
   ],
   herrings: [
     iou, sabre, dismissal, spade, recipe, berryStain, sauceDrip, threat,
-    cocoa, crumbs, jobAd,
+    cocoa, crumbs, jobAd, betting, savings, diary,
     Evidence(
       'ricottadrip', 'White Cream Drips', 'landing', 4,
       "A little pool of thick white ricotta on the landing floorboards, "
@@ -125,11 +152,22 @@ const brewCase = MysteryCase(
     ),
     Evidence(
       'pearls', 'Empty Pearl Case', 'study', 2,
-      "Behind the globe, a velvet jewel case stamped “Senclair Pearls”. It is "
-      "empty. In the lid, a pawnbroker's ticket dated last month.",
-      icon: Icons.diamond, color: Color(0xFFE1BEE7),
+      "At the back of the drawer, a velvet jewel case stamped “Senclair "
+      "Pearls”. It is empty. In the lid, a pawnbroker's ticket dated last "
+      "month.",
+      icon: Icons.diamond, color: Color(0xFFE1BEE7), inside: 'desk',
     ),
   ],
+  weapons: {'urn'},
+  printsOn: ['penny', 'tira', 'graham'],
+  prints: Evidence.given(
+    'prints', 'Prints on the Urn', 'churlock',
+    "Three sets of prints came up under the powder. On the lid, Penny "
+    "Cotta's: she fills it every morning. On the left handle, Tira Misu's. "
+    "On the right handle, Graham Cracker's.",
+    icon: Icons.fingerprint, color: Color(0xFFB2EBF2),
+  ),
+  deskCode: '1892',
   topics: {
     'sprinkles': [
       Topic(
@@ -151,6 +189,7 @@ const brewCase = MysteryCase(
         needs: ['urn'],
       ),
       whoWasHome,
+      sprinklesChart,
     ],
     'glaze': glazeTopics,
     'penny': [
@@ -205,6 +244,14 @@ const brewCase = MysteryCase(
         "stairwell like a brass band.",
         heard: ['cannoli/where'],
       ),
+      Topic(
+        'carry', 'Does Graham carry the urn to the breakfast table?',
+        "That urn? It hasn't left its stand in twenty years, Detective. I "
+        "fill the coffee pot from it and carry the pot. Nobody carries the "
+        "urn anywhere. Nobody could.",
+        heard: ['graham/prints'],
+      ),
+      pennyLog,
       pennyRecipe,
       pennySauce,
       ...pennyCommon,
@@ -274,6 +321,24 @@ const brewCase = MysteryCase(
         "how a pawn ticket came to be in the case.",
         needs: ['pearls'],
       ),
+      Topic(
+        'tally', 'Is there any record of your silver count?',
+        "Certainly, sir. Our tally sheet from last night, signed by Miss "
+        "Tira and myself. I trust that settles the matter.",
+        heard: ['graham/where'],
+        gives: Evidence.given(
+          'tally', 'Silver Tally Sheet', 'graham',
+          "The sheet Graham says he and Tira filled in last night: “Forks, "
+          "48. Knives, 48. Spoons, 50. Total, 144 pieces, all present. "
+          "Counted 10:30 to 11:30 PM. Signed, G. Cracker and T. Misu.”",
+        ),
+      ),
+      Topic(
+        'prints', 'Your fingerprints are on the urn.',
+        "I carry that urn to the breakfast table daily, sir. With "
+        "assistance. One would expect to find them.",
+        needs: ['prints'],
+      ),
       ...grahamCommon,
     ],
     'tira': [
@@ -335,6 +400,13 @@ const brewCase = MysteryCase(
         "little book. Auntie was alive and scolding me for it at ten.",
         needs: ['cocoa'],
       ),
+      Topic(
+        'prints', 'Your fingerprints are on the urn.',
+        "I helped Graham move it on Sunday, darling, when the footman was "
+        "off. Once. It was frightfully heavy and I broke a nail.",
+        needs: ['prints'],
+      ),
+      tiraDiary,
     ],
     'cannoli': [
       Topic(
@@ -367,6 +439,8 @@ const brewCase = MysteryCase(
         needs: ['ricottadrip'],
       ),
       cannoliIou,
+      cannoliProof,
+      cannoliBetting,
       cannoliSabre,
     ],
     'barry': [

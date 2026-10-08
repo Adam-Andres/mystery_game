@@ -11,9 +11,18 @@ them alone, or two of them together.
 
 - **Move** between rooms with the on-screen arrows or the arrow keys.
 - **Click** glowing objects to collect evidence, and click desserts to question
-  them.
+  them. Churlock walks over to whatever you click.
+- **Search the furniture.** Closets, trunks, drawers and sacks can be opened,
+  and some evidence is only found inside them. The study desk is locked; its
+  combination is somewhere in the house.
 - **Follow up.** Evidence unlocks new questions, and so does testimony: when one
   dessert tells you something, you can put it to the others.
+- **Ask for things.** Some characters will hand over documents. Not all of
+  them are genuine: a guilty dessert may give you a forgery, and each forgery
+  has a flaw in it if you read closely.
+- **Get your hands dirty.** Borrow the police fingerprint chart, then dust the
+  murder weapon and match the prints. Shade the butler's notepad with a pencil
+  to raise what was written on the missing page. Piece torn letters together.
 - **Check the notebook** for everything found and said so far.
 - When you are sure, return to the **Entrance Hall**, press
   **I solved the case**, and accuse one or two residents.

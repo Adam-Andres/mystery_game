@@ -16,7 +16,9 @@ const flatCase = MysteryCase(
       "marble rolling pin, and at 11:05 rolled Mrs. Senclair flat in the cellar. "
       "He hid the pin and was back at the board by 11:20. Every other resident "
       "can be placed elsewhere: Penny at her oven, Tira on the telephone, Barry "
-      "locked outside, and Graham heard on his concertina the whole time.",
+      "locked outside, and Graham heard on his concertina the whole time. The "
+      "note he produced, giving him until Christmas, was his own forgery: he "
+      "signed it “Sinclair”, and she would hardly misspell her own name.",
   core: [
     Evidence(
       'rack', 'Rolling Pin Rack', 'kitchen', 0,
@@ -26,6 +28,22 @@ const flatCase = MysteryCase(
     souffle,
     boots,
     phoneTira,
+    Evidence(
+      'notepad', "Butler's Notepad", 'dining', 0,
+      "Graham's household notepad. The top sheet is gone, but the rubbing "
+      "raises what was written on it: “10:30, chess with the Colonel. He "
+      "cheats.” An appointment, and by all accounts he kept it.",
+      icon: Icons.sticky_note_2, color: paper,
+      puzzle: Puzzle.rubbing,
+      pieces: ['10:30 — chess with', 'the Colonel.', 'He cheats.'],
+    ),
+    Evidence(
+      'planner', 'Appointment Book', 'study', 0,
+      "Mrs. Senclair's appointment book, kept under lock. Today's page: "
+      "“9 AM, the Colonel. No more extensions, whatever he says. 11 AM, "
+      "telephone Fort Fondant.”",
+      icon: Icons.event_note, color: paper, inside: 'desk',
+    ),
   ],
   variants: [
     timeOfDeath,
@@ -50,12 +68,15 @@ const flatCase = MysteryCase(
       Evidence(
         'pinboiler', 'Marble Rolling Pin', 'boiler', 0,
         "Shoved behind the boiler: a heavy marble rolling pin, hastily wiped. "
-        "There is still custard in the handle grooves.",
+        "There is still custard in the handle grooves. It wants dusting for "
+        "fingerprints.",
       ),
       Evidence(
         'pinpantry', 'Marble Rolling Pin', 'pantry', 3,
         "Pushed deep into a flour sack: a heavy marble rolling pin, hastily "
-        "wiped. There is still custard in the handle grooves.",
+        "wiped. There is still custard in the handle grooves. It wants "
+        "dusting for fingerprints.",
+        inside: 'sacks',
       ),
     ],
     [
@@ -72,6 +93,14 @@ const flatCase = MysteryCase(
         "hand: “Colonel — 50,000 sugar cubes by tomorrow, or you pack your "
         "trunk. I mean it this time. É.S.”",
         icon: Icons.mail, color: paper,
+        puzzle: Puzzle.torn,
+        pieces: [
+          'Colonel —',
+          '50,000 sugar cubes by tomorrow,',
+          'or you pack your trunk.',
+          'I mean it this time.',
+          'É.S.',
+        ],
       ),
     ],
     [
@@ -80,13 +109,14 @@ const flatCase = MysteryCase(
         "Inside the lid of his uniform trunk, a receipt: “Sweet Victory "
         "Novelty Coins — 12 chocolate medals, assorted valour.” Clipped to it, "
         "a note in Mrs. Senclair's hand: “I know. The Regiment will too.”",
+        inside: 'trunk',
       ),
       Evidence(
         'regiment', 'Letter from the Regiment', 'study', 5,
         "In the desk drawer, a reply from Fort Fondant: “Madam, we find no "
         "record of any Colonel Cannoli, nor of his medals.” Pinned to it, her "
         "unsent answer: “Then I shall tell all of Donut County what he is.”",
-        icon: Icons.mail, color: paper,
+        icon: Icons.mail, color: paper, inside: 'desk',
       ),
     ],
     [
@@ -108,8 +138,18 @@ const flatCase = MysteryCase(
   ],
   herrings: [
     will, bills, cocoa, dismissal, spade, berryStain, jobAd, crumbs, recipe,
-    sauceDrip, threat,
+    sauceDrip, threat, betting, savings, diary,
   ],
+  weapons: {'pinboiler', 'pinpantry'},
+  printsOn: ['penny', 'cannoli'],
+  prints: Evidence.given(
+    'prints', 'Prints on the Rolling Pin', 'churlock',
+    "Two sets of prints came up under the powder. One is Penny Cotta's, all "
+    "over both handles: it is her rolling pin. The other is a single clear "
+    "print on the marble barrel, and it belongs to Colonel Cannoli.",
+    icon: Icons.fingerprint, color: Color(0xFFB2EBF2),
+  ),
+  deskCode: '1887',
   topics: {
     'sprinkles': [
       Topic(
@@ -126,6 +166,7 @@ const flatCase = MysteryCase(
         "were strong enough — but two could manage it easier.",
       ),
       whoWasHome,
+      sprinklesChart,
     ],
     'glaze': glazeTopics,
     'penny': [
@@ -177,6 +218,13 @@ const flatCase = MysteryCase(
         "basting. I'd have had an elbow in my ribs.",
         heard: ['cannoli/decanter'],
       ),
+      Topic(
+        'crimping', 'The Colonel says he helped you with the pastry.',
+        "The Colonel? In my kitchen? He has never so much as buttered his "
+        "own toast. Nobody touches my pins but me, Detective.",
+        heard: ['cannoli/prints'],
+      ),
+      pennyLog,
       pennyRecipe,
       pennySauce,
       ...pennyCommon,
@@ -283,6 +331,18 @@ const flatCase = MysteryCase(
         "from that cellar myself only — well, recently.",
         needs: ['ricotta', 'flakes'],
       ),
+      Topic(
+        'prints', 'Your fingerprint is on the rolling pin.',
+        "On a rolling pin? Ah. Yes. I helped Penny with the pastry on Sunday. "
+        "Crimping, and so forth. Ask her. She was most grateful.",
+        needs: ['prints'],
+      ),
+      Topic(
+        'proof', cannoliProofQ, cannoliProofA,
+        needs: ['ledger', 'notice'],
+        gives: extensionForged,
+      ),
+      cannoliBetting,
     ],
     'tira': [
       Topic(

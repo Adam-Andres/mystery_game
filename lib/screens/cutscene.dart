@@ -83,7 +83,7 @@ class _CutsceneState extends State<Cutscene> with TickerProviderStateMixin {
     _disposed = true;
     _timer?.cancel();
     if (!(_pause?.isCompleted ?? true)) _pause!.complete();
-    widget.voice.stop();
+    widget.voice.release(this);
     _scene.dispose();
     _rain.dispose();
     super.dispose();
@@ -97,7 +97,7 @@ class _CutsceneState extends State<Cutscene> with TickerProviderStateMixin {
       setState(() => _line = i);
       final line = widget.lines[i];
       await Future.wait([
-        widget.voice.say(line),
+        widget.voice.say(line, owner: this),
         _wait(Duration(milliseconds: 700 + line.text.length * 60)),
       ]);
     }

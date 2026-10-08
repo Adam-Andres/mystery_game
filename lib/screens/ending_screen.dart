@@ -26,12 +26,12 @@ class _EndingScreenState extends State<EndingScreen> {
   void initState() {
     super.initState();
     // The narrator explains what really happened.
-    widget.voice.say((voice: narrator, text: g.mystery.solution));
+    widget.voice.say((voice: narrator, text: g.mystery.solution), owner: this);
   }
 
   @override
   void dispose() {
-    widget.voice.stop();
+    widget.voice.release(this);
     super.dispose();
   }
 

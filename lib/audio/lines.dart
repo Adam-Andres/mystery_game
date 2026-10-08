@@ -105,11 +105,18 @@ List<VoiceLine> allVoiceLines() {
   for (final p in [...residents, ...police]) {
     add(p.id, p.greeting);
   }
+  for (final nook in nooks) {
+    for (final junk in nook.junk) {
+      add(churlock.id, junk.text);
+    }
+  }
   for (final mystery in allCases) {
     add(narrator, mystery.solution);
-    for (final e in mystery.pool) {
+    // Churlock reads out what he finds, including what dusting turns up.
+    for (final e in [...mystery.pool, mystery.prints]) {
       add(churlock.id, e.description);
     }
+    add(churlock.id, certificateText(mystery.deskCode));
     for (final entry in mystery.topics.entries) {
       for (final t in entry.value) {
         add(entry.key, t.answer);

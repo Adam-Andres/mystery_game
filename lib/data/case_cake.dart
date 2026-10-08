@@ -18,7 +18,9 @@ const cakeCase = MysteryCase(
       "cellar with the rock-hard Christmas fruitcake, leaving a drip of her "
       "own sauce beneath the body, then “found” her in the morning. The "
       "chess players were heard throughout, Tira was on the telephone, and "
-      "Barry was locked outside.",
+      "Barry was locked outside. The oven log she handed over was written "
+      "afterwards: it has Madam ringing down at 11:20, a quarter of an hour "
+      "after she died.",
   core: [
     Evidence(
       'tin', 'Empty Cake Tin', 'pantry', 1,
@@ -36,6 +38,22 @@ const cakeCase = MysteryCase(
       "every two or three minutes from 10:32 until 11:58 without a break, "
       "each one initialled by both players.",
       icon: Icons.assignment, color: paper,
+    ),
+    Evidence(
+      'notepad', "Butler's Notepad", 'dining', 0,
+      "Graham's household notepad. The top sheet is gone, but the rubbing "
+      "raises what was written on it: “Eggs: a fresh dozen came today. Order "
+      "none.” A shopping note.",
+      icon: Icons.sticky_note_2, color: paper,
+      puzzle: Puzzle.rubbing,
+      pieces: ['Eggs: a fresh dozen', 'came today.', 'Order none.'],
+    ),
+    Evidence(
+      'planner', 'Appointment Book', 'study', 0,
+      "Mrs. Senclair's appointment book, kept under lock. Today's page: "
+      "“9 AM, the agency sends the new housekeeper. Tell P.C. after "
+      "breakfast, not before.”",
+      icon: Icons.event_note, color: paper, inside: 'desk',
     ),
   ],
   variants: [
@@ -80,24 +98,36 @@ const cakeCase = MysteryCase(
         "without notice or pension. She makes the same puddings she made "
         "thirty years ago.”",
         icon: Icons.mail, color: paper,
+        puzzle: Puzzle.torn,
+        pieces: [
+          'Please send a modern housekeeper at once.',
+          'The present one, P. Cotta,',
+          'is to be retired',
+          'without notice or pension.',
+          'She makes the same puddings as ever.',
+        ],
       ),
     ],
     [
       Evidence(
         'cakesack', 'Christmas Fruitcake', 'pantry', 3,
         "Pushed deep into a flour sack: a fruitcake as hard as granite. One "
-        "corner is freshly chipped, and there is custard on it.",
+        "corner is freshly chipped, and there is custard on it. It wants "
+        "dusting for fingerprints.",
+        inside: 'sacks',
       ),
       Evidence(
         'cakecrate', 'Christmas Fruitcake', 'storage', 1,
         "At the bottom of a crate of old curtains: a fruitcake as hard as "
-        "granite. One corner is freshly chipped, and there is custard on it.",
+        "granite. One corner is freshly chipped, and there is custard on it. "
+        "It wants dusting for fingerprints.",
+        inside: 'crates',
       ),
     ],
   ],
   herrings: [
     will, bills, iou, regiment, dismissal, spade, jobAd, cocoa, crumbs,
-    threat, berryStain, sabre,
+    threat, berryStain, sabre, betting, savings, diary,
     Evidence(
       'ricottadrip', 'White Cream Drips', 'entrance', 4,
       "A few spots of thick white ricotta on the floor at the top of the "
@@ -105,6 +135,16 @@ const cakeCase = MysteryCase(
       icon: Icons.water_drop, color: Colors.white,
     ),
   ],
+  weapons: {'cakesack', 'cakecrate'},
+  printsOn: ['penny'],
+  prints: Evidence.given(
+    'prints', 'Prints on the Fruitcake', 'churlock',
+    "Only one dessert's prints came up on the fruitcake: Penny Cotta's. "
+    "They are sharp and greasy. But then she baked it, twelve years ago, "
+    "and it has sat in her pantry ever since. There are no others at all.",
+    icon: Icons.fingerprint, color: Color(0xFFB2EBF2),
+  ),
+  deskCode: '1879',
   topics: {
     'sprinkles': [
       Topic(
@@ -120,6 +160,7 @@ const cakeCase = MysteryCase(
         "An old one. One dessert could swing it.",
       ),
       whoWasHome,
+      sprinklesChart,
     ],
     'glaze': [
       ...glazeTopics,
@@ -136,6 +177,13 @@ const cakeCase = MysteryCase(
         "and cracked when we arrived at seven, and the housekeeper says she "
         "only came down at half six.",
         needs: ['drydrip'],
+      ),
+      Topic(
+        'fresh', 'Would twelve-year-old fingerprints still be sharp?',
+        "After twelve years in a tin? They'd be dull as dust, Detective, if "
+        "they came up at all. Sharp and greasy means fresh. Hours old, not "
+        "years.",
+        needs: ['prints'],
       ),
     ],
     'penny': [
@@ -192,6 +240,17 @@ const cakeCase = MysteryCase(
         "Was she? She said nothing to me. Thirty years, and the same "
         "puddings — well. They were good enough to build her a factory.",
         needs: ['retire'],
+      ),
+      Topic(
+        'prints', 'Your fingerprints are on the fruitcake.',
+        "My prints, on my own cake, from my own pantry? I baked the thing, "
+        "Detective. I'd be more surprised if you'd found the Colonel's.",
+        needs: ['prints'],
+      ),
+      Topic(
+        'log', pennyLogQ, pennyLogA,
+        needs: ['souffle'],
+        gives: ovenLogForged,
       ),
       pennyRecipe,
       ...pennyCommon,
@@ -264,6 +323,8 @@ const cakeCase = MysteryCase(
         needs: ['ricottadrip'],
       ),
       cannoliIou,
+      cannoliProof,
+      cannoliBetting,
       cannoliRegiment,
       cannoliSabre,
     ],

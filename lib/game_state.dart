@@ -9,7 +9,10 @@ import 'data/models.dart';
 /// The intro and outro are the narrated scenes outside the mansion.
 enum Phase { title, intro, playing, outro, ended }
 
-enum Panel { none, notebook, accuse }
+enum Panel { none, notebook, accuse, nook, puzzle }
+
+/// The hands-on task currently on screen.
+enum Task { none, rubbing, torn, prints }
 
 /// What the dialogue box at the bottom of the screen is showing.
 class Dialogue {
@@ -18,6 +21,7 @@ class Dialogue {
     required this.title,
     required this.text,
     this.talk = false,
+    this.note,
   });
 
   final Person speaker;
@@ -26,6 +30,9 @@ class Dialogue {
 
   /// True when [speaker] can be asked questions.
   final bool talk;
+
+  /// A line shown beneath the text, such as what was just handed over.
+  final String? note;
 }
 
 class GameState extends ChangeNotifier {
@@ -40,12 +47,22 @@ class GameState extends ChangeNotifier {
   Panel panel = Panel.none;
   Dialogue? dialogue;
 
-  /// The evidence hidden in the house this game: a random draw from the
-  /// case, so two playthroughs of one mystery do not offer the same clues.
+  /// The piece of furniture being searched while [panel] is [Panel.nook].
+  Nook? nook;
+
+  /// The evidence being worked on while [panel] is [Panel.puzzle].
+  Evidence? puzzle;
+  Task task = Task.none;
+
+  /// Every piece of evidence in this game: a random draw of what is hidden
+  /// in the house, plus whatever can be handed over or raised by dusting.
   List<Evidence> evidence = const [];
 
   final found = <String>{};
   final visited = <String>{};
+
+  /// Locked furniture that has been opened.
+  final unlocked = <String>{};
 
   /// Statements already heard, as `person/topicId`.
   final asked = <String>{};
@@ -55,8 +72,14 @@ class GameState extends ChangeNotifier {
 
   Room get room => roomById(roomId);
 
-  Iterable<Evidence> get evidenceHere =>
-      evidence.where((e) => e.room == roomId);
+  /// Evidence lying out in the open in the current room.
+  Iterable<Evidence> get evidenceHere => evidence
+      .where((e) => e.room == roomId && e.inside == null && e.from == null);
+
+  Iterable<Nook> get nooksHere => nooks.where((n) => n.room == roomId);
+
+  Iterable<Evidence> evidenceIn(Nook n) =>
+      evidence.where((e) => e.inside == n.id);
 
   /// Starts a fresh investigation with a randomly chosen mystery — never the
   /// one just played — and a fresh draw of its evidence.
@@ -72,15 +95,21 @@ class GameState extends ChangeNotifier {
       ...mystery.core,
       for (final group in mystery.variants) group[_rng.nextInt(group.length)],
       ...(List.of(mystery.herrings)..shuffle(_rng)).take(mystery.herringCount),
+      ...mystery.gifts,
+      mystery.prints,
     ];
     roomId = 'entrance';
     found.clear();
     visited
       ..clear()
       ..add(roomId);
+    unlocked.clear();
     asked.clear();
     accused.clear();
     panel = Panel.none;
+    nook = null;
+    puzzle = null;
+    task = Task.none;
     dialogue = null;
     phase = skipIntro ? Phase.playing : Phase.intro;
     notifyListeners();
@@ -92,6 +121,7 @@ class GameState extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// True while a dialogue or a panel has the player's attention.
   bool get busy => dialogue != null || panel != Panel.none;
 
   /// Where [d] leads from here, or null if Churlock cannot go that way now.
@@ -106,12 +136,73 @@ class GameState extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// The murder weapon can be dusted once it is found and Churlock has the
+  /// police chart to compare prints against.
+  bool canDust(Evidence e) =>
+      mystery.weapons.contains(e.id) &&
+      found.contains(e.id) &&
+      found.contains('chart') &&
+      !found.contains(mystery.prints.id);
+
+  /// Examines [e]. Some evidence needs a hands-on step first.
   void inspect(Evidence e) {
+    if (canDust(e)) {
+      _startTask(e, Task.prints);
+    } else if (e.puzzle != Puzzle.none && !found.contains(e.id)) {
+      _startTask(e, e.puzzle == Puzzle.rubbing ? Task.rubbing : Task.torn);
+    } else {
+      _show(e);
+    }
+  }
+
+  void _startTask(Evidence e, Task t) {
+    puzzle = e;
+    task = t;
+    panel = Panel.puzzle;
+    notifyListeners();
+  }
+
+  void _show(Evidence e) {
     final isNew = found.add(e.id);
     dialogue = Dialogue(
       speaker: churlock,
       title: isNew ? 'New evidence: ${e.name}' : e.name,
       text: e.description,
+    );
+    notifyListeners();
+  }
+
+  /// Called by a minigame when the player has finished it.
+  void completeTask() {
+    final e = puzzle;
+    if (e == null) return;
+    final done = task;
+    puzzle = null;
+    task = Task.none;
+    // Back to the furniture being searched, if that is where this was found.
+    panel = nook != null ? Panel.nook : Panel.none;
+    _show(done == Task.prints ? mystery.prints : e);
+  }
+
+  /// Abandons a minigame without finishing it.
+  void cancelTask() {
+    puzzle = null;
+    task = Task.none;
+    panel = nook != null ? Panel.nook : Panel.none;
+    notifyListeners();
+  }
+
+  /// What Churlock says about [junk]. The certificate names a different
+  /// year in each mystery, because it is the combination of the desk.
+  String junkText(Junk junk) =>
+      junk.text.isEmpty ? certificateText(mystery.deskCode) : junk.text;
+
+  /// Churlock remarks on something that is not evidence.
+  void remark(Junk junk) {
+    dialogue = Dialogue(
+      speaker: churlock,
+      title: junk.name,
+      text: junkText(junk),
     );
     notifyListeners();
   }
@@ -150,11 +241,14 @@ class GameState extends ChangeNotifier {
 
   void ask(Person p, Topic topic) {
     asked.add(keyOf(p.id, topic));
+    final gift = topic.gives;
+    final received = gift != null && found.add(gift.id);
     dialogue = Dialogue(
       speaker: p,
       title: p.name,
       text: topic.answer,
       talk: true,
+      note: received ? 'Received: ${gift.name} — see the notebook.' : null,
     );
     notifyListeners();
   }
@@ -170,8 +264,27 @@ class GameState extends ChangeNotifier {
     notifyListeners();
   }
 
+  void search(Nook n) {
+    nook = n;
+    panel = Panel.nook;
+    notifyListeners();
+  }
+
+  bool isOpen(Nook n) => !n.locked || unlocked.contains(n.id);
+
+  /// Tries a combination on a locked piece of furniture.
+  bool tryCode(Nook n, String code) {
+    if (code != mystery.deskCode) return false;
+    unlocked.add(n.id);
+    notifyListeners();
+    return true;
+  }
+
   void closePanel() {
     panel = Panel.none;
+    nook = null;
+    puzzle = null;
+    task = Task.none;
     notifyListeners();
   }
 

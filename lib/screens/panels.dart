@@ -5,6 +5,7 @@ import '../data/models.dart';
 import '../game_state.dart';
 import '../widgets/dessert_figure.dart';
 import '../widgets/ui.dart';
+import 'minigames.dart';
 
 /// The conversation / evidence box along the bottom of the scene.
 class DialoguePanel extends StatelessWidget {
@@ -35,12 +36,28 @@ class DialoguePanel extends StatelessWidget {
                 if (d.talk)
                   Text(
                     d.speaker.role,
-                    style: const TextStyle(color: kCream, fontSize: 12, fontStyle: FontStyle.italic),
+                    style: const TextStyle(
+                      color: kCream,
+                      fontSize: 12,
+                      fontStyle: FontStyle.italic,
+                    ),
                   ),
                 const SizedBox(height: 6),
                 Expanded(
-                  child: SingleChildScrollView(child: Text(d.text, style: kBody)),
+                  child: SingleChildScrollView(
+                    child: Text(d.text, style: kBody),
+                  ),
                 ),
+                if (d.note != null)
+                  Text(
+                    d.note!,
+                    key: const ValueKey('dialogue-note'),
+                    style: kBody.copyWith(
+                      color: kGold,
+                      fontStyle: FontStyle.italic,
+                      fontSize: 13,
+                    ),
+                  ),
               ],
             ),
           ),
@@ -97,8 +114,8 @@ class _TopicButton extends StatelessWidget {
     final color = asked
         ? Colors.white54
         : topic.isFollowUp
-            ? kGold
-            : kCream;
+        ? kGold
+        : kCream;
     return Padding(
       padding: const EdgeInsets.only(bottom: 5),
       child: Material(
@@ -115,16 +132,19 @@ class _TopicButton extends StatelessWidget {
                   asked
                       ? Icons.check
                       : topic.needs.isNotEmpty
-                          ? Icons.search
-                          : topic.heard.isNotEmpty
-                              ? Icons.forum
-                              : Icons.chat_bubble_outline,
+                      ? Icons.search
+                      : topic.heard.isNotEmpty
+                      ? Icons.forum
+                      : Icons.chat_bubble_outline,
                   color: color,
                   size: 15,
                 ),
                 const SizedBox(width: 7),
                 Expanded(
-                  child: Text(topic.question, style: TextStyle(color: color, fontSize: 13)),
+                  child: Text(
+                    topic.question,
+                    style: TextStyle(color: color, fontSize: 13),
+                  ),
                 ),
               ],
             ),
@@ -144,7 +164,10 @@ class NotebookPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final evidence = g.evidence.where((e) => g.found.contains(e.id)).toList();
-    final speakers = [...police, ...residents].where((p) => g.statementsOf(p.id).isNotEmpty);
+    final speakers = [
+      ...police,
+      ...residents,
+    ].where((p) => g.statementsOf(p.id).isNotEmpty);
     return Plaque(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -153,7 +176,9 @@ class NotebookPanel extends StatelessWidget {
             children: [
               const Icon(Icons.menu_book, color: kGold),
               const SizedBox(width: 8),
-              const Expanded(child: Text("Churlock's Notebook", style: kHeading)),
+              const Expanded(
+                child: Text("Churlock's Notebook", style: kHeading),
+              ),
               GoldButton(
                 key: const ValueKey('close-panel'),
                 label: 'Close',
@@ -169,12 +194,14 @@ class NotebookPanel extends StatelessWidget {
                 Expanded(
                   child: _column(
                     'Evidence (${evidence.length}/${g.evidence.length})',
-                    evidence.isEmpty ? 'Nothing yet. Click anything that glints.' : null,
+                    evidence.isEmpty
+                        ? 'Nothing yet. Click anything that glints.'
+                        : null,
                     [
                       for (final e in evidence)
                         _entry(
                           Icon(e.icon, color: e.color, size: 20),
-                          '${e.name} — ${roomById(e.room).name}',
+                          '${e.name} — ${_whereFound(e)}',
                           e.description,
                         ),
                     ],
@@ -184,7 +211,9 @@ class NotebookPanel extends StatelessWidget {
                 Expanded(
                   child: _column(
                     'Statements',
-                    speakers.isEmpty ? 'Nobody questioned yet. Click a dessert to talk.' : null,
+                    speakers.isEmpty
+                        ? 'Nobody questioned yet. Click a dessert to talk.'
+                        : null,
                     [
                       for (final p in speakers)
                         for (final t in g.statementsOf(p.id))
@@ -202,6 +231,14 @@ class NotebookPanel extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  static String _whereFound(Evidence e) {
+    final giver = e.from;
+    if (giver == churlock.id) return 'raised by dusting';
+    if (giver != null) return 'given by ${personById(giver).name}';
+    final room = roomById(e.room).name;
+    return e.inside == null ? room : '${nookById(e.inside!).name}, $room';
   }
 
   Widget _column(String title, String? emptyText, List<Widget> entries) {
@@ -231,7 +268,14 @@ class NotebookPanel extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: kBody.copyWith(color: kGold, fontWeight: FontWeight.bold, fontSize: 13)),
+                Text(
+                  title,
+                  style: kBody.copyWith(
+                    color: kGold,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 13,
+                  ),
+                ),
                 Text(body, style: kBody.copyWith(fontSize: 13)),
               ],
             ),
@@ -331,9 +375,14 @@ class _SuspectCard extends StatelessWidget {
             width: 150,
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: selected ? kRed.withValues(alpha: .45) : Colors.white.withValues(alpha: .06),
+              color: selected
+                  ? kRed.withValues(alpha: .45)
+                  : Colors.white.withValues(alpha: .06),
               borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: selected ? kGold : Colors.white24, width: selected ? 3 : 1),
+              border: Border.all(
+                color: selected ? kGold : Colors.white24,
+                width: selected ? 3 : 1,
+              ),
             ),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -342,7 +391,10 @@ class _SuspectCard extends StatelessWidget {
                 const SizedBox(height: 8),
                 Text(
                   person.name,
-                  style: kBody.copyWith(color: kGold, fontWeight: FontWeight.bold),
+                  style: kBody.copyWith(
+                    color: kGold,
+                    fontWeight: FontWeight.bold,
+                  ),
                   textAlign: TextAlign.center,
                 ),
                 Text(
@@ -357,6 +409,141 @@ class _SuspectCard extends StatelessWidget {
                 ),
               ],
             ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// The inside of a closet, trunk or drawer: evidence and odds and ends alike.
+class NookPanel extends StatelessWidget {
+  const NookPanel(this.g, {super.key});
+
+  final GameState g;
+
+  @override
+  Widget build(BuildContext context) {
+    final nook = g.nook!;
+    return Plaque(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              Icon(nook.icon, color: kGold),
+              const SizedBox(width: 8),
+              Expanded(child: Text(nook.name, style: kHeading)),
+              GoldButton(
+                key: const ValueKey('close-panel'),
+                label: 'Close',
+                onPressed: g.closePanel,
+              ),
+            ],
+          ),
+          Text(nook.blurb, style: kBody.copyWith(fontStyle: FontStyle.italic)),
+          const Divider(color: kGold),
+          Expanded(
+            child: Center(
+              child: g.isOpen(nook)
+                  ? SingleChildScrollView(
+                      child: Wrap(
+                        spacing: 16,
+                        runSpacing: 16,
+                        alignment: WrapAlignment.center,
+                        children: [
+                          for (final e in g.evidenceIn(nook))
+                            _ItemTile(
+                              key: ValueKey('evidence-${e.id}'),
+                              icon: g.canDust(e) ? Icons.fingerprint : e.icon,
+                              color: e.color,
+                              label: e.name,
+                              done: g.found.contains(e.id) && !g.canDust(e),
+                              onTap: () => g.inspect(e),
+                            ),
+                          for (final junk in nook.junk)
+                            _ItemTile(
+                              key: ValueKey('junk-${junk.name}'),
+                              icon: junk.icon,
+                              color: kCream,
+                              label: junk.name,
+                              done: false,
+                              onTap: () => g.remark(junk),
+                            ),
+                        ],
+                      ),
+                    )
+                  : FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: CodeLock(onTry: (code) => g.tryCode(nook, code)),
+                    ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ItemTile extends StatelessWidget {
+  const _ItemTile({
+    super.key,
+    required this.icon,
+    required this.color,
+    required this.label,
+    required this.done,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final Color color;
+  final String label;
+  final bool done;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          width: 150,
+          height: 130,
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: .07),
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: Colors.white24),
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  Icon(icon, color: color, size: 46),
+                  if (done)
+                    const Positioned(
+                      right: -8,
+                      bottom: -4,
+                      child: Icon(
+                        Icons.check_circle,
+                        color: Color(0xFF81C784),
+                        size: 20,
+                      ),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Text(
+                label,
+                style: kBody.copyWith(fontSize: 13),
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
           ),
         ),
       ),

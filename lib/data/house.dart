@@ -148,3 +148,176 @@ const slots = <String, List<Offset>>{
 };
 
 Offset evidencePos(Evidence e) => slots[e.room]![e.slot];
+
+/// The founding-year certificate in the coat closet gives away the desk's
+/// combination, which differs from mystery to mystery.
+String certificateText(String year) =>
+    "A framed certificate, put away behind the coats: “Senclair Confections. "
+    "Founded $year.” She was prouder of that year than of anything.";
+
+/// Furniture that can be searched. What evidence each holds depends on the
+/// mystery; the odds and ends are always there.
+const nooks = <Nook>[
+  Nook(
+    id: 'closet',
+    name: 'Coat Closet',
+    room: 'entrance',
+    pos: Offset(326, 215),
+    icon: Icons.checkroom,
+    blurb: 'Coats, umbrellas, and whatever has been pushed to the back.',
+    junk: [
+      Junk('Framed certificate', '', icon: Icons.workspace_premium),
+      Junk(
+        'Umbrellas',
+        "Five umbrellas, and every one of them bone dry. Nobody took one "
+            "out into the soda rain last night.",
+        icon: Icons.umbrella,
+      ),
+    ],
+  ),
+  Nook(
+    id: 'bookcase',
+    name: 'Bookcase',
+    room: 'parlor',
+    pos: Offset(865, 200),
+    icon: Icons.menu_book,
+    blurb: 'Four shelves of books that nobody in this house appears to read.',
+    junk: [
+      Junk(
+        'War memoirs',
+        "A row of the Colonel's war memoirs. Every one of them is a cookery "
+            "book in a false cover.",
+        icon: Icons.auto_stories,
+      ),
+    ],
+  ),
+  Nook(
+    id: 'cupboard',
+    name: 'Kitchen Cupboards',
+    room: 'kitchen',
+    pos: Offset(440, 305),
+    icon: Icons.kitchen,
+    blurb: 'Everything in its place, and a label on the place.',
+    junk: [
+      Junk(
+        'Cooking sherry',
+        "Cooking sherry. The level is marked in pencil. So is the cork.",
+        icon: Icons.wine_bar,
+      ),
+      Junk(
+        'Wooden spoons',
+        "Forty-one wooden spoons, graded by size. I count them. Forty-one.",
+        icon: Icons.restaurant,
+      ),
+    ],
+  ),
+  Nook(
+    id: 'sacks',
+    name: 'Flour Sacks',
+    room: 'pantry',
+    pos: Offset(480, 350),
+    icon: Icons.shopping_bag,
+    blurb: 'Two fat sacks of flour. Something could be pushed down inside.',
+    junk: [
+      Junk(
+        'Flour',
+        "Flour. A great deal of flour. And now a great deal of it on me.",
+        icon: Icons.grain,
+      ),
+    ],
+  ),
+  Nook(
+    id: 'kitbag',
+    name: "Barry's Kit Bag",
+    room: 'boiler',
+    pos: Offset(870, 410),
+    icon: Icons.backpack,
+    blurb: 'A canvas bag that smells of compost and strong tea.',
+    junk: [
+      Junk(
+        'Lunch',
+        "A flask, three packets of seeds, and a sandwich of some age.",
+        icon: Icons.lunch_dining,
+      ),
+    ],
+  ),
+  Nook(
+    id: 'chest',
+    name: 'Linen Chest',
+    room: 'landing',
+    pos: Offset(835, 360),
+    icon: Icons.inventory_2,
+    blurb: 'Sheets and pillowcases, and room to hide things under them.',
+    junk: [
+      Junk(
+        'Sheets',
+        "Monogrammed sheets, ironed perfectly flat. Graham irons everything.",
+        icon: Icons.bed,
+      ),
+    ],
+  ),
+  Nook(
+    id: 'desk',
+    name: 'Desk Drawer',
+    room: 'study',
+    pos: Offset(560, 360),
+    icon: Icons.lock,
+    blurb: "Mrs. Senclair kept her private papers here, under lock.",
+    locked: true,
+    junk: [
+      Junk(
+        'Peppermints',
+        "A tin of peppermints, with a note on the lid: “Counted.”",
+        icon: Icons.cookie,
+      ),
+    ],
+  ),
+  Nook(
+    id: 'dresser',
+    name: "Tira's Dresser",
+    room: 'bedroom',
+    pos: Offset(850, 290),
+    icon: Icons.dry_cleaning,
+    blurb: 'Three drawers, all of them too full to close.',
+    junk: [
+      Junk(
+        'Hats',
+        "Nineteen hats. I count them twice. Nineteen.",
+        icon: Icons.checkroom,
+      ),
+    ],
+  ),
+  Nook(
+    id: 'trunk',
+    name: "The Colonel's Trunk",
+    room: 'storage',
+    pos: Offset(485, 395),
+    icon: Icons.work,
+    blurb: 'A battered campaign trunk, stencilled “COL. CANNOLI”.',
+    junk: [
+      Junk(
+        'Dress uniform',
+        "A dress uniform, smelling of mothballs and marsala.",
+        icon: Icons.military_tech,
+      ),
+    ],
+  ),
+  Nook(
+    id: 'crates',
+    name: 'Old Crates',
+    room: 'storage',
+    pos: Offset(180, 300),
+    icon: Icons.inventory,
+    blurb: 'Thirty years of things nobody could bear to throw away.',
+    junk: [
+      Junk(
+        'Curtains',
+        "Old curtains, older curtains, and a stuffed pheasant with a "
+            "disapproving look.",
+        icon: Icons.curtains,
+      ),
+    ],
+  ),
+];
+
+Nook nookById(String id) => nooks.firstWhere((n) => n.id == id);

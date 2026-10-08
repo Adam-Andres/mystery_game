@@ -48,9 +48,9 @@ class _MysteryAppState extends State<MysteryApp> {
     if (identical(d, _spoken)) return;
     _spoken = d;
     if (d == null) {
-      voice.stop();
+      voice.release(this);
     } else {
-      voice.say((voice: d.speaker.id, text: d.text));
+      voice.say((voice: d.speaker.id, text: d.text), owner: this);
     }
   }
 

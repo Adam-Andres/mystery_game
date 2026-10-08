@@ -81,10 +81,10 @@ const will = Evidence(
 
 const bills = Evidence(
   'bills', 'Unpaid Hat Bills', 'bedroom', 3,
-  "A drawer of Tira's vanity stuffed with bills from Madame Leine's Hat "
+  "A drawer of Tira's dresser stuffed with bills from Madame Leine's Hat "
   "Boutique. The newest is stamped FINAL DEMAND in red. The total would buy "
   "a small bakery.",
-  icon: Icons.receipt_long, color: paper,
+  icon: Icons.receipt_long, color: paper, inside: 'dresser',
 );
 
 const dismissal = Evidence(
@@ -111,18 +111,18 @@ const jobAd = Evidence(
 
 const recipe = Evidence(
   'recipe', 'Old Recipe Book', 'kitchen', 3,
-  "A battered notebook behind the jars. Inside: the famous Senclair Cream "
+  "A battered notebook at the back of the cupboard. Inside: the famous Senclair Cream "
   "Puff recipe — dated thirty years ago, in Penny's handwriting, long before "
   "Senclair Confections existed. Scrawled beneath: “MINE. She never paid a "
   "cube.”",
-  icon: Icons.menu_book, color: Color(0xFFD7CCC8),
+  icon: Icons.menu_book, color: Color(0xFFD7CCC8), inside: 'cupboard',
 );
 
 const threat = Evidence(
   'threat', 'Anonymous Letter', 'entrance', 2,
-  "In the pocket of the coat on the stand, a letter made of cut-out "
+  "In the pocket of a coat at the back of the closet, a letter made of cut-out "
   "newspaper type: “YOU WILL GET YOUR JUST DESSERTS.” No signature.",
-  icon: Icons.markunread_mailbox, color: Color(0xFFEF9A9A),
+  icon: Icons.markunread_mailbox, color: Color(0xFFEF9A9A), inside: 'closet',
 );
 
 const berryStain = Evidence(
@@ -165,7 +165,7 @@ const regiment = Evidence(
   "In the desk drawer, a reply to Mrs. Senclair from Fort Fondant: “Madam, "
   "we regret that we can find no record of any Colonel Cannoli among our "
   "fighting officers, nor of the medals you describe.”",
-  icon: Icons.mail, color: paper,
+  icon: Icons.mail, color: paper, inside: 'desk',
 );
 
 const sabre = Evidence(
@@ -173,6 +173,127 @@ const sabre = Evidence(
   "The Colonel's ceremonial sabre, missing from the parlor wall, thrust "
   "through the old dress form. The blade is tacky with something dark red.",
   icon: Icons.colorize, color: Color(0xFFCFD8DC),
+);
+
+const betting = Evidence(
+  'betting', 'Betting Slips', 'parlor', 0,
+  "Pressed inside a hollowed-out book: a thick wad of the Colonel's betting "
+  "slips from the Gingerbread Derby. Every single horse lost.",
+  icon: Icons.confirmation_number, color: paper, inside: 'bookcase',
+);
+
+const savings = Evidence(
+  'savings', 'Savings Tin', 'boiler', 0,
+  "At the bottom of Barry's bag, a tobacco tin of sugar cubes and the deeds "
+  "to a small plot: “Tart's Nursery — deposit paid. Balance due at month "
+  "end.”",
+  icon: Icons.savings, color: gold, inside: 'kitbag',
+);
+
+const diary = Evidence(
+  'diary', "Tira's Diary", 'landing', 0,
+  "Hidden under the sheets, a diary with a tiny brass lock, left open. "
+  "Yesterday's entry: “Auntie impossible again about my allowance. I could "
+  "scream. Must be sweeter to her. Madame Leine telephones tonight.”",
+  icon: Icons.book, color: Color(0xFFF8BBD0), inside: 'chest',
+);
+
+// Things the residents and the police hand over when asked.
+
+const chart = Evidence.given(
+  'chart', 'Fingerprint Chart', 'sprinkles',
+  "A reference card from the Donut County Police with the fingerprints of "
+  "all five residents, taken this morning. With it I can dust the murder "
+  "weapon and see who has handled it.",
+  icon: Icons.fingerprint, color: Color(0xFFB2EBF2),
+);
+
+const cellarBook = Evidence.given(
+  'cellarbook', 'Cellar Book', 'graham',
+  "Graham's cellar book. Yesterday's entries: “8:00 PM — Colonel Cannoli, "
+  "one bottle of brandy (helped himself). 9:00 PM — Miss Tira, one bottle of "
+  "the '08 port.” Nothing is entered after nine.",
+  icon: Icons.menu_book, color: Color(0xFFD7CCC8),
+);
+
+const ovenLog = Evidence.given(
+  'ovenlog', 'Oven Log', 'penny',
+  "Penny's oven log card for last night, in pencil: “Needy Soufflé. IN "
+  "10:30. Basted every 2 min. OUT 11:30. Risen four inches. Eggs: 6.”",
+);
+
+/// As [ovenLog], with one entry too many: Mrs. Senclair died at 11:05.
+const ovenLogForged = Evidence.given(
+  'ovenlog', 'Oven Log', 'penny',
+  "Penny's oven log card for last night, in pencil: “Needy Soufflé. IN "
+  "10:30. Basted every 2 min. 11:20 — Madam rang down to say it smelt "
+  "divine. OUT 11:30. Risen four inches. Eggs: 6.”",
+);
+
+const extension = Evidence.given(
+  'extension', "Mrs. Senclair's Note", 'cannoli',
+  "A note the Colonel says Mrs. Senclair wrote him last week: “My dear "
+  "Colonel, do not trouble yourself about the sugar. Take until Christmas. "
+  "Your friend, Éclaire Senclair.”",
+  icon: Icons.mail,
+);
+
+/// As [extension], but whoever wrote it could not spell her surname.
+const extensionForged = Evidence.given(
+  'extension', "Mrs. Senclair's Note", 'cannoli',
+  "A note the Colonel says Mrs. Senclair wrote him last week: “My dear "
+  "Colonel, do not trouble yourself about the sugar. Take until Christmas. "
+  "Your friend, Éclaire Sinclair.”",
+  icon: Icons.mail,
+);
+
+const sprinklesChart = Topic(
+  'chart', 'May I borrow your fingerprint chart?',
+  "Take it, Detective. We printed all five of them at breakfast, and they "
+  "were not pleased about it. Find the weapon, dust it, and see whose prints "
+  "come up. Just remember: a print tells you who touched a thing. It doesn't "
+  "tell you when.",
+  gives: chart,
+);
+
+const grahamRecords = Topic(
+  'records', 'Do you keep a record of the household?',
+  "Naturally, sir. Every bottle that leaves the cellar is entered in my "
+  "cellar book. You may borrow it. I should like it back unmarked.",
+  gives: cellarBook,
+);
+
+const pennyLogQ = 'May I see your oven log?';
+const pennyLogA =
+    "Of course. I write up every bake, same as my mother did. Take it. I've "
+    "nothing to hide.";
+
+const cannoliProofQ = 'Can you prove she gave you more time?';
+const cannoliProofA =
+    "As it happens, sir, I can! She wrote me this only last week. Keep it. "
+    "You'll see we were on the best of terms.";
+
+const tiraDiary = Topic(
+  'diary', 'Your diary says you could scream at her.',
+  "Darling, I could scream at everybody. It's a diary. If I meant to do "
+  "anything about it I should hardly write it down first and leave it in "
+  "the linen.",
+  needs: ['diary'],
+);
+
+const barrySavings = Topic(
+  'savings', 'You are buying a nursery.',
+  "Me own plot, guv. Balance due at month end — and me last wages off the "
+  "old girl was to pay it. With her gone, who's payin' me? Worst thing that "
+  "could've happened.",
+  needs: ['savings'],
+);
+
+const cannoliBetting = Topic(
+  'betting', 'You have lost a great deal on the horses.',
+  "The Gingerbread Derby, sir. A mug's game, and I am the mug. But one "
+  "doesn't murder one's creditor over a slow horse. One simply backs another.",
+  needs: ['betting'],
 );
 
 // Testimony about the household's routines and the herrings above.
@@ -183,6 +304,18 @@ const pennyWhere = Topic(
   "two minutes — look away and it sulks flat. At midnight I let Barry in from "
   "the greenhouse, then went to bed. I didn't go down to the cellar until "
   "morning... oh, I'm all a-wobble just thinking of it.",
+);
+
+const pennyLog = Topic(
+  'log', pennyLogQ, pennyLogA,
+  needs: ['souffle'],
+  gives: ovenLog,
+);
+
+const cannoliProof = Topic(
+  'proof', cannoliProofQ, cannoliProofA,
+  needs: ['iou'],
+  gives: extension,
 );
 
 const pennyRecipe = Topic(
@@ -245,6 +378,7 @@ const grahamCommon = [
     "have done it then — and a good deal more tidily.",
     needs: ['jobad'],
   ),
+  grahamRecords,
 ];
 
 const tiraCommon = [
@@ -266,6 +400,7 @@ const tiraCommon = [
     "book. Auntie was alive and scolding me for it at ten.",
     needs: ['cocoa'],
   ),
+  tiraDiary,
 ];
 
 const cannoliIou = Topic(
@@ -323,6 +458,7 @@ const barryCommon = [
     "floor ain't neither.",
     needs: ['berrystain'],
   ),
+  barrySavings,
 ];
 
 const whoWasHome = Topic(

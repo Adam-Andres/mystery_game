@@ -11,6 +11,7 @@ import '../game_state.dart';
 import '../widgets/dessert_figure.dart';
 import '../widgets/room_painter.dart';
 import '../widgets/ui.dart';
+import 'minigames.dart';
 import 'panels.dart';
 
 /// Y of the ground the characters stand on.
@@ -58,6 +59,24 @@ class _GameScreenState extends State<GameScreen>
       if (status == AnimationStatus.completed) setState(() => _dir = null);
     });
 
+  // A short walk across the room to whatever was clicked.
+  late final AnimationController _approach = AnimationController(vsync: this)
+    ..addStatusListener((status) {
+      if (status != AnimationStatus.completed) return;
+      final arrived = _onArrive;
+      setState(() {
+        _spot = _target;
+        _onArrive = null;
+      });
+      arrived?.call();
+    });
+
+  /// Where Churlock is standing, and stays until he is sent somewhere else.
+  Offset _spot = _home;
+  Offset _from = _home;
+  Offset _target = _home;
+  VoidCallback? _onArrive;
+
   late final AnimationController _rain = AnimationController(
     vsync: this,
     duration: const Duration(milliseconds: 900),
@@ -71,25 +90,49 @@ class _GameScreenState extends State<GameScreen>
   @override
   void dispose() {
     _walk.dispose();
+    _approach.dispose();
     _rain.dispose();
     super.dispose();
   }
 
+  bool get _moving => _dir != null || _approach.isAnimating;
+
   void _go(Dir d) {
-    if (_dir != null) return;
+    if (_moving) return;
     final next = g.destination(d);
     if (next == null) return;
     setState(() {
       _dir = d;
       _destination = next;
+      // He leaves from wherever he happens to be standing.
+      _from = _spot;
     });
     _walk.forward(from: 0);
+  }
+
+  /// Walks Churlock over to the thing at [point], then calls [then].
+  void _walkTo(Offset point, VoidCallback then, {double reach = 62}) {
+    if (_moving || g.busy) return;
+    // Stand beside it, on whichever side keeps him on screen, with his feet
+    // on the floor in front of it.
+    final side = point.dx > 150 ? -1 : 1;
+    final feet = (point.dy + 55).clamp(floorY + 70, _standY + 6);
+    final target = Offset(point.dx + side * reach - 55, feet - 143);
+    setState(() {
+      _from = _spot;
+      _target = target;
+      _onArrive = then;
+    });
+    final distance = (target - _spot).distance;
+    _approach.duration = Duration(milliseconds: (160 + distance * 1.5).round().clamp(200, 900));
+    _approach.forward(from: 0);
   }
 
   void _onTick() {
     final next = _destination;
     if (next != null && _walk.value >= .5) {
       _destination = null;
+      _spot = _home;
       g.enter(next);
     }
   }
@@ -100,6 +143,8 @@ class _GameScreenState extends State<GameScreen>
     if (key == LogicalKeyboardKey.escape) {
       if (g.dialogue != null) {
         g.closeDialogue();
+      } else if (g.panel == Panel.puzzle) {
+        g.cancelTask();
       } else if (g.panel != Panel.none) {
         g.closePanel();
       }
@@ -123,7 +168,7 @@ class _GameScreenState extends State<GameScreen>
       autofocus: true,
       onKeyEvent: _onKey,
       child: AbsorbPointer(
-        absorbing: _dir != null,
+        absorbing: _moving,
         child: Stack(
           children: [
             Positioned.fill(
@@ -147,15 +192,20 @@ class _GameScreenState extends State<GameScreen>
                 child: _EvidenceSpot(
                   key: ValueKey('evidence-${e.id}'),
                   evidence: e,
-                  found: g.found.contains(e.id),
-                  onTap: () => g.inspect(e),
+                  found: g.found.contains(e.id) && !g.canDust(e),
+                  dust: g.canDust(e),
+                  onTap: () => _walkTo(evidencePos(e), () => g.inspect(e)),
                 ),
               ),
             for (final (id, x) in placements[room.id] ?? const <(String, double)>[])
               _character(personById(id), x),
+            for (final n in g.nooksHere) _nook(n),
             for (final d in Dir.values)
               if (neighbor(room, d) case final Room next) _arrow(d, next),
-            AnimatedBuilder(animation: _walk, builder: (context, _) => _churlock()),
+            AnimatedBuilder(
+              animation: Listenable.merge([_walk, _approach]),
+              builder: (context, _) => _churlock(),
+            ),
             Positioned(left: 14, top: 12, child: _RoomLabel(room)),
             Positioned(right: 14, top: 12, child: _Hud(g, widget.voice)),
             if (room.id == 'entrance')
@@ -191,18 +241,25 @@ class _GameScreenState extends State<GameScreen>
                   ),
                 ),
               ),
-            if (g.dialogue != null) ...[
-              Scrim(onTap: g.closeDialogue, opacity: .25),
-              Positioned(left: 20, right: 20, bottom: 14, height: 236, child: DialoguePanel(g)),
-            ],
             if (g.panel != Panel.none) ...[
-              Scrim(onTap: g.closePanel),
+              Scrim(onTap: g.panel == Panel.puzzle ? null : g.closePanel),
               Positioned.fill(
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 30),
-                  child: g.panel == Panel.notebook ? NotebookPanel(g) : AccusePanel(g),
+                  child: switch (g.panel) {
+                    Panel.notebook => NotebookPanel(g),
+                    Panel.accuse => AccusePanel(g),
+                    Panel.nook => NookPanel(g),
+                    _ => PuzzlePanel(g),
+                  },
                 ),
               ),
+            ],
+            // Dialogue sits above the panels, so finds inside furniture can
+            // be read without closing it.
+            if (g.dialogue != null) ...[
+              Scrim(onTap: g.closeDialogue, opacity: .25),
+              Positioned(left: 20, right: 20, bottom: 14, height: 236, child: DialoguePanel(g)),
             ],
           ],
         ),
@@ -210,12 +267,13 @@ class _GameScreenState extends State<GameScreen>
     );
   }
 
-  /// Churlock, either standing at his spot or waddling between rooms.
+  /// Churlock: standing where he last stopped, crossing the room to
+  /// something, or waddling off to the next room.
   Widget _churlock() {
     final d = _dir;
-    var pos = _home;
+    var pos = _spot;
     var facingLeft = false;
-    var scale = 1.0;
+    var stairs = 1.0;
     var sway = 0.0;
     var bob = 0.0;
     if (d != null) {
@@ -223,18 +281,29 @@ class _GameScreenState extends State<GameScreen>
       final leaving = t < .5;
       final part = Curves.easeInOut.transform(leaving ? t * 2 : t * 2 - 1);
       // He arrives through the side opposite the one he left by.
-      final from = leaving ? _home : _exitPoint(_opposite(d));
+      final from = leaving ? _from : _exitPoint(_opposite(d));
       final to = leaving ? _exitPoint(d) : _home;
       pos = Offset.lerp(from, to, part)!;
       facingLeft = to.dx < from.dx;
       // Stairs lead away from the viewer, so he shrinks as he climbs.
       final depth = leaving ? part : 1 - part;
       final vertical = leaving ? d : _opposite(d);
-      if (vertical == Dir.up) scale = 1 - .45 * depth;
+      if (vertical == Dir.up) stairs = 1 - .45 * depth;
       final step = t * 2 * pi * 9;
       sway = sin(step) * .09;
       bob = -sin(step).abs() * 7;
+    } else if (_approach.isAnimating) {
+      final t = Curves.easeInOut.transform(_approach.value);
+      pos = Offset.lerp(_from, _target, t)!;
+      facingLeft = _target.dx < _from.dx;
+      final step = _approach.value * (_target - _from).distance / 26;
+      sway = sin(step) * .09;
+      bob = -sin(step).abs() * 6;
     }
+    // Further back in the room he is drawn a little smaller.
+    final feet = pos.dy + 143;
+    final depthScale = stairs < 1 ? 1.0 : (.8 + .2 * (feet - floorY - 70) / (_standY - floorY - 70)).clamp(.8, 1.0);
+    final scale = stairs * depthScale;
     return Positioned(
       left: pos.dx,
       top: pos.dy + bob,
@@ -250,6 +319,48 @@ class _GameScreenState extends State<GameScreen>
     );
   }
 
+  /// A piece of furniture that can be searched.
+  Widget _nook(Nook n) {
+    return Positioned(
+      left: n.pos.dx - 60,
+      top: n.pos.dy - 20,
+      width: 120,
+      child: Center(
+        child: MouseRegion(
+          cursor: SystemMouseCursors.click,
+          child: GestureDetector(
+            key: ValueKey('nook-${n.id}'),
+            onTap: () => _walkTo(n.pos, () => g.search(n)),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: kInk.withValues(alpha: .75),
+                    shape: BoxShape.circle,
+                    border: Border.all(color: kCream, width: 1.5),
+                  ),
+                  child: Icon(n.icon, color: kCream, size: 22),
+                ),
+                const SizedBox(height: 2),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                  decoration: BoxDecoration(
+                    color: Colors.black54,
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Text(n.name, style: const TextStyle(color: kCream, fontSize: 11)),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _character(Person p, double x) {
     return Positioned(
       left: x - 70,
@@ -259,7 +370,7 @@ class _GameScreenState extends State<GameScreen>
         cursor: SystemMouseCursors.click,
         child: GestureDetector(
           key: ValueKey('person-${p.id}'),
-          onTap: () => g.talkTo(p),
+          onTap: () => _walkTo(Offset(x, _standY - 60), () => g.talkTo(p), reach: 100),
           child: Column(
             children: [
               Container(
@@ -414,11 +525,15 @@ class _EvidenceSpot extends StatefulWidget {
     super.key,
     required this.evidence,
     required this.found,
+    required this.dust,
     required this.onTap,
   });
 
   final Evidence evidence;
   final bool found;
+
+  /// Whether this is the weapon, ready to be dusted for prints.
+  final bool dust;
   final VoidCallback onTap;
 
   @override
@@ -475,7 +590,7 @@ class _EvidenceSpotState extends State<_EvidenceSpot>
                     child: child,
                   ),
                   child: Icon(
-                    e.icon,
+                    widget.dust ? Icons.fingerprint : e.icon,
                     color: e.color,
                     size: 30,
                     shadows: const [Shadow(color: Colors.black, blurRadius: 4)],
