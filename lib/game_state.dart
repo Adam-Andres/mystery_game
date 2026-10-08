@@ -39,11 +39,15 @@ class GameState extends ChangeNotifier {
   Panel panel = Panel.none;
   Dialogue? dialogue;
 
+  /// The evidence hidden in the house this game: a random draw from the
+  /// case, so two playthroughs of one mystery do not offer the same clues.
+  List<Evidence> evidence = const [];
+
   final found = <String>{};
   final visited = <String>{};
 
-  /// Person id -> indexes of the topics already asked.
-  final asked = <String, Set<int>>{};
+  /// Statements already heard, as `person/topicId`.
+  final asked = <String>{};
 
   /// Suspects ticked in the accusation panel; the final verdict once ended.
   final accused = <String>{};
@@ -51,17 +55,23 @@ class GameState extends ChangeNotifier {
   Room get room => roomById(roomId);
 
   Iterable<Evidence> get evidenceHere =>
-      mystery.evidence.where((e) => e.room == roomId);
+      evidence.where((e) => e.room == roomId);
 
-  /// Starts a fresh investigation. The first case is random; after that the
-  /// cases alternate so a replay is never the same mystery twice in a row.
+  /// Starts a fresh investigation with a randomly chosen mystery — never the
+  /// one just played — and a fresh draw of its evidence.
   void newGame({int? caseIndex}) {
     final previous = _caseIndex;
-    _caseIndex = caseIndex ??
-        (previous == null
-            ? _rng.nextInt(allCases.length)
-            : (previous + 1) % allCases.length);
-    mystery = allCases[_caseIndex!];
+    var next = caseIndex ?? _rng.nextInt(allCases.length);
+    if (caseIndex == null && next == previous) {
+      next = (next + 1 + _rng.nextInt(allCases.length - 1)) % allCases.length;
+    }
+    _caseIndex = next;
+    mystery = allCases[next];
+    evidence = [
+      ...mystery.core,
+      for (final group in mystery.variants) group[_rng.nextInt(group.length)],
+      ...(List.of(mystery.herrings)..shuffle(_rng)).take(mystery.herringCount),
+    ];
     roomId = 'entrance';
     found.clear();
     visited
@@ -81,10 +91,13 @@ class GameState extends ChangeNotifier {
 
   bool get busy => dialogue != null || panel != Panel.none;
 
-  void move(Dir d) {
-    if (phase != Phase.playing || busy) return;
-    final next = neighbor(room, d);
-    if (next == null) return;
+  /// Where [d] leads from here, or null if Churlock cannot go that way now.
+  Room? destination(Dir d) {
+    if (phase != Phase.playing || busy) return null;
+    return neighbor(room, d);
+  }
+
+  void enter(Room next) {
     roomId = next.id;
     visited.add(roomId);
     notifyListeners();
@@ -110,22 +123,30 @@ class GameState extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// The questions [personId] can currently be asked, with their index in the
-  /// case's full topic list.
-  List<(int, Topic)> topicsFor(String personId) {
+  static String keyOf(String personId, Topic t) => '$personId/${t.id}';
+
+  /// The questions [personId] can currently be asked. Follow-ups appear only
+  /// once the evidence or the statements they rest on are known.
+  List<Topic> topicsFor(String personId) {
     final all = mystery.topics[personId] ?? const <Topic>[];
     return [
-      for (var i = 0; i < all.length; i++)
-        if (all[i].needs == null || found.contains(all[i].needs)) (i, all[i]),
+      for (final t in all)
+        if ((t.needs.isEmpty || t.needs.any(found.contains)) &&
+            t.heard.every(asked.contains))
+          t,
     ];
   }
 
-  bool hasAsked(String personId, int index) =>
-      asked[personId]?.contains(index) ?? false;
+  bool hasAsked(String personId, Topic t) => asked.contains(keyOf(personId, t));
 
-  void ask(Person p, int index) {
-    final topic = mystery.topics[p.id]![index];
-    asked.putIfAbsent(p.id, () => {}).add(index);
+  /// Everything [personId] has told Churlock so far.
+  List<Topic> statementsOf(String personId) => [
+        for (final t in mystery.topics[personId] ?? const <Topic>[])
+          if (hasAsked(personId, t)) t,
+      ];
+
+  void ask(Person p, Topic topic) {
+    asked.add(keyOf(p.id, topic));
     dialogue = Dialogue(
       speaker: p,
       title: p.name,

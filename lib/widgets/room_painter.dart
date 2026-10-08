@@ -346,7 +346,8 @@ class RoomPainter extends CustomPainter {
     _rect(80, 140, 150, 20, const Color(0xFF616161), 4);
     _rect(90, 215, 130, 135, const Color(0xFF424242), 6);
     _rect(105, 250, 100, 70, const Color(0xFF1B1B1B), 4);
-    _rect(112, 258, 86, 54, const Color(0xFFBF5B17), 3);
+    // The oven is unlit in the case where nothing was baked.
+    _rect(112, 258, 86, 54, caseId == 'cake' ? const Color(0xFF2B2B2B) : const Color(0xFFBF5B17), 3);
     c.drawCircle(const Offset(125, 228), 8, fill(const Color(0xFF9E9E9E)));
     c.drawCircle(const Offset(185, 228), 8, fill(const Color(0xFF9E9E9E)));
     // Counter.
@@ -361,7 +362,7 @@ class RoomPainter extends CustomPainter {
     for (var i = 0; i < 6; i++) {
       final x = 305.0 + i * 30;
       c.drawLine(Offset(x, 128), Offset(x, 138), stroke(const Color(0xFF757575), 3));
-      if (i == 3 && !_brew) continue;
+      if (i == 3 && caseId == 'flat') continue;
       final marble = i == 3;
       _rect(x - 2, 138, 4, 54, marble ? const Color(0xFFB0BEC5) : _wood);
       _rect(x - 6, 146, 12, 38, marble ? const Color(0xFFECEFF1) : const Color(0xFFD9A05B), 5);

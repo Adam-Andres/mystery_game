@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -12,10 +14,76 @@ import 'panels.dart';
 /// Y of the ground the characters stand on.
 const double _standY = 478;
 
-class GameScreen extends StatelessWidget {
+/// Where Churlock stands (top-left of his figure) when he is not walking.
+const _home = Offset(38, _standY - 143);
+
+/// Where he walks to when leaving in each direction: off the side of the
+/// room, up the stairs, or down through the cellar hatch.
+Offset _exitPoint(Dir d) => switch (d) {
+      Dir.left => const Offset(-130, _standY - 143),
+      Dir.right => const Offset(sceneW + 20, _standY - 143),
+      Dir.up => const Offset(425, -40),
+      Dir.down => const Offset(425, sceneH - 110),
+    };
+
+Dir _opposite(Dir d) => switch (d) {
+      Dir.left => Dir.right,
+      Dir.right => Dir.left,
+      Dir.up => Dir.down,
+      Dir.down => Dir.up,
+    };
+
+class GameScreen extends StatefulWidget {
   const GameScreen(this.g, {super.key});
 
   final GameState g;
+
+  @override
+  State<GameScreen> createState() => _GameScreenState();
+}
+
+class _GameScreenState extends State<GameScreen>
+    with SingleTickerProviderStateMixin {
+  // First half: Churlock walks out and the room fades to black. Second half:
+  // the next room fades in as he walks to his usual spot.
+  late final AnimationController _walk = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 1500),
+  )
+    ..addListener(_onTick)
+    ..addStatusListener((status) {
+      if (status == AnimationStatus.completed) setState(() => _dir = null);
+    });
+
+  Dir? _dir;
+  Room? _destination;
+
+  GameState get g => widget.g;
+
+  @override
+  void dispose() {
+    _walk.dispose();
+    super.dispose();
+  }
+
+  void _go(Dir d) {
+    if (_dir != null) return;
+    final next = g.destination(d);
+    if (next == null) return;
+    setState(() {
+      _dir = d;
+      _destination = next;
+    });
+    _walk.forward(from: 0);
+  }
+
+  void _onTick() {
+    final next = _destination;
+    if (next != null && _walk.value >= .5) {
+      _destination = null;
+      g.enter(next);
+    }
+  }
 
   KeyEventResult _onKey(FocusNode node, KeyEvent event) {
     if (event is! KeyDownEvent) return KeyEventResult.ignored;
@@ -35,7 +103,7 @@ class GameScreen extends StatelessWidget {
       LogicalKeyboardKey.arrowDown: Dir.down,
     }[key];
     if (dir == null) return KeyEventResult.ignored;
-    g.move(dir);
+    _go(dir);
     return KeyEventResult.handled;
   }
 
@@ -45,59 +113,116 @@ class GameScreen extends StatelessWidget {
     return Focus(
       autofocus: true,
       onKeyEvent: _onKey,
-      child: Stack(
-        children: [
-          Positioned.fill(
-            child: CustomPaint(painter: RoomPainter(room, caseId: g.mystery.id)),
-          ),
-          for (final e in g.evidenceHere)
-            Positioned(
-              left: e.pos.dx - 24,
-              top: e.pos.dy - 24,
-              child: _EvidenceSpot(
-                key: ValueKey('evidence-${e.id}'),
-                evidence: e,
-                found: g.found.contains(e.id),
-                onTap: () => g.inspect(e),
-              ),
-            ),
-          for (final (id, x) in placements[room.id] ?? const <(String, double)>[])
-            _character(personById(id), x),
-          const Positioned(
-            left: 38,
-            top: _standY - 143,
-            child: IgnorePointer(child: DessertFigure(Dessert.churro, width: 110)),
-          ),
-          for (final d in Dir.values)
-            if (neighbor(room, d) case final Room next) _arrow(d, next),
-          Positioned(left: 14, top: 12, child: _RoomLabel(room)),
-          Positioned(right: 14, top: 12, child: _Hud(g)),
-          if (room.id == 'entrance')
-            Positioned(
-              left: 60,
-              bottom: 16,
-              child: GoldButton(
-                key: const ValueKey('solve'),
-                label: 'I solved the case',
-                icon: Icons.gavel,
-                color: kRed,
-                onPressed: () => g.openPanel(Panel.accuse),
-              ),
-            ),
-          if (g.dialogue != null) ...[
-            Scrim(onTap: g.closeDialogue, opacity: .25),
-            Positioned(left: 20, right: 20, bottom: 14, height: 236, child: DialoguePanel(g)),
-          ],
-          if (g.panel != Panel.none) ...[
-            Scrim(onTap: g.closePanel),
+      child: AbsorbPointer(
+        absorbing: _dir != null,
+        child: Stack(
+          children: [
             Positioned.fill(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 30),
-                child: g.panel == Panel.notebook ? NotebookPanel(g) : AccusePanel(g),
-              ),
+              child: CustomPaint(painter: RoomPainter(room, caseId: g.mystery.id)),
             ),
+            for (final e in g.evidenceHere)
+              Positioned(
+                left: evidencePos(e).dx - 24,
+                top: evidencePos(e).dy - 24,
+                child: _EvidenceSpot(
+                  key: ValueKey('evidence-${e.id}'),
+                  evidence: e,
+                  found: g.found.contains(e.id),
+                  onTap: () => g.inspect(e),
+                ),
+              ),
+            for (final (id, x) in placements[room.id] ?? const <(String, double)>[])
+              _character(personById(id), x),
+            for (final d in Dir.values)
+              if (neighbor(room, d) case final Room next) _arrow(d, next),
+            AnimatedBuilder(animation: _walk, builder: (context, _) => _churlock()),
+            Positioned(left: 14, top: 12, child: _RoomLabel(room)),
+            Positioned(right: 14, top: 12, child: _Hud(g)),
+            if (room.id == 'entrance')
+              Positioned(
+                left: 60,
+                bottom: 16,
+                child: GoldButton(
+                  key: const ValueKey('solve'),
+                  label: 'I solved the case',
+                  icon: Icons.gavel,
+                  color: kRed,
+                  onPressed: () => g.openPanel(Panel.accuse),
+                ),
+              ),
+            // The fade between rooms, darkest at the moment of the switch.
+            if (_dir != null)
+              Positioned.fill(
+                child: IgnorePointer(
+                  child: FadeTransition(
+                    opacity: _walk.drive(
+                      TweenSequence([
+                        TweenSequenceItem(tween: ConstantTween(0.0), weight: 20),
+                        TweenSequenceItem(tween: Tween(begin: 0.0, end: 1.0), weight: 28),
+                        TweenSequenceItem(tween: ConstantTween(1.0), weight: 4),
+                        TweenSequenceItem(tween: Tween(begin: 1.0, end: 0.0), weight: 28),
+                        TweenSequenceItem(tween: ConstantTween(0.0), weight: 20),
+                      ]),
+                    ),
+                    child: const ColoredBox(color: Colors.black),
+                  ),
+                ),
+              ),
+            if (g.dialogue != null) ...[
+              Scrim(onTap: g.closeDialogue, opacity: .25),
+              Positioned(left: 20, right: 20, bottom: 14, height: 236, child: DialoguePanel(g)),
+            ],
+            if (g.panel != Panel.none) ...[
+              Scrim(onTap: g.closePanel),
+              Positioned.fill(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 30),
+                  child: g.panel == Panel.notebook ? NotebookPanel(g) : AccusePanel(g),
+                ),
+              ),
+            ],
           ],
-        ],
+        ),
+      ),
+    );
+  }
+
+  /// Churlock, either standing at his spot or waddling between rooms.
+  Widget _churlock() {
+    final d = _dir;
+    var pos = _home;
+    var facingLeft = false;
+    var scale = 1.0;
+    var sway = 0.0;
+    var bob = 0.0;
+    if (d != null) {
+      final t = _walk.value;
+      final leaving = t < .5;
+      final part = Curves.easeInOut.transform(leaving ? t * 2 : t * 2 - 1);
+      // He arrives through the side opposite the one he left by.
+      final from = leaving ? _home : _exitPoint(_opposite(d));
+      final to = leaving ? _exitPoint(d) : _home;
+      pos = Offset.lerp(from, to, part)!;
+      facingLeft = to.dx < from.dx;
+      // Stairs lead away from the viewer, so he shrinks as he climbs.
+      final depth = leaving ? part : 1 - part;
+      final vertical = leaving ? d : _opposite(d);
+      if (vertical == Dir.up) scale = 1 - .45 * depth;
+      final step = t * 2 * pi * 9;
+      sway = sin(step) * .09;
+      bob = -sin(step).abs() * 7;
+    }
+    return Positioned(
+      left: pos.dx,
+      top: pos.dy + bob,
+      child: IgnorePointer(
+        child: Transform(
+          alignment: Alignment.bottomCenter,
+          transform: Matrix4.identity()
+            ..rotateZ(sway)
+            ..scaleByDouble(facingLeft ? -scale : scale, scale, 1, 1),
+          child: const DessertFigure(Dessert.churro, width: 110),
+        ),
       ),
     );
   }
@@ -147,7 +272,7 @@ class GameScreen extends StatelessWidget {
         cursor: SystemMouseCursors.click,
         child: GestureDetector(
           key: ValueKey('go-${d.name}'),
-          onTap: () => g.move(d),
+          onTap: () => _go(d),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -210,7 +335,7 @@ class _Hud extends StatelessWidget {
       children: [
         GoldButton(
           key: const ValueKey('notebook'),
-          label: 'Notebook  ${g.found.length}/${g.mystery.evidence.length}',
+          label: 'Notebook  ${g.found.length}/${g.evidence.length}',
           icon: Icons.menu_book,
           onPressed: () => g.openPanel(Panel.notebook),
         ),

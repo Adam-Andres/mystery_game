@@ -11,7 +11,9 @@ them alone, or two of them together.
 
 - **Move** between rooms with the on-screen arrows or the arrow keys.
 - **Click** glowing objects to collect evidence, and click desserts to question
-  them. New evidence unlocks new questions.
+  them.
+- **Follow up.** Evidence unlocks new questions, and so does testimony: when one
+  dessert tells you something, you can put it to the others.
 - **Check the notebook** for everything found and said so far.
 - When you are sure, return to the **Entrance Hall**, press
   **I solved the case**, and accuse one or two residents.
@@ -19,7 +21,14 @@ them alone, or two of them together.
 Get it right and the case is closed. Get it wrong and an innocent dessert goes
 to jail while the killer strikes again.
 
-There are two different mysteries; the game alternates between them on replay.
+Everybody has a motive and nobody confesses. Most of what you find is a red
+herring with an innocent explanation, so the case is solved by checking every
+alibi against the evidence and against the other residents.
+
+There are three mysteries, chosen at random. Each game also draws its evidence
+at random from that mystery's pool — key clues turn up in different forms and
+places, and a different set of red herrings is scattered about — so replaying
+a case is not the same hunt twice.
 
 ## Running
 
@@ -32,7 +41,7 @@ All artwork is drawn in code, so there are no image assets.
 
 ## Layout
 
-- `lib/data/` — the house, the residents, and the two cases (evidence and dialogue)
+- `lib/data/` — the house, the residents, the three cases, and their shared red herrings
 - `lib/game_state.dart` — game logic and the verdict
 - `lib/screens/` — title, game, panels, and ending
 - `lib/widgets/` — the painted rooms and characters

@@ -15,7 +15,12 @@ class DialoguePanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final d = g.dialogue!;
-    final topics = d.talk ? g.topicsFor(d.speaker.id) : const <(int, Topic)>[];
+    final available = d.talk ? g.topicsFor(d.speaker.id) : const <Topic>[];
+    // Questions not yet asked come first, so new follow-ups are easy to spot.
+    final topics = [
+      ...available.where((t) => !g.hasAsked(d.speaker.id, t)),
+      ...available.where((t) => g.hasAsked(d.speaker.id, t)),
+    ];
     return Plaque(
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -49,12 +54,12 @@ class DialoguePanel extends StatelessWidget {
                   child: ListView(
                     padding: EdgeInsets.zero,
                     children: [
-                      for (final (i, topic) in topics)
+                      for (final topic in topics)
                         _TopicButton(
-                          key: ValueKey('topic-$i'),
+                          key: ValueKey('topic-${topic.id}'),
                           topic: topic,
-                          asked: g.hasAsked(d.speaker.id, i),
-                          onTap: () => g.ask(d.speaker, i),
+                          asked: g.hasAsked(d.speaker.id, topic),
+                          onTap: () => g.ask(d.speaker, topic),
                         ),
                     ],
                   ),
@@ -88,10 +93,10 @@ class _TopicButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Questions unlocked by evidence stand out until they have been asked.
+    // Follow-up questions stand out until they have been asked.
     final color = asked
         ? Colors.white54
-        : topic.needs != null
+        : topic.isFollowUp
             ? kGold
             : kCream;
     return Padding(
@@ -109,9 +114,11 @@ class _TopicButton extends StatelessWidget {
                 Icon(
                   asked
                       ? Icons.check
-                      : topic.needs != null
+                      : topic.needs.isNotEmpty
                           ? Icons.search
-                          : Icons.chat_bubble_outline,
+                          : topic.heard.isNotEmpty
+                              ? Icons.forum
+                              : Icons.chat_bubble_outline,
                   color: color,
                   size: 15,
                 ),
@@ -136,8 +143,8 @@ class NotebookPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final evidence = g.mystery.evidence.where((e) => g.found.contains(e.id)).toList();
-    final speakers = [...police, ...residents].where((p) => g.asked[p.id]?.isNotEmpty ?? false);
+    final evidence = g.evidence.where((e) => g.found.contains(e.id)).toList();
+    final speakers = [...police, ...residents].where((p) => g.statementsOf(p.id).isNotEmpty);
     return Plaque(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -161,7 +168,7 @@ class NotebookPanel extends StatelessWidget {
               children: [
                 Expanded(
                   child: _column(
-                    'Evidence (${evidence.length}/${g.mystery.evidence.length})',
+                    'Evidence (${evidence.length}/${g.evidence.length})',
                     evidence.isEmpty ? 'Nothing yet. Click anything that glints.' : null,
                     [
                       for (final e in evidence)
@@ -180,11 +187,11 @@ class NotebookPanel extends StatelessWidget {
                     speakers.isEmpty ? 'Nobody questioned yet. Click a dessert to talk.' : null,
                     [
                       for (final p in speakers)
-                        for (final i in g.asked[p.id]!.toList()..sort())
+                        for (final t in g.statementsOf(p.id))
                           _entry(
                             DessertFigure(p.dessert, width: 20),
-                            '${p.name}: “${g.mystery.topics[p.id]![i].question}”',
-                            g.mystery.topics[p.id]![i].answer,
+                            '${p.name}: “${t.question}”',
+                            t.answer,
                           ),
                     ],
                   ),
