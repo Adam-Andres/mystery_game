@@ -189,11 +189,20 @@ class _CutsceneState extends State<Cutscene> with TickerProviderStateMixin {
 
   Widget _stage(double t) {
     final lurking = widget.kind == CutsceneKind.struckAgain ? _span(t, .5, .62) : 0.0;
+    // The door opens as Churlock reaches it, and shuts behind Watsonut.
+    final door = _arrival
+        ? Curves.easeOut.transform(_span(t, .64, .71)) * (1 - _span(t, .86, .91))
+        : 0.0;
     return Stack(
       children: [
         Positioned.fill(
           child: CustomPaint(
-            painter: ExteriorPainter(gloomy: _gloomy, time: t, lurker: lurking),
+            painter: ExteriorPainter(
+              gloomy: _gloomy,
+              time: t,
+              lurker: lurking,
+              door: door,
+            ),
           ),
         ),
         if (_arrival) ..._arrivalActors(t) else ..._departureActors(t),

@@ -280,6 +280,16 @@ void main() {
     await tester.pump();
     expect(g.phase, Phase.playing);
     expect(g.roomId, 'entrance');
+    // Nothing can be clicked until Watsonut has said his piece.
+    await tester.pump();
+    expect(find.text(watsonut.greeting), findsOneWidget);
+    await tester.tap(_key('notebook'), warnIfMissed: false);
+    await tester.tap(_key('go-down'), warnIfMissed: false);
+    await tester.pump(const Duration(seconds: 1));
+    expect(g.panel, Panel.none);
+    expect(g.roomId, 'entrance');
+    expect(find.text(watsonut.greeting), findsOneWidget);
+    await tester.pump(const Duration(seconds: 12));
     await tester.tap(_key('go-down'));
     await tester.pump();
     // Mid-walk the room has not changed yet, and clicks are ignored.
@@ -610,11 +620,12 @@ void main() {
       await tester.pumpWidget(
         MysteryApp(state: g, voice: Voice(SilentPlayer())),
       );
-      g.newGame(caseIndex: 0, skipIntro: true);
+      g.newGame(caseIndex: 0);
+      g.beginInvestigation();
       await tester.pump();
       await tester.pump();
       expect(find.text(watsonut.greeting), findsOneWidget);
-      await tester.pump(const Duration(seconds: 11));
+      await tester.pump(const Duration(seconds: 12));
       expect(_key('watsonut-remark'), findsNothing);
       // Prodding him afterwards gets a remark, not the explanation again.
       await tester.tap(_key('watsonut'));

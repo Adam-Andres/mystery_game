@@ -18,11 +18,19 @@ const _gumdrops = [
 /// scene and drifts the clouds and chimney smoke; [lurker] fades in a figure
 /// watching from the tower window.
 class ExteriorPainter extends CustomPainter {
-  ExteriorPainter({required this.gloomy, required this.time, this.lurker = 0});
+  ExteriorPainter({
+    required this.gloomy,
+    required this.time,
+    this.lurker = 0,
+    this.door = 0,
+  });
 
   final bool gloomy;
   final double time;
   final double lurker;
+
+  /// How far the front door stands open, from 0 to 1.
+  final double door;
 
   late Canvas c;
 
@@ -38,7 +46,10 @@ class ExteriorPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(ExteriorPainter old) =>
-      old.time != time || old.gloomy != gloomy || old.lurker != lurker;
+      old.time != time ||
+      old.gloomy != gloomy ||
+      old.lurker != lurker ||
+      old.door != door;
 
   void _rect(double x, double y, double w, double h, Color col, [double r = 0]) {
     c.drawRRect(
@@ -176,9 +187,15 @@ class ExteriorPainter extends CustomPainter {
     _window(750, 338, 52, 48);
 
     // Front door between candy-cane pillars.
-    _rect(650, 312, 62, ground - 312, const Color(0xFF7B1F1F), 8);
+    // It swings inward on its left-hand hinges, letting out the hall light.
+    final leaf = 62 * (1 - .78 * door);
+    if (door > 0) {
+      _rect(650, 312, 62, ground - 312, const Color(0xFF2A1408), 8);
+      _rect(650 + leaf, 322, 62 - leaf, ground - 322, const Color(0xFFFFC56B).withValues(alpha: .85));
+    }
+    _rect(650, 312, leaf, ground - 312, Color.lerp(const Color(0xFF7B1F1F), const Color(0xFF5A1414), door)!, 8);
     c.drawArc(const Rect.fromLTWH(644, 298, 74, 60), pi, pi, false, stroke(_icing, 7));
-    c.drawCircle(const Offset(700, 362), 4, fill(const Color(0xFFFFD54F)));
+    c.drawCircle(Offset(650 + leaf - 12, 362), 4, fill(const Color(0xFFFFD54F)));
     for (final x in [632.0, 720.0]) {
       _rect(x, 300, 11, ground - 300, _icing, 4);
       for (var y = 306.0; y < ground - 6; y += 16) {

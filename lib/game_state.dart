@@ -82,6 +82,10 @@ class GameState extends ChangeNotifier {
   bool hintPrompt = false;
   Evidence? _hintAbout;
 
+  /// True from the end of the arrival scene until Watsonut has had his say
+  /// in the entrance hall.
+  bool arriving = false;
+
   /// Suspects ticked in the accusation panel; the final verdict once ended.
   final accused = <String>{};
 
@@ -123,6 +127,7 @@ class GameState extends ChangeNotifier {
     hintsUsed = 0;
     accuseHintsGiven = 0;
     hintPrompt = false;
+    arriving = false;
     asked.clear();
     accused.clear();
     panel = Panel.none;
@@ -136,6 +141,7 @@ class GameState extends ChangeNotifier {
 
   /// Ends the arrival scene and puts Churlock in the entrance hall.
   void beginInvestigation() {
+    arriving = true;
     phase = Phase.playing;
     notifyListeners();
   }

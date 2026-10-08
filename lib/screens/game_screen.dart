@@ -141,8 +141,34 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     // Anything the game does counts as activity, not only clicks.
     g.addListener(_onGameChanged);
     // Watsonut explains himself once, as they come through the door.
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted && !g.busy) _say(watsonut.greeting, seconds: 10);
+    if (g.arriving) {
+      g.arriving = false;
+      _greeting = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) => _greet());
+    }
+  }
+
+  /// True while Watsonut is explaining himself in the entrance hall. Nothing
+  /// can be clicked until he has finished, so that it is not missed.
+  bool _greeting = false;
+
+  Future<void> _greet() async {
+    if (!mounted) return;
+    final text = watsonut.greeting;
+    setState(() => _remark = text);
+    final clock = Stopwatch()..start();
+    await widget.voice.say((voice: watsonut.id, text: text), owner: this);
+    if (!mounted) return;
+    // A clip that ends at once never played, so allow time to read instead.
+    final wait = clock.elapsedMilliseconds < 400
+        ? Duration(milliseconds: 1000 + text.length * 62)
+        : Duration.zero;
+    _remarkTimer = Timer(wait, () {
+      if (!mounted) return;
+      setState(() => _greeting = false);
+      _remarkTimer = Timer(const Duration(seconds: 2), () {
+        if (mounted) setState(() => _remark = null);
+      });
     });
   }
 
@@ -150,7 +176,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     _idleTimer?.cancel();
     _idleTimer = Timer(_idleAfter, _onIdle);
     // Whoever is talking now has the floor.
-    if (g.busy && _remark != null) {
+    if (g.busy && _remark != null && !_greeting) {
       _remarkTimer?.cancel();
       setState(() => _remark = null);
     }
@@ -172,7 +198,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
   void _resetIdle() {
     _idleTimer?.cancel();
     _idleTimer = Timer(_idleAfter, _onIdle);
-    if (_remark != null) {
+    if (_remark != null && !_greeting) {
       _remarkTimer?.cancel();
       widget.voice.release(this);
       setState(() => _remark = null);
@@ -182,7 +208,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
   void _onIdle() {
     if (!mounted) return;
     _idleTimer = Timer(_idleAfter, _onIdle);
-    if (g.busy || _moving) return;
+    if (g.busy || _moving || _greeting) return;
     _say(idleRemarks[_remarks++ % idleRemarks.length]);
   }
 
@@ -260,7 +286,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
   }
 
   KeyEventResult _onKey(FocusNode node, KeyEvent event) {
-    if (event is! KeyDownEvent) return KeyEventResult.ignored;
+    if (event is! KeyDownEvent || _greeting) return KeyEventResult.ignored;
     final key = event.logicalKey;
     if (key == LogicalKeyboardKey.escape) {
       if (g.hintPrompt) {
@@ -294,7 +320,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
       child: Listener(
         onPointerDown: (_) => _resetIdle(),
         child: AbsorbPointer(
-          absorbing: _moving,
+          absorbing: _moving || _greeting,
           child: Stack(
             children: [
               Positioned.fill(
