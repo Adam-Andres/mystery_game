@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../audio/lines.dart';
+import '../audio/voice.dart';
 import '../data/house.dart';
 import '../game_state.dart';
 import '../widgets/dessert_figure.dart';
@@ -7,10 +9,31 @@ import '../widgets/ui.dart';
 
 String _names(Iterable<String> ids) => ids.map((id) => personById(id).name).join(' and ');
 
-class EndingScreen extends StatelessWidget {
-  const EndingScreen(this.g, {super.key});
+class EndingScreen extends StatefulWidget {
+  const EndingScreen(this.g, {super.key, required this.voice});
 
   final GameState g;
+  final Voice voice;
+
+  @override
+  State<EndingScreen> createState() => _EndingScreenState();
+}
+
+class _EndingScreenState extends State<EndingScreen> {
+  GameState get g => widget.g;
+
+  @override
+  void initState() {
+    super.initState();
+    // The narrator explains what really happened.
+    widget.voice.say((voice: narrator, text: g.mystery.solution));
+  }
+
+  @override
+  void dispose() {
+    widget.voice.stop();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -110,11 +133,18 @@ class EndingScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 10),
-            GoldButton(
-              key: const ValueKey('again'),
-              label: 'Take another case',
-              icon: Icons.replay,
-              onPressed: g.newGame,
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                MuteButton(widget.voice),
+                const SizedBox(width: 10),
+                GoldButton(
+                  key: const ValueKey('again'),
+                  label: 'Take another case',
+                  icon: Icons.replay,
+                  onPressed: g.newGame,
+                ),
+              ],
             ),
           ],
         ),

@@ -3,6 +3,8 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../audio/lines.dart';
+import '../audio/voice.dart';
 import '../data/house.dart';
 import '../data/models.dart';
 import '../game_state.dart';
@@ -34,16 +36,17 @@ Dir _opposite(Dir d) => switch (d) {
     };
 
 class GameScreen extends StatefulWidget {
-  const GameScreen(this.g, {super.key});
+  const GameScreen(this.g, {super.key, required this.voice});
 
   final GameState g;
+  final Voice voice;
 
   @override
   State<GameScreen> createState() => _GameScreenState();
 }
 
 class _GameScreenState extends State<GameScreen>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   // First half: Churlock walks out and the room fades to black. Second half:
   // the next room fades in as he walks to his usual spot.
   late final AnimationController _walk = AnimationController(
@@ -55,6 +58,11 @@ class _GameScreenState extends State<GameScreen>
       if (status == AnimationStatus.completed) setState(() => _dir = null);
     });
 
+  late final AnimationController _rain = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 900),
+  )..repeat();
+
   Dir? _dir;
   Room? _destination;
 
@@ -63,6 +71,7 @@ class _GameScreenState extends State<GameScreen>
   @override
   void dispose() {
     _walk.dispose();
+    _rain.dispose();
     super.dispose();
   }
 
@@ -120,6 +129,17 @@ class _GameScreenState extends State<GameScreen>
             Positioned.fill(
               child: CustomPaint(painter: RoomPainter(room, caseId: g.mystery.id)),
             ),
+            if (roomWindows.containsKey(room.id))
+              Positioned.fill(
+                child: IgnorePointer(
+                  child: AnimatedBuilder(
+                    animation: _rain,
+                    builder: (context, _) => CustomPaint(
+                      painter: WindowRainPainter(room.id, _rain.value),
+                    ),
+                  ),
+                ),
+              ),
             for (final e in g.evidenceHere)
               Positioned(
                 left: evidencePos(e).dx - 24,
@@ -137,7 +157,7 @@ class _GameScreenState extends State<GameScreen>
               if (neighbor(room, d) case final Room next) _arrow(d, next),
             AnimatedBuilder(animation: _walk, builder: (context, _) => _churlock()),
             Positioned(left: 14, top: 12, child: _RoomLabel(room)),
-            Positioned(right: 14, top: 12, child: _Hud(g)),
+            Positioned(right: 14, top: 12, child: _Hud(g, widget.voice)),
             if (room.id == 'entrance')
               Positioned(
                 left: 60,
@@ -147,7 +167,10 @@ class _GameScreenState extends State<GameScreen>
                   label: 'I solved the case',
                   icon: Icons.gavel,
                   color: kRed,
-                  onPressed: () => g.openPanel(Panel.accuse),
+                  onPressed: () {
+                    widget.voice.say(eurekaLine);
+                    g.openPanel(Panel.accuse);
+                  },
                 ),
               ),
             // The fade between rooms, darkest at the moment of the switch.
@@ -324,15 +347,18 @@ class _RoomLabel extends StatelessWidget {
 }
 
 class _Hud extends StatelessWidget {
-  const _Hud(this.g);
+  const _Hud(this.g, this.voice);
 
   final GameState g;
+  final Voice voice;
 
   @override
   Widget build(BuildContext context) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        MuteButton(voice),
+        const SizedBox(width: 8),
         GoldButton(
           key: const ValueKey('notebook'),
           label: 'Notebook  ${g.found.length}/${g.evidence.length}',

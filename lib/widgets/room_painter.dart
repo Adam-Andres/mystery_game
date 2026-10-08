@@ -5,11 +5,76 @@ import 'package:flutter/material.dart';
 import '../data/house.dart';
 import '../data/models.dart';
 import 'dessert_figure.dart' show fill, stroke;
+import 'exterior_painter.dart' show scatter;
 
 const _wood = Color(0xFF6B4226);
 const _darkWood = Color(0xFF4A2C1A);
 const _lightWood = Color(0xFF9C6B3F);
 const _brass = Color(0xFFD4A537);
+
+const _stormSky = LinearGradient(
+  begin: Alignment.topCenter,
+  end: Alignment.bottomCenter,
+  colors: [Color(0xFF17131F), Color(0xFF4B4257)],
+);
+
+/// The glass of each room's window, in scene coordinates.
+const roomWindows = <String, Rect>{
+  'parlor': Rect.fromLTWH(90, 90, 150, 150),
+  'dining': Rect.fromLTWH(760, 90, 140, 150),
+  'kitchen': Rect.fromLTWH(540, 60, 130, 110),
+  'study': Rect.fromLTWH(700, 100, 130, 130),
+  'bedroom': Rect.fromLTWH(130, 110, 110, 120),
+  'landing': Rect.fromLTWH(422, 82, 116, 116),
+};
+
+/// Soda rain streaking past a room's window. [cycle] loops 0..1.
+class WindowRainPainter extends CustomPainter {
+  WindowRainPainter(this.roomId, this.cycle);
+
+  final String roomId;
+  final double cycle;
+
+  static const _soda = [
+    Color(0xAAF2D6A0), Color(0xAAD9963A), Color(0xAAB8E986), Color(0xAAFF9EBB),
+  ];
+
+  @override
+  void paint(Canvas c, Size size) {
+    final pane = roomWindows[roomId];
+    if (pane == null) return;
+    final round = roomId == 'landing';
+    c.save();
+    if (round) {
+      c.clipPath(Path()..addOval(pane));
+    } else {
+      c.clipRect(pane);
+    }
+    final span = pane.height + 30;
+    for (var i = 0; i < 30; i++) {
+      final x = pane.left + scatter(i, 3) * (pane.width + 16);
+      final y = pane.top + (scatter(i, 4) * span + cycle * span * (1 + i % 2)) % span - 15;
+      c.drawLine(Offset(x, y), Offset(x - 4, y + 15), stroke(_soda[i % _soda.length], 1.6));
+    }
+    // Drops fizzing on the sill.
+    for (var i = 0; i < 6; i++) {
+      final life = (cycle * 2 + i * .29) % 1;
+      c.drawCircle(
+        Offset(pane.left + (i * 53.1) % pane.width, pane.bottom - 3 - life * 8),
+        1.6,
+        fill(Colors.white.withValues(alpha: .7 * (1 - life))),
+      );
+    }
+    c.restore();
+    final bar = stroke(_darkWood, 5);
+    c.drawLine(pane.topCenter, pane.bottomCenter, bar);
+    c.drawLine(pane.centerLeft, pane.centerRight, bar);
+  }
+
+  @override
+  bool shouldRepaint(WindowRainPainter old) =>
+      old.cycle != cycle || old.roomId != roomId;
+}
 
 /// Paints a room's backdrop at scene size (960x540). [caseId] switches the few
 /// props that differ between mysteries, such as the espresso urn.
@@ -127,15 +192,13 @@ class RoomPainter extends CustomPainter {
     _rect(0, floorY - 12, sceneW, 12, Colors.black38);
   }
 
-  void _window(double x, double y, double w, double h) {
-    _rect(x - 8, y - 8, w + 16, h + 16, _darkWood, 4);
-    _rect(x, y, w, h, const Color(0xFF9FD3F0));
-    c.drawCircle(Offset(x + w * .3, y + h * .35), h * .12, fill(Colors.white70));
-    c.drawCircle(Offset(x + w * .42, y + h * .32), h * .15, fill(Colors.white70));
-    final bar = stroke(_darkWood, 5);
-    c.drawLine(Offset(x + w / 2, y), Offset(x + w / 2, y + h), bar);
-    c.drawLine(Offset(x, y + h / 2), Offset(x + w, y + h / 2), bar);
-    _rect(x - 14, y + h + 6, w + 28, 8, _wood, 2);
+  /// A window onto the storm. The falling rain is drawn by
+  /// [WindowRainPainter], which also repaints the glazing bars over it.
+  void _window() {
+    final pane = roomWindows[room.id]!;
+    _rect(pane.left - 8, pane.top - 8, pane.width + 16, pane.height + 16, _darkWood, 4);
+    c.drawRect(pane, Paint()..shader = _stormSky.createShader(pane));
+    _rect(pane.left - 14, pane.bottom + 6, pane.width + 28, 8, _wood, 2);
   }
 
   void _picture(double x, double y, double w, double h, Color col) {
@@ -282,7 +345,7 @@ class RoomPainter extends CustomPainter {
   }
 
   void _parlor() {
-    _window(90, 90, 150, 150);
+    _window();
     _picture(430, 50, 100, 76, const Color(0xFF2E4A3A));
     c.drawCircle(const Offset(480, 88), 20, fill(const Color(0xFFD7CCC8)));
     // Fireplace.
@@ -308,7 +371,7 @@ class RoomPainter extends CustomPainter {
   }
 
   void _dining() {
-    _window(760, 90, 140, 150);
+    _window();
     // Chandelier.
     c.drawLine(const Offset(480, 0), const Offset(480, 70), stroke(_brass, 4));
     c.drawArc(const Rect.fromLTWH(420, 40, 120, 70), 0, pi, false, stroke(_brass, 5));
@@ -340,7 +403,7 @@ class RoomPainter extends CustomPainter {
   }
 
   void _kitchen() {
-    _window(540, 60, 130, 110);
+    _window();
     _shelves(740, 90, 180, 130, 2);
     // Stove.
     _rect(80, 140, 150, 20, const Color(0xFF616161), 4);
@@ -472,10 +535,9 @@ class RoomPainter extends CustomPainter {
   // Attic
 
   void _landing() {
-    c.drawCircle(const Offset(480, 140), 68, fill(_darkWood));
-    c.drawCircle(const Offset(480, 140), 58, fill(const Color(0xFF9FD3F0)));
-    c.drawLine(const Offset(422, 140), const Offset(538, 140), stroke(_darkWood, 5));
-    c.drawLine(const Offset(480, 82), const Offset(480, 198), stroke(_darkWood, 5));
+    final porthole = roomWindows['landing']!;
+    c.drawCircle(porthole.center, 68, fill(_darkWood));
+    c.drawOval(porthole, Paint()..shader = _stormSky.createShader(porthole));
     _picture(250, 150, 80, 100, const Color(0xFF3E5C76));
     // Telephone table.
     _table(595, 322, 90, 420);
@@ -497,7 +559,7 @@ class RoomPainter extends CustomPainter {
   void _study() {
     _books(230, 110, 90, 240, 4);
     _books(100, 180, 120, 170, 3);
-    _window(700, 100, 130, 130);
+    _window();
     _picture(430, 90, 110, 80, const Color(0xFF5B3A4A));
     _eclair(485, 134, 76);
     // Chair and desk.
@@ -519,7 +581,7 @@ class RoomPainter extends CustomPainter {
   }
 
   void _bedroom() {
-    _window(130, 110, 110, 120);
+    _window();
     // Vanity mirror.
     c.drawOval(const Rect.fromLTWH(810, 150, 90, 130), fill(_brass));
     c.drawOval(const Rect.fromLTWH(818, 158, 74, 114), fill(const Color(0xFFCFE8F5)));

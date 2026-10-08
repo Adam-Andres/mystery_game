@@ -1,7 +1,11 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'dart:io';
+
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mystery/audio/lines.dart';
+import 'package:mystery/audio/voice.dart';
 import 'package:mystery/data/cases.dart';
 import 'package:mystery/data/house.dart';
 import 'package:mystery/data/models.dart';
@@ -66,7 +70,7 @@ void main() {
         final index = allCases.indexOf(mystery);
         final draws = <String>{};
         for (var seed = 0; seed < 40; seed++) {
-          final g = GameState(random: Random(seed))..newGame(caseIndex: index);
+          final g = GameState(random: Random(seed))..newGame(caseIndex: index, skipIntro: true);
           final ids = g.evidence.map((e) => e.id).toSet();
           expect(ids.length, mystery.evidenceCount);
           expect(ids, containsAll(mystery.core.map((e) => e.id)));
@@ -82,7 +86,7 @@ void main() {
         final index = allCases.indexOf(mystery);
         final reached = <String>{};
         for (var seed = 0; seed < 60; seed++) {
-          final g = GameState(random: Random(seed))..newGame(caseIndex: index);
+          final g = GameState(random: Random(seed))..newGame(caseIndex: index, skipIntro: true);
           g.found.addAll(g.evidence.map((e) => e.id));
           var before = -1;
           while (g.asked.length != before) {
@@ -117,20 +121,36 @@ void main() {
     });
   });
 
+  test('every spoken line has a voice clip', () {
+    final lines = allVoiceLines();
+    expect(lines.length, greaterThan(150));
+    final missing = [
+      for (final l in lines)
+        if (!File(clipAsset(l)).existsSync()) '${l.voice}: ${l.text}',
+    ];
+    expect(missing, isEmpty, reason: 'run tool/make_voices.py');
+    final wanted = {for (final l in lines) clipAsset(l).split('/').last};
+    final extra = Directory('assets/voice')
+        .listSync()
+        .map((f) => f.uri.pathSegments.last)
+        .where((f) => !wanted.contains(f));
+    expect(extra, isEmpty, reason: 'unused clips');
+  });
+
   group('verdict', () {
     test('exact culprits win', () {
-      final g = GameState()..newGame(caseIndex: 1);
+      final g = GameState()..newGame(caseIndex: 1, skipIntro: true);
       g
         ..toggleAccused('tira')
         ..toggleAccused('graham')
         ..makeArrest();
-      expect(g.phase, Phase.ended);
+      expect(g.phase, Phase.outro);
       expect(g.won, isTrue);
       expect(g.nextVictim, isNull);
     });
 
     test('a third suspect cannot be added', () {
-      final g = GameState()..newGame(caseIndex: 0);
+      final g = GameState()..newGame(caseIndex: 0, skipIntro: true);
       g
         ..toggleAccused('tira')
         ..toggleAccused('graham')
@@ -139,13 +159,13 @@ void main() {
     });
 
     test('no arrest without a suspect', () {
-      final g = GameState()..newGame(caseIndex: 0);
+      final g = GameState()..newGame(caseIndex: 0, skipIntro: true);
       g.makeArrest();
       expect(g.phase, Phase.playing);
     });
 
     test('wrong accusation frees the killer to strike a free resident', () {
-      final g = GameState()..newGame(caseIndex: 0);
+      final g = GameState()..newGame(caseIndex: 0, skipIntro: true);
       g
         ..toggleAccused('graham')
         ..toggleAccused('barry')
@@ -157,7 +177,7 @@ void main() {
     });
 
     test('catching only one of two killers still loses', () {
-      final g = GameState()..newGame(caseIndex: 1);
+      final g = GameState()..newGame(caseIndex: 1, skipIntro: true);
       g
         ..toggleAccused('tira')
         ..makeArrest();
@@ -167,7 +187,7 @@ void main() {
     });
 
     test('killer plus an innocent is not a win, but nobody else dies', () {
-      final g = GameState()..newGame(caseIndex: 0);
+      final g = GameState()..newGame(caseIndex: 0, skipIntro: true);
       g
         ..toggleAccused('cannoli')
         ..toggleAccused('tira')
@@ -187,15 +207,21 @@ void main() {
 
   testWidgets('play through to a correct arrest', (tester) async {
     final g = GameState(random: Random(1));
-    await tester.pumpWidget(MysteryApp(state: g));
+    await tester.pumpWidget(MysteryApp(state: g, voice: Voice(SilentPlayer())));
     await tester.tap(_key('start'));
     await tester.pump();
+    expect(g.phase, Phase.intro);
     g.newGame(caseIndex: 0);
     await tester.pump();
 
-    // Briefing, then down to the cellar.
-    await tester.tap(_key('close-dialogue'));
+    // The arrival scene narrates line by line, and can be skipped.
+    expect(find.textContaining('gloomy morning'), findsOneWidget);
+    await tester.pump(const Duration(seconds: 16));
+    expect(find.textContaining('Five residents'), findsOneWidget);
+    await tester.tap(_key('cutscene-done'));
     await tester.pump();
+    expect(g.phase, Phase.playing);
+    expect(g.roomId, 'entrance');
     await tester.tap(_key('go-down'));
     await tester.pump();
     // Mid-walk the room has not changed yet, and clicks are ignored.
@@ -238,11 +264,15 @@ void main() {
     await tester.pump();
     await tester.tap(_key('arrest'));
     await tester.pump();
+    expect(find.textContaining('rain has stopped'), findsOneWidget);
+    await tester.pump(const Duration(seconds: 4));
+    await tester.tap(_key('cutscene-done'));
+    await tester.pump();
     expect(find.text('CASE CLOSED'), findsOneWidget);
   });
 
   test('statements unlock questions for other characters', () {
-    final g = GameState(random: Random(1))..newGame(caseIndex: 0);
+    final g = GameState(random: Random(1))..newGame(caseIndex: 0, skipIntro: true);
     bool offered(String person, String id) =>
         g.topicsFor(person).any((t) => t.id == id);
     Topic topic(String person, String id) =>
@@ -263,8 +293,8 @@ void main() {
   testWidgets('every room lays out without errors', (tester) async {
     for (var i = 0; i < allCases.length; i++) {
       final g = GameState(random: Random(i));
-      await tester.pumpWidget(MysteryApp(key: UniqueKey(), state: g));
-      g.newGame(caseIndex: i);
+      await tester.pumpWidget(MysteryApp(key: UniqueKey(), state: g, voice: Voice(SilentPlayer())));
+      g.newGame(caseIndex: i, skipIntro: true);
       // Show every possible clue at once.
       g.evidence = allCases[i].pool.toList();
       g.closeDialogue();
@@ -301,6 +331,9 @@ void main() {
         ..toggleAccused(innocents.first)
         ..toggleAccused(innocents.last)
         ..makeArrest();
+      await tester.pump();
+      await tester.pump(const Duration(seconds: 14));
+      g.showVerdict();
       await tester.pump();
       expect(find.text('THE KILLER STRIKES AGAIN'), findsOneWidget);
     }

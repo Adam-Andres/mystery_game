@@ -39,9 +39,32 @@ flutter test
 
 All artwork is drawn in code, so there are no image assets.
 
+## Voices
+
+Every character, and the narrator of the opening and closing scenes, has their
+own voice. The clips in `assets/voice/` were generated offline with
+[Piper](https://github.com/rhasspy/piper), a free neural text-to-speech engine,
+so the game needs no API key and makes no network calls to speak.
+
+Voices play in the browser build. On Linux and macOS desktop builds they play
+if a command-line audio player is installed (`mpv`, `ffplay`, `mpg123`,
+`gst-play-1.0`, `cvlc`, or macOS's built-in `afplay`); otherwise the game is
+silent, with subtitles. The speaker button mutes them.
+
+After changing any dialogue, regenerate the clips (only new lines are made):
+
+```sh
+flutter test tool/voice_lines.dart
+PIPER=/path/to/piper MODELS=/path/to/voice/models python3 tool/make_voices.py
+```
+
+The voice chosen for each character is the `VOICES` table at the top of
+`tool/make_voices.py`.
+
 ## Layout
 
 - `lib/data/` — the house, the residents, the three cases, and their shared red herrings
+- `lib/audio/` — the spoken lines and the clip player
 - `lib/game_state.dart` — game logic and the verdict
-- `lib/screens/` — title, game, panels, and ending
+- `lib/screens/` — title, opening and closing scenes, game, panels, and verdict
 - `lib/widgets/` — the painted rooms and characters

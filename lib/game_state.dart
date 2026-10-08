@@ -6,7 +6,8 @@ import 'data/cases.dart';
 import 'data/house.dart';
 import 'data/models.dart';
 
-enum Phase { title, playing, ended }
+/// The intro and outro are the narrated scenes outside the mansion.
+enum Phase { title, intro, playing, outro, ended }
 
 enum Panel { none, notebook, accuse }
 
@@ -59,7 +60,7 @@ class GameState extends ChangeNotifier {
 
   /// Starts a fresh investigation with a randomly chosen mystery — never the
   /// one just played — and a fresh draw of its evidence.
-  void newGame({int? caseIndex}) {
+  void newGame({int? caseIndex, bool skipIntro = false}) {
     final previous = _caseIndex;
     var next = caseIndex ?? _rng.nextInt(allCases.length);
     if (caseIndex == null && next == previous) {
@@ -80,11 +81,13 @@ class GameState extends ChangeNotifier {
     asked.clear();
     accused.clear();
     panel = Panel.none;
-    dialogue = const Dialogue(
-      speaker: churlock,
-      title: 'Detective Churlock',
-      text: briefing,
-    );
+    dialogue = null;
+    phase = skipIntro ? Phase.playing : Phase.intro;
+    notifyListeners();
+  }
+
+  /// Ends the arrival scene and puts Churlock in the entrance hall.
+  void beginInvestigation() {
     phase = Phase.playing;
     notifyListeners();
   }
@@ -183,6 +186,12 @@ class GameState extends ChangeNotifier {
     if (!canAccuse) return;
     panel = Panel.none;
     dialogue = null;
+    phase = Phase.outro;
+    notifyListeners();
+  }
+
+  /// Ends the closing scene and shows the verdict.
+  void showVerdict() {
     phase = Phase.ended;
     notifyListeners();
   }

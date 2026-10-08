@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../audio/voice.dart';
+
 const kGold = Color(0xFFFFD27A);
 const kCream = Color(0xFFFFF3DC);
 const kInk = Color(0xFF24140C);
@@ -80,6 +82,30 @@ class Scrim extends StatelessWidget {
         behavior: HitTestBehavior.opaque,
         onTap: onTap,
         child: ColoredBox(color: Colors.black.withValues(alpha: opacity)),
+      ),
+    );
+  }
+}
+
+/// Turns the voices on and off.
+class MuteButton extends StatelessWidget {
+  const MuteButton(this.voice, {super.key});
+
+  final Voice voice;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListenableBuilder(
+      listenable: voice,
+      builder: (context, _) => IconButton(
+        key: const ValueKey('mute'),
+        tooltip: voice.muted ? 'Turn voices on' : 'Turn voices off',
+        onPressed: voice.toggleMute,
+        style: IconButton.styleFrom(
+          backgroundColor: kInk.withValues(alpha: .9),
+          side: const BorderSide(color: kGold, width: 2),
+        ),
+        icon: Icon(voice.muted ? Icons.volume_off : Icons.volume_up, color: kGold),
       ),
     );
   }
