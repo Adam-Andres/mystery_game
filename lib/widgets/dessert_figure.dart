@@ -359,11 +359,14 @@ class _DessertPainter extends CustomPainter {
     c.drawCircle(centre, radius, fill(const Color(0xFFDDA35B)));
     c.drawCircle(centre.translate(0, -radius * .06), radius * .86, fill(icing));
     // The hole doubles as a surprised mouth.
+    // It opens downward from under the moustache when he talks.
+    final gape = radius * (talk > 0 ? .25 + .42 * talk : .4);
     c.drawOval(
-      Rect.fromCenter(
-        center: centre.translate(0, radius * .25),
-        width: radius * .4,
-        height: radius * (talk > 0 ? .2 + .36 * talk : .4),
+      Rect.fromLTWH(
+        centre.dx - radius * (talk > 0 ? .17 + .06 * talk : .2),
+        centre.dy + radius * .05,
+        radius * (talk > 0 ? .34 + .12 * talk : .4),
+        gape,
       ),
       fill(const Color(0xFF5A3A1A)),
     );

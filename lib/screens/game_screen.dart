@@ -86,7 +86,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
   late final AnimationController _walk =
       AnimationController(
           vsync: this,
-          duration: const Duration(milliseconds: 2400),
+          duration: const Duration(milliseconds: 3500),
         )
         ..addListener(_onTick)
         ..addStatusListener((status) {
@@ -499,6 +499,13 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     );
   }
 
+  /// Watsonut's little jump of surprise on finding Churlock already gone,
+  /// in the moment before he sets off after him, [t] of the way through.
+  static double _startle(double t) => t < _lag ? -sin(pi * t / _lag) * 18 : 0;
+
+  /// How much of a walk has gone by before Watsonut starts to follow.
+  static const _lag = .25;
+
   /// Churlock, or with [partner] Watsonut at his heel: standing where they
   /// last stopped, crossing the room to something, or waddling off to the
   /// next room.
@@ -506,7 +513,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     // Churlock is off before Watsonut has noticed. Watsonut stands a moment
     // longer, then hurries after him to catch up.
     double pace(double t) => partner
-        ? Curves.easeOut.transform(((t - .25) / .75).clamp(0.0, 1.0))
+        ? Curves.easeOut.transform(((t - _lag) / (1 - _lag)).clamp(0.0, 1.0))
         : Curves.easeInOut.transform(t);
     final heel = partner ? _heel : Offset.zero;
     final d = _dir;
@@ -530,9 +537,10 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
       (pos, facingLeft) = _along(path, part);
       // Watsonut's steps follow his own progress: none while he dithers,
       // then a flurry of short ones.
-      final step = partner ? part * 2 * pi * 8 : t * 2 * pi * 9;
+      final step = partner ? part * 2 * pi * 11 : t * 2 * pi * 13;
       sway = sin(step) * .09;
       bob = -sin(step).abs() * 7;
+      if (partner && leaving) bob += _startle(t * 2);
     } else if (_approach.isAnimating) {
       final t = pace(_approach.value);
       pos = Offset.lerp(_from + heel, _target + heel, t)!;
@@ -541,6 +549,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
           (partner ? t : _approach.value) * (_target - _from).distance / 20;
       sway = sin(step) * .09;
       bob = -sin(step).abs() * 6;
+      if (partner) bob += _startle(_approach.value);
     }
     // Further back in the room they are drawn a little smaller.
     final feet = pos.dy + 143;

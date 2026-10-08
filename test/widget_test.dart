@@ -258,8 +258,8 @@ void main() {
   /// Lets a room-to-room walk run to its end.
   Future<void> walk(WidgetTester tester) async {
     await tester.pump();
-    await tester.pump(const Duration(milliseconds: 1300));
-    await tester.pump(const Duration(milliseconds: 1300));
+    await tester.pump(const Duration(milliseconds: 1800));
+    await tester.pump(const Duration(milliseconds: 1800));
     await tester.pump();
   }
 
