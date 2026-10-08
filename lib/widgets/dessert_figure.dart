@@ -368,7 +368,8 @@ class _DessertPainter extends CustomPainter {
         radius * (talk > 0 ? .34 + .12 * talk : .4),
         gape,
       ),
-      fill(const Color(0xFF5A3A1A)),
+      // Darker on Watsonut, or it would vanish into his chocolate icing.
+      fill(Color(doctor ? 0xFF1C0D06 : 0xFF5A3A1A)),
     );
     if (sprinkles) {
       const colours = [
@@ -417,10 +418,12 @@ class _DessertPainter extends CustomPainter {
           drizzle,
         );
       }
+      // His moustache bobs up and down as he speaks.
+      final lift = talk * radius * .14;
       final tache = _line(const Color(0xFFF5E6C8), w * .045);
       c.drawArc(
         Rect.fromCenter(
-          center: centre.translate(-radius * .2, radius * .02),
+          center: centre.translate(-radius * .2, radius * .02 - lift),
           width: w * .16,
           height: w * .1,
         ),
@@ -431,7 +434,7 @@ class _DessertPainter extends CustomPainter {
       );
       c.drawArc(
         Rect.fromCenter(
-          center: centre.translate(radius * .2, radius * .02),
+          center: centre.translate(radius * .2, radius * .02 - lift),
           width: w * .16,
           height: w * .1,
         ),
