@@ -172,6 +172,20 @@ class GameState extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Brings a piece of evidence already in the notebook back up.
+  void review(Evidence e) => _show(e);
+
+  /// Plays back something [p] has already said.
+  void replay(Person p, Topic topic) {
+    dialogue = Dialogue(
+      speaker: p,
+      title: p.name,
+      text: topic.answer,
+      note: 'You asked: “${topic.question}”',
+    );
+    notifyListeners();
+  }
+
   /// Called by a minigame when the player has finished it.
   void completeTask() {
     final e = puzzle;

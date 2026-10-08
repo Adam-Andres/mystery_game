@@ -26,7 +26,7 @@ class DialoguePanel extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          DessertFigure(d.speaker.dessert, width: 96),
+          DessertFigure(d.speaker.dessert, width: 96, animate: true),
           const SizedBox(width: 14),
           Expanded(
             child: Column(
@@ -176,8 +176,13 @@ class NotebookPanel extends StatelessWidget {
             children: [
               const Icon(Icons.menu_book, color: kGold),
               const SizedBox(width: 8),
-              const Expanded(
-                child: Text("Churlock's Notebook", style: kHeading),
+              const Text("Churlock's Notebook", style: kHeading),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  'Click an entry to read and hear it again.',
+                  style: kBody.copyWith(fontSize: 12, color: Colors.white54),
+                ),
               ),
               GoldButton(
                 key: const ValueKey('close-panel'),
@@ -200,9 +205,11 @@ class NotebookPanel extends StatelessWidget {
                     [
                       for (final e in evidence)
                         _entry(
+                          'note-${e.id}',
                           Icon(e.icon, color: e.color, size: 20),
                           '${e.name} — ${_whereFound(e)}',
                           e.description,
+                          () => g.review(e),
                         ),
                     ],
                   ),
@@ -218,9 +225,11 @@ class NotebookPanel extends StatelessWidget {
                       for (final p in speakers)
                         for (final t in g.statementsOf(p.id))
                           _entry(
+                            'note-${GameState.keyOf(p.id, t)}',
                             DessertFigure(p.dessert, width: 20),
                             '${p.name}: “${t.question}”',
                             t.answer,
+                            () => g.replay(p, t),
                           ),
                     ],
                   ),
@@ -256,31 +265,54 @@ class NotebookPanel extends StatelessWidget {
     );
   }
 
-  Widget _entry(Widget leading, String title, String body) {
+  /// One line of the notebook. Clicking it brings the evidence or the
+  /// statement back up, spoken again in its owner's voice.
+  Widget _entry(
+    String key,
+    Widget leading,
+    String title,
+    String body,
+    VoidCallback onTap,
+  ) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 10, right: 8),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          leading,
-          const SizedBox(width: 8),
-          Expanded(
-            child: Column(
+      padding: const EdgeInsets.only(bottom: 6, right: 8),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(8),
+        child: InkWell(
+          key: ValueKey(key),
+          borderRadius: BorderRadius.circular(8),
+          hoverColor: Colors.white10,
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.all(4),
+            child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  title,
-                  style: kBody.copyWith(
-                    color: kGold,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 13,
+                leading,
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: kBody.copyWith(
+                          color: kGold,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 13,
+                        ),
+                      ),
+                      Text(body, style: kBody.copyWith(fontSize: 13)),
+                    ],
                   ),
                 ),
-                Text(body, style: kBody.copyWith(fontSize: 13)),
+                const SizedBox(width: 4),
+                const Icon(Icons.volume_up, color: Colors.white38, size: 16),
               ],
             ),
           ),
-        ],
+        ),
       ),
     );
   }

@@ -28,6 +28,19 @@ VOICES = {
     "glaze": ("en_US-bryce-medium", 1.0, 1.05),
 }
 
+# Lines that get a rising four-note chime under them, and are delivered
+# louder, higher and with a little echo.
+FANFARE = {"Eureka!"}
+CHIME = (
+    "aevalsrc=0.22*("
+    "sin(2*PI*523*t)*exp(-6*t)"
+    "+sin(2*PI*659*(t-0.1))*exp(-6*(t-0.1))*gte(t\\,0.1)"
+    "+sin(2*PI*784*(t-0.2))*exp(-6*(t-0.2))*gte(t\\,0.2)"
+    "+sin(2*PI*1047*(t-0.3))*exp(-3.5*(t-0.3))*gte(t\\,0.3)"
+    "+0.5*sin(2*PI*1568*(t-0.3))*exp(-5*(t-0.3))*gte(t\\,0.3)"
+    "):d=1.9:s=22050"
+)
+
 KEEP_CAPS = {"PM", "AM", "IOU"}
 RATE = 22050
 
@@ -83,7 +96,40 @@ def main():
                 input=requests.encode(), check=True,
                 stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
             )
+            # Fanfare lines are spoken again, slower and with more feeling.
+            shouted = "".join(
+                json.dumps({
+                    "text": speakable(l["text"]),
+                    "output_file": os.path.join(tmp, l["file"] + ".wav"),
+                }) + "\n"
+                for l in todo if l["text"] in FANFARE
+            )
+            if shouted:
+                subprocess.run(
+                    [piper, "--model", os.path.join(models, model + ".onnx"),
+                     "--json-input", "--length_scale", str(length * 1.35),
+                     "--noise_scale", "0.9"],
+                    input=shouted.encode(), check=True,
+                    stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                )
             for l in todo:
+                if l["text"] in FANFARE:
+                    lift = 1.1
+                    subprocess.run(
+                        [ffmpeg, "-nostdin", "-y", "-loglevel", "error",
+                         "-i", os.path.join(tmp, l["file"] + ".wav"),
+                         "-f", "lavfi", "-i", CHIME,
+                         "-filter_complex",
+                         f"[0:a]asetrate={RATE * lift:.0f},aresample={RATE},"
+                         f"atempo={1 / lift:.4f},loudnorm=I=-13:TP=-1.5,"
+                         "aecho=0.8:0.7:70|140:0.3|0.15,adelay=420[v];"
+                         "[1:a][v]amix=inputs=2:normalize=0:duration=longest,"
+                         "alimiter=limit=0.95[out]",
+                         "-map", "[out]", "-ac", "1", "-ar", str(RATE),
+                         "-b:a", "64k", os.path.join(out_dir, l["file"] + ".mp3")],
+                        check=True,
+                    )
+                    continue
                 filters = []
                 if pitch != 1.0:
                     filters += [f"asetrate={RATE * pitch:.0f}",

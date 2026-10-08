@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../data/house.dart';
 import '../data/models.dart';
-import 'dessert_figure.dart' show fill, stroke;
+import 'pixel.dart';
 import 'exterior_painter.dart' show scatter;
 
 const _wood = Color(0xFF6B4226);
@@ -116,16 +116,10 @@ class RoomPainter extends CustomPainter {
       case 'storage':
         _storage();
     }
-    final bounds = Offset.zero & size;
-    c.drawRect(
-      bounds,
-      Paint()
-        ..shader = const RadialGradient(
-          radius: .9,
-          colors: [Colors.transparent, Colors.black54],
-          stops: [.65, 1],
-        ).createShader(bounds),
-    );
+    // Dithered shadow closing in from the edges, for a sense of depth.
+    ditherShade(c, const Rect.fromLTWH(0, 0, 48, sceneH), AxisDirection.left, strength: .55);
+    ditherShade(c, const Rect.fromLTWH(sceneW - 48, 0, 48, sceneH), AxisDirection.right, strength: .55);
+    ditherShade(c, const Rect.fromLTWH(0, sceneH - 36, sceneW, 36), AxisDirection.down, strength: .5);
   }
 
   @override
@@ -189,7 +183,11 @@ class RoomPainter extends CustomPainter {
     for (var i = -12; i <= 12; i++) {
       c.drawLine(Offset(480 + i * 60, floorY), Offset(480 + i * 115, sceneH), board);
     }
+    // The ceiling's shadow on the wall, and the wall's on the floor.
+    ditherShade(c, const Rect.fromLTWH(0, 0, sceneW, 48), AxisDirection.up, strength: .6);
+    ditherShade(c, const Rect.fromLTWH(0, floorY, sceneW, 24), AxisDirection.up, strength: .55);
     _rect(0, floorY - 12, sceneW, 12, Colors.black38);
+    _rect(0, floorY - 12, sceneW, pixel, Colors.white12);
   }
 
   /// A window onto the storm. The falling rain is drawn by

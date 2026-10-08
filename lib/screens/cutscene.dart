@@ -9,6 +9,7 @@ import '../data/house.dart';
 import '../data/models.dart';
 import '../widgets/dessert_figure.dart';
 import '../widgets/exterior_painter.dart';
+import '../widgets/pixel.dart';
 import '../widgets/ui.dart';
 
 enum CutsceneKind {
@@ -146,9 +147,11 @@ class _CutsceneState extends State<Cutscene> with TickerProviderStateMixin {
           top: -_lift,
           width: sceneW,
           height: sceneH,
-          child: AnimatedBuilder(
-            animation: Listenable.merge([_scene, _rain]),
-            builder: (context, _) => _stage(_scene.value),
+          child: Pixelate(
+            child: AnimatedBuilder(
+              animation: Listenable.merge([_scene, _rain]),
+              builder: (context, _) => _stage(_scene.value),
+            ),
           ),
         ),
         Positioned(
@@ -235,7 +238,7 @@ class _CutsceneState extends State<Cutscene> with TickerProviderStateMixin {
           transform: Matrix4.identity()
             ..rotateZ(sway)
             ..scaleByDouble(scale, scale, 1, 1),
-          child: const DessertFigure(Dessert.churro, width: width),
+          child: const DessertFigure(Dessert.churro, width: width, inScene: true),
         ),
       ),
     );
@@ -290,7 +293,7 @@ class _CutsceneState extends State<Cutscene> with TickerProviderStateMixin {
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
                     for (final p in widget.prisoners)
-                      DessertFigure(p.dessert, width: 40, jailed: true),
+                      DessertFigure(p.dessert, width: 40, jailed: true, inScene: true),
                   ],
                 ),
               ),

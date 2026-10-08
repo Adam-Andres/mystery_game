@@ -32,8 +32,9 @@ const introLines = <VoiceLine>[
   ),
 ];
 
-/// Churlock's cry when the player declares the case solved.
-const VoiceLine eurekaLine = (voice: 'churlock', text: "Eureka! I know who did it!");
+/// Churlock's cry when the player declares the case solved. Its clip is made
+/// specially, with a fanfare under it: see `FANFARE` in tool/make_voices.py.
+const VoiceLine eurekaLine = (voice: 'churlock', text: "Eureka!");
 
 const winLines = <VoiceLine>[
   (
@@ -112,8 +113,9 @@ List<VoiceLine> allVoiceLines() {
   }
   for (final mystery in allCases) {
     add(narrator, mystery.solution);
-    // Churlock reads out what he finds, including what dusting turns up.
-    for (final e in [...mystery.pool, mystery.prints]) {
+    // Churlock reads out what he finds, what dusting turns up, and (from
+    // the notebook) what he has been handed.
+    for (final e in [...mystery.pool, ...mystery.gifts, mystery.prints]) {
       add(churlock.id, e.description);
     }
     add(churlock.id, certificateText(mystery.deskCode));

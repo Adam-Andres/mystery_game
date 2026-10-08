@@ -46,7 +46,10 @@ flutter run -d linux   # or: -d chrome, -d windows, -d macos
 flutter test
 ```
 
-All artwork is drawn in code, so there are no image assets.
+All artwork is drawn in code, so there are no image assets. Scenes and
+characters are rendered to a 320x180 canvas with hard edges and scaled up
+without smoothing, which is what makes them pixel art; the text and buttons
+over the top are left crisp.
 
 ## Voices
 

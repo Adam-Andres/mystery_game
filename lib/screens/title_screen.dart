@@ -22,7 +22,7 @@ class TitleScreen extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 60, vertical: 24),
         child: Row(
           children: [
-            const DessertFigure(Dessert.churro, width: 230),
+            const DessertFigure(Dessert.churro, width: 230, animate: true),
             const SizedBox(width: 40),
             Expanded(
               child: Center(

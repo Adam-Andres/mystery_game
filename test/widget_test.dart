@@ -300,6 +300,29 @@ void main() {
     await tester.tap(_key('notebook'));
     await tester.pump();
     expect(find.textContaining(clue.name), findsOneWidget);
+
+    // Clicking a notebook entry brings it back up, over the notebook.
+    await tester.tap(_key('note-${clue.id}'));
+    await tester.pump();
+    expect(g.dialogue!.speaker.id, 'churlock');
+    expect(g.dialogue!.text, clue.description);
+    await tester.tap(_key('close-dialogue'));
+    await tester.pump();
+    expect(g.panel, Panel.notebook);
+    await tester.tap(_key('note-sprinkles/what'));
+    await tester.pump();
+    expect(g.dialogue!.speaker.id, 'sprinkles');
+    expect(g.dialogue!.talk, isFalse);
+    expect(find.textContaining('You asked'), findsOneWidget);
+    await tester.tap(_key('close-dialogue'));
+    await tester.pump();
+    // A handed-over document can be reviewed too.
+    await tester.tap(_key('note-chart'));
+    await tester.pump();
+    expect(g.dialogue!.title, 'Fingerprint Chart');
+    await tester.tap(_key('close-dialogue'));
+    await tester.pump();
+
     await tester.tap(_key('close-panel'));
     await tester.pump();
 

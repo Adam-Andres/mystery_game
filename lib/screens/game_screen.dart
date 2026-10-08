@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
@@ -9,6 +10,7 @@ import '../data/house.dart';
 import '../data/models.dart';
 import '../game_state.dart';
 import '../widgets/dessert_figure.dart';
+import '../widgets/pixel.dart';
 import '../widgets/room_painter.dart';
 import '../widgets/ui.dart';
 import 'minigames.dart';
@@ -82,6 +84,35 @@ class _GameScreenState extends State<GameScreen>
     duration: const Duration(milliseconds: 900),
   )..repeat();
 
+  // The basement lamps gutter now and then, never more than once in twenty
+  // seconds.
+  late final AnimationController _flicker = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 900),
+  );
+  final _random = Random();
+  Timer? _nextFlicker;
+
+  void _scheduleFlicker() {
+    _nextFlicker = Timer(Duration(seconds: 20 + _random.nextInt(25)), () {
+      if (!mounted) return;
+      _flicker.forward(from: 0);
+      _scheduleFlicker();
+    });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _scheduleFlicker();
+  }
+
+  /// How dark the flicker makes the room at point [t] of its run.
+  static double _dimming(double t) {
+    const steps = [.0, .6, .15, .7, .1, .0, .45, .0];
+    return steps[(t * steps.length).floor().clamp(0, steps.length - 1)];
+  }
+
   Dir? _dir;
   Room? _destination;
 
@@ -89,6 +120,8 @@ class _GameScreenState extends State<GameScreen>
 
   @override
   void dispose() {
+    _nextFlicker?.cancel();
+    _flicker.dispose();
     _walk.dispose();
     _approach.dispose();
     _rain.dispose();
@@ -171,41 +204,79 @@ class _GameScreenState extends State<GameScreen>
         absorbing: _moving,
         child: Stack(
           children: [
+            // The room is a still picture, so it is drawn to pixels once.
             Positioned.fill(
-              child: CustomPaint(painter: RoomPainter(room, caseId: g.mystery.id)),
+              child: Pixelate(
+                child: CustomPaint(painter: RoomPainter(room, caseId: g.mystery.id)),
+              ),
             ),
-            if (roomWindows.containsKey(room.id))
+            // Everything that moves shares a second pixel layer.
+            Positioned.fill(
+              child: Pixelate(
+                child: Stack(
+                  children: [
+                    if (roomWindows.containsKey(room.id))
+                      Positioned.fill(
+                        child: IgnorePointer(
+                          child: AnimatedBuilder(
+                            animation: _rain,
+                            builder: (context, _) => CustomPaint(
+                              painter: WindowRainPainter(room.id, _rain.value),
+                            ),
+                          ),
+                        ),
+                      ),
+                    for (final e in g.evidenceHere)
+                      Positioned(
+                        left: evidencePos(e).dx - 24,
+                        top: evidencePos(e).dy - 24,
+                        child: _EvidenceSpot(
+                          key: ValueKey('evidence-${e.id}'),
+                          evidence: e,
+                          found: g.found.contains(e.id) && !g.canDust(e),
+                          dust: g.canDust(e),
+                          onTap: () => _walkTo(evidencePos(e), () => g.inspect(e)),
+                        ),
+                      ),
+                    for (final (id, x) in placements[room.id] ?? const <(String, double)>[])
+                      Positioned(
+                        left: x - 50,
+                        top: _standY - 130,
+                        child: IgnorePointer(
+                          child: DessertFigure(
+                            personById(id).dessert,
+                            animate: true,
+                            inScene: true,
+                          ),
+                        ),
+                      ),
+                    AnimatedBuilder(
+                      animation: Listenable.merge([_walk, _approach]),
+                      builder: (context, _) => _churlock(),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            if (room.level == 0)
               Positioned.fill(
                 child: IgnorePointer(
                   child: AnimatedBuilder(
-                    animation: _rain,
-                    builder: (context, _) => CustomPaint(
-                      painter: WindowRainPainter(room.id, _rain.value),
+                    animation: _flicker,
+                    builder: (context, _) => ColoredBox(
+                      color: Colors.black.withValues(
+                        alpha: _flicker.isAnimating ? _dimming(_flicker.value) : 0,
+                      ),
                     ),
                   ),
                 ),
               ),
-            for (final e in g.evidenceHere)
-              Positioned(
-                left: evidencePos(e).dx - 24,
-                top: evidencePos(e).dy - 24,
-                child: _EvidenceSpot(
-                  key: ValueKey('evidence-${e.id}'),
-                  evidence: e,
-                  found: g.found.contains(e.id) && !g.canDust(e),
-                  dust: g.canDust(e),
-                  onTap: () => _walkTo(evidencePos(e), () => g.inspect(e)),
-                ),
-              ),
+            // Labels and buttons are kept crisp, above the pixel art.
             for (final (id, x) in placements[room.id] ?? const <(String, double)>[])
               _character(personById(id), x),
             for (final n in g.nooksHere) _nook(n),
             for (final d in Dir.values)
               if (neighbor(room, d) case final Room next) _arrow(d, next),
-            AnimatedBuilder(
-              animation: Listenable.merge([_walk, _approach]),
-              builder: (context, _) => _churlock(),
-            ),
             Positioned(left: 14, top: 12, child: _RoomLabel(room)),
             Positioned(right: 14, top: 12, child: _Hud(g, widget.voice)),
             if (room.id == 'entrance')
@@ -313,7 +384,13 @@ class _GameScreenState extends State<GameScreen>
           transform: Matrix4.identity()
             ..rotateZ(sway)
             ..scaleByDouble(facingLeft ? -scale : scale, scale, 1, 1),
-          child: const DessertFigure(Dessert.churro, width: 110),
+          child: DessertFigure(
+            Dessert.churro,
+            width: 110,
+            // He stops fidgeting while he walks.
+            animate: !_moving,
+            inScene: true,
+          ),
         ),
       ),
     );
@@ -361,32 +438,33 @@ class _GameScreenState extends State<GameScreen>
     );
   }
 
+  /// The name tag over a character, and the area that can be clicked to
+  /// talk to them. The figure itself is drawn in the pixel layer.
   Widget _character(Person p, double x) {
     return Positioned(
       left: x - 70,
       top: _standY - 130 - 26,
       width: 140,
+      height: 156,
       child: MouseRegion(
         cursor: SystemMouseCursors.click,
         child: GestureDetector(
           key: ValueKey('person-${p.id}'),
+          behavior: HitTestBehavior.opaque,
           onTap: () => _walkTo(Offset(x, _standY - 60), () => g.talkTo(p), reach: 100),
-          child: Column(
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                decoration: BoxDecoration(
-                  color: kInk.withValues(alpha: .85),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Text(
-                  p.name,
-                  style: const TextStyle(color: kGold, fontSize: 12, fontWeight: FontWeight.bold),
-                ),
+          child: Align(
+            alignment: Alignment.topCenter,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              decoration: BoxDecoration(
+                color: kInk.withValues(alpha: .85),
+                borderRadius: BorderRadius.circular(10),
               ),
-              const SizedBox(height: 4),
-              DessertFigure(p.dessert),
-            ],
+              child: Text(
+                p.name,
+                style: const TextStyle(color: kGold, fontSize: 12, fontWeight: FontWeight.bold),
+              ),
+            ),
           ),
         ),
       ),

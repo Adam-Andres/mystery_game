@@ -4,10 +4,18 @@ import 'package:flutter/material.dart';
 
 import '../data/house.dart';
 import '../game_state.dart';
-import '../widgets/dessert_figure.dart' show fill, stroke;
 import '../widgets/ui.dart';
 
 const _paperColor = Color(0xFFF7EFD9);
+
+// The minigames are drawn smooth, unlike the pixel-art scenes.
+Paint fill(Color c) => Paint()..color = c;
+
+Paint stroke(Color c, double w) => Paint()
+  ..color = c
+  ..style = PaintingStyle.stroke
+  ..strokeWidth = w
+  ..strokeCap = StrokeCap.round;
 
 /// The frame around whichever hands-on task is in progress.
 class PuzzlePanel extends StatelessWidget {
