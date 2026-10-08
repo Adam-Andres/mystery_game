@@ -11,6 +11,10 @@ abstract class ClipPlayer {
   Future<void> play(String asset);
 
   void stop();
+
+  /// Silences or restores the sound. Where the platform allows, a clip keeps
+  /// running while muted, so unmuting picks it up at the point it has reached.
+  void setMuted(bool muted);
 }
 
 /// A player that makes no sound, for tests and unsupported platforms.
@@ -20,6 +24,9 @@ class SilentPlayer implements ClipPlayer {
 
   @override
   void stop() {}
+
+  @override
+  void setMuted(bool muted) {}
 }
 
 /// The game's voices: speaks pre-recorded lines, and remembers the mute setting.
@@ -38,7 +45,8 @@ class Voice extends ChangeNotifier {
   Future<void> say(VoiceLine line, {Object? owner}) async {
     _player.stop();
     _owner = owner;
-    if (_muted) return;
+    // Lines are played even when muted, only silently, so that narration
+    // keeps its place and its timing.
     await _player.play(clipAsset(line));
   }
 
@@ -53,7 +61,7 @@ class Voice extends ChangeNotifier {
 
   void toggleMute() {
     _muted = !_muted;
-    if (_muted) _player.stop();
+    _player.setMuted(_muted);
     notifyListeners();
   }
 }

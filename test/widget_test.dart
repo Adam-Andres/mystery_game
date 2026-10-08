@@ -16,12 +16,18 @@ Finder _key(String k) => find.byKey(ValueKey(k));
 
 class _RecordingPlayer implements ClipPlayer {
   int stops = 0;
+  final played = <String>[];
 
   @override
-  Future<void> play(String asset) async {}
+  Future<void> play(String asset) async => played.add(asset);
 
   @override
   void stop() => stops++;
+
+  @override
+  void setMuted(bool muted) => mutes.add(muted);
+
+  final mutes = <bool>[];
 }
 
 void main() {
@@ -449,6 +455,21 @@ void main() {
     }
     expect(g.found, contains('prints'));
     expect(find.textContaining('Three sets of prints'), findsOneWidget);
+  });
+
+  test('muting silences narration without stopping or skipping it', () {
+    final player = _RecordingPlayer();
+    final voice = Voice(player);
+    voice.say(introLines[0]);
+    final stopsBefore = player.stops;
+    voice.toggleMute();
+    expect(player.mutes, [true]);
+    expect(player.stops, stopsBefore, reason: 'the clip must keep its place');
+    // Lines that begin while muted still play, silently.
+    voice.say(introLines[1]);
+    expect(player.played, hasLength(2));
+    voice.toggleMute();
+    expect(player.mutes, [true, false]);
   });
 
   test('a closing screen does not silence the next one', () {

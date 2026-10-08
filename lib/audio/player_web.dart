@@ -10,6 +10,13 @@ ClipPlayer createClipPlayer() => _WebPlayer();
 class _WebPlayer implements ClipPlayer {
   web.HTMLAudioElement? _audio;
   Completer<void>? _done;
+  bool _muted = false;
+
+  @override
+  void setMuted(bool muted) {
+    _muted = muted;
+    _audio?.muted = muted;
+  }
 
   @override
   Future<void> play(String asset) {
@@ -20,7 +27,9 @@ class _WebPlayer implements ClipPlayer {
     }
 
     // Flutter serves bundled assets from the `assets/` folder beside the page.
-    final audio = web.HTMLAudioElement()..src = 'assets/$asset';
+    final audio = web.HTMLAudioElement()
+      ..src = 'assets/$asset'
+      ..muted = _muted;
     audio.addEventListener('ended', finish.toJS);
     audio.addEventListener('error', finish.toJS);
     _audio = audio;
