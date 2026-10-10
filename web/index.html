@@ -18,19 +18,39 @@
 
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
-  <meta name="description" content="A new Flutter project.">
+  <meta name="description" content="A point-and-click dessert murder mystery.">
 
   <!-- iOS meta tags & icons -->
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
-  <meta name="apple-mobile-web-app-title" content="mystery">
+  <meta name="apple-mobile-web-app-title" content="Senclair Affair">
   <link rel="apple-touch-icon" href="icons/Icon-192.png">
 
   <!-- Favicon -->
   <link rel="icon" type="image/png" href="favicon.png"/>
 
-  <title>mystery</title>
+  <title>The Senclair Affair</title>
   <link rel="manifest" href="manifest.json">
+
+  <!--
+    Pin the page to the screen. On a phone, turning the device can leave the
+    page scrolled or zoomed by a few pixels, and then every tap lands beside
+    the button it was aimed at.
+  -->
+  <style>
+    html, body {
+      position: fixed;
+      inset: 0;
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      overscroll-behavior: none;
+      touch-action: none;
+      background: #000;
+    }
+  </style>
 </head>
 <body>
   <!--
@@ -41,6 +61,32 @@
     For more details:
     * https://docs.flutter.dev/platform-integration/web/initialization
   -->
+  <script>
+    // After the device is turned, the browser reports its new size late and
+    // sometimes leaves the page scrolled. Put the page back at the top and
+    // have Flutter measure the screen again, a few times as it settles.
+    (function () {
+      var timers = [];
+      function settle() {
+        timers.forEach(clearTimeout);
+        timers = [60, 250, 600, 1200].map(function (ms) {
+          return setTimeout(function () {
+            window.scrollTo(0, 0);
+            window.dispatchEvent(new Event('resize'));
+          }, ms);
+        });
+      }
+      window.addEventListener('orientationchange', settle);
+      if (screen.orientation && screen.orientation.addEventListener) {
+        screen.orientation.addEventListener('change', settle);
+      }
+      if (window.visualViewport) {
+        window.visualViewport.addEventListener('scroll', function () {
+          window.scrollTo(0, 0);
+        });
+      }
+    })();
+  </script>
   <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>

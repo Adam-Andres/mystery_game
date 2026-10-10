@@ -1,12 +1,12 @@
 {
-    "name": "mystery",
-    "short_name": "mystery",
+    "name": "The Senclair Affair",
+    "short_name": "Senclair",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
     "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
-    "orientation": "portrait-primary",
+    "description": "A point-and-click dessert murder mystery.",
+    "orientation": "any",
     "prefer_related_applications": false,
     "icons": [
         {
