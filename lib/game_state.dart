@@ -89,8 +89,20 @@ class GameState extends ChangeNotifier {
   /// Locked furniture that has been opened.
   final unlocked = <String>{};
 
-  /// Ids of the tools Churlock is carrying, in the order he found them.
+  /// Ids of the tools Churlock is carrying, in the order he found them. A
+  /// tool is used up by the thing it opens.
   final items = <String>[];
+
+  /// Every tool he has ever picked up, so that a used one does not reappear
+  /// where it was found.
+  final taken = <String>{};
+
+  /// The three numbers of the study desk's dial, drawn afresh each game.
+  /// They are written down nowhere: each is found by its click.
+  List<int> combination = const [10, 69, 36];
+
+  /// True once the loose lining of the desk drawer has been lifted.
+  bool cornerLifted = false;
 
   /// The order in which the strongbox's pins must be set, which changes
   /// from game to game.
@@ -143,14 +155,25 @@ class GameState extends ChangeNotifier {
 
   /// Tools lying in the current room that have not been picked up yet.
   Iterable<Item> get itemsHere =>
-      allItems.where((i) => i.room == roomId && !items.contains(i.id));
+      allItems.where((i) => i.room == roomId && !taken.contains(i.id));
 
   static const allItems = house.items;
 
   Iterable<Sight> get sightsHere => sights.where((s) => s.room == roomId);
 
+  /// What is to be seen inside [n]: not what is tucked behind its lining.
   Iterable<Evidence> evidenceIn(Nook n) =>
-      evidence.where((e) => e.inside == n.id);
+      evidence.where((e) => e.inside == n.id && !e.hidden);
+
+  /// What is behind the lining of [n], if anything.
+  Iterable<Evidence> hiddenIn(Nook n) =>
+      evidence.where((e) => e.inside == n.id && e.hidden);
+
+  /// Lifts the loose corner of the desk drawer's lining.
+  void liftCorner(Nook n) {
+    cornerLifted = true;
+    notifyListeners();
+  }
 
   /// Starts a fresh investigation with a randomly chosen mystery — never the
   /// one just played — and a fresh draw of its evidence.
@@ -181,6 +204,14 @@ class GameState extends ChangeNotifier {
       ..add(roomId);
     unlocked.clear();
     items.clear();
+    taken.clear();
+    cornerLifted = false;
+    // No number twice running, or there would be no turn between them.
+    combination = [_rng.nextInt(99) + 1];
+    while (combination.length < 3) {
+      final next = _rng.nextInt(100);
+      if (next != combination.last) combination.add(next);
+    }
     pinOrder = [0, 1, 2, 3]..shuffle(_rng);
     hintsUsed = 0;
     accuseHintsGiven = 0;
@@ -307,7 +338,7 @@ class GameState extends ChangeNotifier {
 
   /// Pockets a tool found lying about.
   void take(Item item) {
-    if (!items.contains(item.id)) items.add(item.id);
+    if (taken.add(item.id)) items.add(item.id);
     showItem(item, isNew: true);
   }
 
@@ -446,12 +477,14 @@ class GameState extends ChangeNotifier {
   void forceOpen(Nook n) {
     if (!canOpen(n)) return;
     unlocked.add(n.id);
+    // It stays open, and the tool has done its work.
+    items.remove(n.needs);
     notifyListeners();
   }
 
   /// Tries a combination on a locked piece of furniture.
   bool tryCode(Nook n, String code) {
-    if (code != deskCombination.join('-')) return false;
+    if (code != combination.join('-')) return false;
     unlocked.add(n.id);
     notifyListeners();
     return true;

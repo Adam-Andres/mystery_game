@@ -354,9 +354,21 @@ void main() {
 
       // The strip is in the desk. Fitted back, it adds a sixth suspect.
       final desk = nookById('desk');
-      expect(g.tryCode(desk, deskCombination.join('-')), isTrue);
-      g.inspect(g.evidence.firstWhere((e) => e.id == 'tornsheet'));
+      expect(g.tryCode(desk, g.combination.join('-')), isTrue);
+      g.search(desk);
+      await tester.pump();
+      // The strip is not on show: it is behind the loose lining.
+      expect(_key('evidence-planner'), findsOneWidget);
+      expect(_key('evidence-tornsheet'), findsNothing);
+      await tester.tap(_key('loose-corner'));
+      await tester.pump();
+      expect(_key('hidden-jewels'), findsNothing);
+      expect(g.found, isNot(contains('tornsheet')));
+      await tester.tap(_key('evidence-tornsheet'));
+      await tester.pump();
+      expect(g.found, contains('tornsheet'));
       g.closeDialogue();
+      g.closePanel();
       g.openPanel(Panel.accuse);
       await tester.pump();
       await tester.tap(_key('attach-sheet'));
@@ -371,6 +383,53 @@ void main() {
       await tester.tap(_key('cutscene-done'));
       await tester.pump();
       expect(find.text('CASE CLOSED'), findsOneWidget);
+    });
+
+    testWidgets('elsewhere the compartment holds only jewellery', (tester) async {
+      final g = GameState(random: Random(4));
+      await tester.pumpWidget(
+        MysteryApp(state: g, voice: Voice(SilentPlayer())),
+      );
+      g.newGame(caseIndex: 0, skipIntro: true);
+      final desk = nookById('desk');
+      g.tryCode(desk, g.combination.join('-'));
+      g.search(desk);
+      await tester.pump();
+      await tester.tap(_key('loose-corner'));
+      await tester.pump();
+      expect(_key('evidence-tornsheet'), findsNothing);
+      await tester.tap(_key('hidden-jewels'));
+      await tester.pump();
+      expect(g.dialogue!.text, looseCorner.text);
+    });
+
+    test('the dial has a new combination every game', () {
+      final g = GameState(random: Random(9), twistChance: 0);
+      final seen = <String>{};
+      for (var i = 0; i < 30; i++) {
+        g.newGame();
+        expect(g.combination, hasLength(3));
+        expect(g.combination.every((n) => n >= 0 && n < 100), isTrue);
+        seen.add(g.combination.join('-'));
+      }
+      expect(seen.length, greaterThan(25));
+    });
+
+    test('the butler mentions the compartment when asked about the initials', () {
+      final g = GameState()..newGame(twist: true, skipIntro: true);
+      bool offered() => g.topicsFor('graham').any((t) => t.id == 'initials');
+      expect(offered(), isFalse);
+      g.found.add(
+        g.evidence.firstWhere((e) => e.id == 'wwnote' || e.id == 'wwbill').id,
+      );
+      expect(offered(), isTrue);
+      final topic = g.topicsFor('graham').firstWhere((t) => t.id == 'initials');
+      expect(topic.answer, contains('behind the lining'));
+      for (final c in allCases) {
+        for (final t in c.topics.values.expand((l) => l)) {
+          expect(t.answer, isNot(contains('lining')));
+        }
+      }
     });
 
     test('is lost by arresting a resident', () {
@@ -686,10 +745,10 @@ void main() {
     await tester.tap(_key('dial-left'));
     await tester.pump();
     expect(find.textContaining('Dial reads  0'), findsOneWidget);
-    await dial([5, 3, 8]);
+    await dial([for (final n in g.combination) (n + 50) % 100]);
     expect(g.isOpen(desk), isFalse);
     expect(find.textContaining('does not give'), findsOneWidget);
-    await dial(deskCombination);
+    await dial(g.combination);
     expect(g.isOpen(desk), isTrue);
     await tester.tap(_key('evidence-planner'));
     await tester.pump();
@@ -897,9 +956,17 @@ void main() {
       g.closePanel();
       await tester.pump();
       expect(tester.getCenter(_key('sight-pupcake')), isNot(before));
+      // Each tool is used up by what it opens, and what it opened stays so.
+      expect(g.items, isEmpty);
       for (final item in items) {
-        expect(_key('held-${item.id}'), findsOneWidget);
+        expect(_key('held-${item.id}'), findsNothing);
       }
+      for (final n in [dirt, box, kennel]) {
+        expect(g.isOpen(n), isTrue);
+      }
+      g.enter(roomById('boiler'));
+      await tester.pump();
+      expect(_key('item-shovel'), findsNothing);
     });
 
     testWidgets('explains himself once, on the way in', (tester) async {
@@ -1010,7 +1077,7 @@ void main() {
         for (final n in g.nooksHere) {
           g.search(n);
           await tester.pump();
-          expect(g.tryCode(n, deskCombination.join('-')), isTrue);
+          expect(g.tryCode(n, g.combination.join('-')), isTrue);
           await tester.pump();
           for (final e in g.evidenceIn(n).toList()) {
             await examine(e);

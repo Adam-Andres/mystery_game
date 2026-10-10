@@ -362,12 +362,7 @@ class AccusePanel extends StatelessWidget {
               key: ValueKey(g.sheetAttached ? 'list-whole' : 'list-torn'),
               clipper: g.sheetAttached ? null : const _TornEdge(),
               child: Container(
-                padding: EdgeInsets.fromLTRB(
-                  8,
-                  6,
-                  g.sheetAttached ? 8 : 34,
-                  6,
-                ),
+                padding: EdgeInsets.fromLTRB(8, 6, g.sheetAttached ? 8 : 34, 6),
                 decoration: BoxDecoration(
                   color: kCream.withValues(alpha: .09),
                   borderRadius: const BorderRadius.horizontal(
@@ -651,40 +646,129 @@ class NookPanel extends StatelessWidget {
           Text(nook.blurb, style: kBody.copyWith(fontStyle: FontStyle.italic)),
           const Divider(color: kGold),
           Expanded(
-            child: Center(
-              child: g.isOpen(nook)
-                  ? SingleChildScrollView(
-                      child: Wrap(
-                        spacing: 16,
-                        runSpacing: 16,
-                        alignment: WrapAlignment.center,
-                        children: [
-                          for (final e in g.evidenceIn(nook))
-                            _ItemTile(
-                              key: ValueKey('evidence-${e.id}'),
-                              icon: g.canDust(e) ? Icons.fingerprint : e.icon,
-                              color: e.color,
-                              label: e.name,
-                              done: g.found.contains(e.id) && !g.canDust(e),
-                              onTap: () => g.inspect(e),
-                            ),
-                          for (final junk in nook.junk)
-                            _ItemTile(
-                              key: ValueKey('junk-${junk.name}'),
-                              icon: junk.icon,
-                              color: kCream,
-                              label: junk.name,
-                              done: false,
-                              onTap: () => g.remark(junk),
-                            ),
-                        ],
-                      ),
-                    )
-                  : FittedBox(fit: BoxFit.scaleDown, child: _barrier(nook)),
+            child: Stack(
+              children: [
+                Positioned.fill(child: _contents(nook)),
+                if (nook.locked && g.isOpen(nook))
+                  Positioned(right: 0, bottom: 0, child: _corner(nook)),
+              ],
             ),
           ),
         ],
       ),
+    );
+  }
+
+  /// The bottom right-hand corner of the desk drawer, where the lining
+  /// does not sit quite flat. Lifted, it may have something behind it.
+  Widget _corner(Nook nook) {
+    if (!g.cornerLifted) {
+      return MouseRegion(
+        cursor: SystemMouseCursors.click,
+        child: GestureDetector(
+          key: const ValueKey('loose-corner'),
+          behavior: HitTestBehavior.opaque,
+          onTap: () => g.liftCorner(nook),
+          child: const CustomPaint(
+            size: Size(46, 40),
+            painter: _CornerPainter(lifted: false),
+          ),
+        ),
+      );
+    }
+    return Stack(
+      alignment: Alignment.bottomRight,
+      children: [
+        const CustomPaint(
+          size: Size(70, 60),
+          painter: _CornerPainter(lifted: true),
+        ),
+        // Her jewellery, as a rule. Once, something else.
+        if (g.hiddenIn(nook).isEmpty)
+          Padding(
+            padding: const EdgeInsets.only(right: 6, bottom: 4),
+            child: MouseRegion(
+              cursor: SystemMouseCursors.click,
+              child: GestureDetector(
+                key: const ValueKey('hidden-jewels'),
+                onTap: () => g.remark(looseCorner),
+                child: const Icon(
+                  Icons.diamond,
+                  color: Color(0xFFE57373),
+                  size: 24,
+                  shadows: [Shadow(color: Colors.black, blurRadius: 3)],
+                ),
+              ),
+            ),
+          ),
+        for (final e in g.hiddenIn(nook))
+          Padding(
+            padding: const EdgeInsets.only(right: 8, bottom: 6),
+            child: MouseRegion(
+              cursor: SystemMouseCursors.click,
+              child: GestureDetector(
+                key: ValueKey('evidence-${e.id}'),
+                onTap: () => g.inspect(e),
+                child: Transform.rotate(
+                  angle: -.2,
+                  child: Container(
+                    width: 30,
+                    height: 20,
+                    decoration: BoxDecoration(
+                      color: g.found.contains(e.id)
+                          ? const Color(0xFFBFB59A)
+                          : const Color(0xFFF7EFD9),
+                      borderRadius: BorderRadius.circular(2),
+                      boxShadow: const [
+                        BoxShadow(color: Colors.black54, blurRadius: 3),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _contents(Nook nook) {
+    return Column(
+      children: [
+        Expanded(
+          child: Center(
+            child: g.isOpen(nook)
+                ? SingleChildScrollView(
+                    child: Wrap(
+                      spacing: 16,
+                      runSpacing: 16,
+                      alignment: WrapAlignment.center,
+                      children: [
+                        for (final e in g.evidenceIn(nook))
+                          _ItemTile(
+                            key: ValueKey('evidence-${e.id}'),
+                            icon: g.canDust(e) ? Icons.fingerprint : e.icon,
+                            color: e.color,
+                            label: e.name,
+                            done: g.found.contains(e.id) && !g.canDust(e),
+                            onTap: () => g.inspect(e),
+                          ),
+                        for (final junk in nook.junk)
+                          _ItemTile(
+                            key: ValueKey('junk-${junk.name}'),
+                            icon: junk.icon,
+                            color: kCream,
+                            label: junk.name,
+                            done: false,
+                            onTap: () => g.remark(junk),
+                          ),
+                      ],
+                    ),
+                  )
+                : FittedBox(fit: BoxFit.scaleDown, child: _barrier(nook)),
+          ),
+        ),
+      ],
     );
   }
 }
@@ -694,16 +778,13 @@ extension on NookPanel {
   Widget _barrier(Nook nook) {
     if (nook.locked) {
       return DialLock(
-        combination: deskCombination,
+        combination: g.combination,
         onTry: (code) => g.tryCode(nook, code),
       );
     }
     final tool = itemById(nook.needs!);
     if (g.canOpen(nook) && nook.pick) {
-      return LockPickGame(
-        order: g.pinOrder,
-        onDone: () => g.forceOpen(nook),
-      );
+      return LockPickGame(order: g.pinOrder, onDone: () => g.forceOpen(nook));
     }
     return SizedBox(
       width: 520,
@@ -717,7 +798,9 @@ extension on NookPanel {
           ),
           const SizedBox(height: 10),
           Text(
-            g.canOpen(nook) ? 'I have the ${tool.name.toLowerCase()}.' : nook.barred,
+            g.canOpen(nook)
+                ? 'I have the ${tool.name.toLowerCase()}.'
+                : nook.barred,
             key: const ValueKey('barred'),
             style: kBody,
             textAlign: TextAlign.center,
@@ -735,6 +818,51 @@ extension on NookPanel {
       ),
     );
   }
+}
+
+/// The loose corner of a drawer lining: a slight curl, or folded right back.
+class _CornerPainter extends CustomPainter {
+  const _CornerPainter({required this.lifted});
+
+  final bool lifted;
+
+  @override
+  void paint(Canvas canvas, Size s) {
+    final lining = Paint()
+      ..color = kCream.withValues(alpha: lifted ? .16 : .07);
+    final edge = Paint()
+      ..color = kCream.withValues(alpha: lifted ? .5 : .22)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.2;
+    final fold = lifted ? .0 : .45;
+    final path = Path()
+      ..moveTo(s.width, s.height * fold)
+      ..lineTo(s.width, s.height)
+      ..lineTo(s.width * fold, s.height)
+      ..close();
+    if (lifted) {
+      // The wood beneath, and the lining turned back over itself.
+      canvas.drawPath(path, Paint()..color = const Color(0xFF3A2414));
+      canvas.drawPath(
+        Path()
+          ..moveTo(s.width, 0)
+          ..lineTo(0, s.height)
+          ..lineTo(s.width * .3, s.height * .3)
+          ..close(),
+        lining,
+      );
+    } else {
+      canvas.drawPath(path, lining);
+    }
+    canvas.drawLine(
+      Offset(s.width, s.height * fold),
+      Offset(s.width * fold, s.height),
+      edge,
+    );
+  }
+
+  @override
+  bool shouldRepaint(_CornerPainter old) => old.lifted != lifted;
 }
 
 class _ItemTile extends StatelessWidget {

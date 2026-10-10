@@ -78,6 +78,7 @@ class Evidence {
     this.inside,
     this.puzzle = Puzzle.none,
     this.pieces = const [],
+    this.hidden = false,
   }) : from = null;
 
   /// Evidence that is not lying about the house but handed over by [from].
@@ -92,7 +93,8 @@ class Evidence {
         slot = 0,
         inside = null,
         puzzle = Puzzle.none,
-        pieces = const [];
+        pieces = const [],
+        hidden = false;
 
   final String id;
   final String name;
@@ -111,6 +113,10 @@ class Evidence {
   /// The hidden text for a [Puzzle.rubbing], or the strips, in order, of a
   /// [Puzzle.torn] letter.
   final List<String> pieces;
+
+  /// Whether it is tucked behind the loose lining of the furniture it is
+  /// [inside], and so not seen until the lining is lifted.
+  final bool hidden;
 
   /// Who handed this over, for evidence obtained by asking.
   final String? from;

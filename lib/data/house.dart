@@ -175,10 +175,6 @@ const slots = <String, List<Offset>>{
 
 Offset evidencePos(Evidence e) => slots[e.room]![e.slot];
 
-/// The combination of the study desk. It is written down nowhere: the
-/// dial has to be turned until each tumbler is heard to click.
-const deskCombination = [10, 69, 36];
-
 /// The founding-year certificate in the coat closet names a different year
 /// in each mystery.
 String certificateText(String year) =>
@@ -464,6 +460,16 @@ const pupcake = Person(
 /// it.
 const pupcakeGuarding = Offset(508, 420);
 const pupcakeFed = Offset(680, 446);
+
+/// What is usually in the hidden compartment behind the lining of the desk
+/// drawer.
+const looseCorner = Junk(
+  'Hidden jewellery',
+  "A velvet pouch, tucked in a little compartment behind the lining. A "
+      "garnet brooch, two rings, and a locket with nobody in it. Her private "
+      "jewellery. Pretty, and nothing to do with last night.",
+  icon: Icons.diamond,
+);
 
 /// What Churlock makes of the dog.
 const pupcakeRemark = Junk(

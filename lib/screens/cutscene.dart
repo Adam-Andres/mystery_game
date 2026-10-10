@@ -301,23 +301,23 @@ class _CutsceneState extends State<Cutscene> with TickerProviderStateMixin {
     final happy = widget.kind == CutsceneKind.solved;
     final hop = happy ? -sin(t * 2 * pi * 12).abs() * 6 : 0.0;
     return [
-      // Pupcake bounces up to look over the fence when the right dessert
-      // is driven away.
+      // Pupcake jumps for joy behind the fence when the right dessert is
+      // driven away: only his head clears the top of it.
       if (happy)
         Positioned(
-          left: ExteriorPainter.fenceGap - 36,
-          top: ExteriorPainter.fenceTop - 62,
-          width: 72,
-          height: 62,
+          left: ExteriorPainter.fenceGap - 27,
+          top: ExteriorPainter.fenceTop - 40,
+          width: 54,
+          height: 40,
           child: ClipRect(
             child: OverflowBox(
               alignment: Alignment.topCenter,
               maxHeight: 120,
               child: Transform.translate(
-                offset: Offset(0, 8 + hop),
+                offset: Offset(0, 44 * (1 + hop / 6) - 8),
                 child: const DessertFigure(
                   Dessert.pupcake,
-                  width: 72,
+                  width: 54,
                   animate: true,
                 ),
               ),

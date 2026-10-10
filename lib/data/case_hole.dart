@@ -40,12 +40,13 @@ const holeCase = MysteryCase(
     ),
     Evidence(
       'tornsheet', 'Torn Strip of Paper', 'study', 0,
-      "Folded very small at the back of the drawer: a strip torn from the "
+      "Folded very small behind the lining of the drawer: a strip torn from the "
       "right-hand edge of a police form. The printing matches the "
       "sergeant's list of suspects exactly, and so does the tear. There is "
       "a sixth name on it. “Dr. Long John Watsonut, physician. Born Donut County. "
       "Guest of the deceased. Slept in the house last night.”",
       icon: Icons.content_cut, color: Color(0xFFFFAB91), inside: 'desk',
+      hidden: true,
     ),
   ],
   variants: [
@@ -140,32 +141,35 @@ const holeCase = MysteryCase(
     'souffle': souffleHint,
     'scoresheet': "No gaps at all, and each man watching the other. I "
         "should say that settles the pair of them.",
-    'boots': "Mud proves nothing, Churlock. A gardener may come in by any "
-        "door he pleases. I should press him, and press him hard.",
-    'planner': "J.? A month, old chap. June, or July. She was a busy "
-        "woman. I shouldn't dwell on it.",
+    'boots': "Locked out until midnight, by the look of it. Though a latch "
+        "only stops those who knock, Churlock. Who would know the other "
+        "ways into a house better than the man who tends the outside of it?",
+    'planner': "J.? I should think of the calendar before I thought of a "
+        "person, old chap. June. July. She kept a busy diary.",
     'tornsheet': "Churlock. Old friend. I can explain that. ...No. No, I "
         "don't suppose I can.",
-    'chainlink': "The Colonel wears his eyeglass on a chain, Churlock. "
-        "There you are. I should look no further.",
-    'drizzle': "Cocoa. The niece is covered in the stuff from head to "
-        "foot. Open and shut, I should have thought.",
-    'syringesack': "A kitchen thing, from the kitchen, hidden in the "
-        "pantry. It's the housekeeper. Arrest the housekeeper and have "
-        "done.",
-    'syringedirt': "A kitchen thing, and buried by somebody with a spade. "
-        "The housekeeper and the gardener between them. Have done with "
-        "it.",
-    'wwnote': "J. W.? Might be anybody, old chap. A jam wholesaler. A "
-        "jeweller. I shouldn't waste a minute on it.",
-    'wwbill': "J. W.? Might be anybody, old chap. A jam wholesaler. A "
-        "jeweller. I shouldn't waste a minute on it.",
-    'guestcot': "Some relative of the cook's, I expect, long gone. There "
-        "is nothing in it. Do come away.",
-    'sixthplace': "Butlers lay a spare place out of habit, Churlock. "
-        "There is nothing in it. Do come away.",
-    'prints': "Smudges. The police chart is never wrong: if a print isn't "
-        "on the chart, it is nobody's. Put it out of your mind.",
+    'chainlink': "A gentleman's eyeglass chain. Now, who in this house "
+        "wears an eyeglass, Churlock? I should ask him to show you his.",
+    'drizzle': "Brown, and on top of the custard. Who under this roof "
+        "leaves brown on whatever she touches? Compare it with the wine "
+        "rack, old chap.",
+    'syringesack': "It came out of the kitchen, and it never got far from "
+        "it. I should ask who is at home in both of those rooms.",
+    'syringedirt': "Out of the kitchen, and under the earth. I should ask "
+        "who is at home with a mixing bowl, and who with a spade.",
+    'wwnote': "Initials are slippery things, Churlock. A tradesman, as "
+        "like as not. I should want a good deal more before I gave it an "
+        "afternoon.",
+    'wwbill': "Initials are slippery things, Churlock. A tradesman, as "
+        "like as not. I should want a good deal more before I gave it an "
+        "afternoon.",
+    'guestcot': "Old houses are full of beds that nobody sleeps in. I "
+        "shouldn't read a great deal into a dent in a pillow, old chap.",
+    'sixthplace': "A careful butler lays one more than he needs. Ask him, "
+        "by all means. But I doubt there is much in it.",
+    'prints': "Powder plays tricks on brass, Churlock. A smudge and a "
+        "sleeve can look very like a hand. I should trust the chart over "
+        "my own eyes.",
   },
   lies: {
     'boots', 'planner', 'chainlink', 'drizzle', 'syringesack', 'syringedirt',
@@ -183,14 +187,18 @@ const holeCase = MysteryCase(
         "Well, hello! Twenty years. I never knew you had left Donut County.",
   },
   accuseHints: [
-    "Five suspects and five alibis, Churlock, so one alibi is false. I "
-        "should start with the gardener. Nobody saw him for two hours.",
-    "The Colonel owes her a fortune, and he wears a chain. Need I say "
-        "more? Take the Colonel.",
-    "That list is complete, old chap. Five names. I counted them myself "
-        "when the sergeant handed it to me. Pay no mind to the edge of it.",
-    "Arrest the housekeeper. It was her syringe. Please, Churlock. Arrest "
-        "somebody, and let us go home.",
+    "Before you name anyone, Churlock: five alibis cannot all be sound. I "
+        "should begin with the one that nobody watched. Two hours in a "
+        "greenhouse is a long while to be alone.",
+    "Look at what was left beside the body, old chap, and ask yourself "
+        "who in this house it most resembles. I should start with the "
+        "obvious owner.",
+    "Is the list complete? Naturally it is. Five names, as the sergeant "
+        "gave it to me. Paper frays at the edges, old chap. I shouldn't "
+        "dwell on that.",
+    "The weapon came out of the kitchen, Churlock. In my experience a "
+        "thing finds its way back to whoever owns it. Let us finish this, "
+        "and go home.",
   ],
   topics: {
     'sprinkles': [
@@ -290,6 +298,15 @@ const holeCase = MysteryCase(
         "in a dressing gown and slippers by the garden door, and is gone "
         "before I am up.",
         needs: ['sixthplace', 'guestcot'],
+      ),
+      Topic(
+        'initials', 'Do the initials J. W. mean anything to you?',
+        "Not to me, sir. But Madam said them aloud on Tuesday, to herself, "
+        "at her desk. She had taken to mumbling. “J. W. goes behind the "
+        "lining, where he will never think to look.” She had a little "
+        "compartment made in that drawer years ago, sir, in the corner. I "
+        "was not supposed to know of it.",
+        needs: ['wwnote', 'wwbill'],
       ),
       Topic(
         'name', 'Your doctor is named on this strip.',

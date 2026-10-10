@@ -120,6 +120,7 @@ List<VoiceLine> allVoiceLines() {
     add(churlock.id, item.description);
   }
   add(churlock.id, pupcakeRemark.text);
+  add(churlock.id, looseCorner.text);
   for (final sight in sights) {
     add(churlock.id, sight.junk.text);
   }

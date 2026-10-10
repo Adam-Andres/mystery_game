@@ -14,12 +14,12 @@ them alone, or two of them together.
   them. Churlock walks over to whatever you click.
 - **Search the furniture.** Closets, trunks, drawers and sacks can be opened,
   and some evidence is only found inside them. The study desk has a
-  combination dial with three numbers, and the combination is written down
-  nowhere. Turn it the way the arrow shows and listen: it ticks at every
+  combination dial with three numbers. They change every game and are written
+  down nowhere. Turn it the way the arrow shows and listen: it ticks at every
   notch and gives a loud click at the right number. Press SET there.
 - **Pick up tools.** A coal shovel, a lock pick box and a dog biscuit are lying
   about the house. What you carry shows in boxes at the top of the screen.
-  Each one opens somewhere else: loose earth in the backyard, an iron
+  Each one is used up by the one place it opens, which then stays open: loose earth in the backyard, an iron
   strongbox in the cellar, and the kennel of Pupcake, the cupcake dog, who
   will not budge from his doorway unless bribed.
 - **Follow up.** Evidence unlocks new questions, and so does testimony: when one
