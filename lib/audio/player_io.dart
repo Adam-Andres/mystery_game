@@ -76,3 +76,6 @@ class _CommandPlayer implements ClipPlayer {
     _process = null;
   }
 }
+
+/// Sound effects play through the same command-line player as voices.
+ClipPlayer createEffectsPlayer(List<String> assets) => _CommandPlayer();

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
@@ -33,6 +34,19 @@ class _RecordingPlayer implements ClipPlayer {
   void setMuted(bool muted) => mutes.add(muted);
 
   final mutes = <bool>[];
+}
+
+/// A player whose clips never report that they have finished, as a browser
+/// that has run out of media players behaves.
+class _HangingPlayer implements ClipPlayer {
+  @override
+  Future<void> play(String asset) => Completer<void>().future;
+
+  @override
+  void stop() {}
+
+  @override
+  void setMuted(bool muted) {}
 }
 
 void main() {
@@ -209,6 +223,27 @@ void main() {
     expect(extra, isEmpty, reason: 'unused clips');
   });
 
+  testWidgets('a sound that never ends cannot leave the player stuck', (
+    tester,
+  ) async {
+    final g = GameState(random: Random(2));
+    await tester.pumpWidget(MysteryApp(state: g, voice: Voice(_HangingPlayer())));
+    g.newGame(caseIndex: 0);
+    g.beginInvestigation();
+    await tester.pump();
+    await tester.pump();
+    // Held while Watsonut speaks, as usual.
+    await tester.tap(_key('notebook'), warnIfMissed: false);
+    await tester.pump(const Duration(seconds: 2));
+    expect(g.panel, Panel.none);
+    // But not for ever.
+    await tester.pump(const Duration(seconds: 30));
+    await tester.pump(const Duration(seconds: 3));
+    await tester.tap(_key('notebook'));
+    await tester.pump();
+    expect(g.panel, Panel.notebook);
+  });
+
   testWidgets('the arrow keys go back to moving once the dial is closed', (
     tester,
   ) async {
@@ -263,17 +298,18 @@ void main() {
     // The tenth notch, and no other.
     expect(clicks, [9]);
     expect(effects.played, hasLength(12));
-    expect(find.text('(click)'), findsNothing);
-
-    // With the sound off, the click is shown instead.
-    voice.toggleMute();
+    // The box says so too, for as long as the dial rests on the number.
+    expect(find.text('click'), findsNothing);
     for (var n = 0; n < 98; n++) {
       await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
     }
     await tester.pump();
-    expect(find.text('(click)'), findsOneWidget);
-    await tester.pump(const Duration(seconds: 1));
-    expect(find.text('(click)'), findsNothing);
+    expect(find.text('click'), findsOneWidget);
+    await tester.pump(const Duration(seconds: 2));
+    expect(find.text('click'), findsOneWidget);
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+    await tester.pump();
+    expect(find.text('click'), findsNothing);
 
     // Dragging round the dial turns it too.
     await tester.tap(_key('dial-reset'));

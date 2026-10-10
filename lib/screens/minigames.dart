@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
@@ -553,11 +552,6 @@ class _DialLockState extends State<DialLock> {
   String _message = '';
   double _drag = 0;
 
-  /// True for a moment after the dial has clicked, for players with the
-  /// sound off.
-  bool _caught = false;
-  Timer? _catchTimer;
-
   int get _reading => _steps % _notches;
 
   /// The first and third numbers are dialled to the right.
@@ -582,7 +576,6 @@ class _DialLockState extends State<DialLock> {
 
   @override
   void dispose() {
-    _catchTimer?.cancel();
     final previous = _previous;
     if (_focus.hasFocus && previous != null && previous.context != null) {
       previous.requestFocus();
@@ -592,13 +585,11 @@ class _DialLockState extends State<DialLock> {
   }
 
   void _reset([String message = '']) {
-    _catchTimer?.cancel();
     setState(() {
       _steps = 0;
       _moved = 0;
       _drag = 0;
       _set.clear();
-      _caught = false;
       _message = message;
     });
   }
@@ -619,7 +610,6 @@ class _DialLockState extends State<DialLock> {
       _steps += right ? 1 : -1;
       _moved++;
       _message = '';
-      _caught = false;
     });
     if (_reading != widget.combination[_set.length]) {
       voice?.tick();
@@ -627,16 +617,12 @@ class _DialLockState extends State<DialLock> {
     }
     voice?.click();
     // The last tumbler opens the lock the moment the dial reaches it.
-    if (_last && widget.onTry([..._set, _reading].join('-'))) return;
-    // With the sound off there is nothing to hear, so it is shown instead.
-    if (voice?.muted ?? false) {
-      setState(() => _caught = true);
-      _catchTimer?.cancel();
-      _catchTimer = Timer(const Duration(milliseconds: 700), () {
-        if (mounted) setState(() => _caught = false);
-      });
-    }
+    if (_last) widget.onTry([..._set, _reading].join('-'));
   }
+
+  /// True while the dial rests on the number the next tumbler wants.
+  bool get _onTheNumber =>
+      _moved > 0 && _reading == widget.combination[_set.length];
 
   /// Dragging round the dial, with a finger or the mouse, turns it a notch
   /// at a time. It takes a firmer pull to turn it back than to keep going,
@@ -744,8 +730,8 @@ class _DialLockState extends State<DialLock> {
                   const Text(
                     'A brass dial, and no note of the numbers anywhere. '
                     'Drag round it, or use the arrow keys, and listen: each '
-                    'tumbler clicks at its number. Turn back the other way '
-                    'to set it.',
+                    'tumbler clicks at its number, and the box below says so. '
+                    'Turn back the other way to set it.',
                     style: kBody,
                   ),
                   const SizedBox(height: 12),
@@ -766,18 +752,27 @@ class _DialLockState extends State<DialLock> {
                     ),
                   ),
                   const SizedBox(height: 8),
-                  Text(
-                    _message.isNotEmpty
-                        ? _message
-                        : _caught
-                        ? '(click)'
-                        : ' ',
+                  // What the lock is heard to do: it says so here as well,
+                  // for as long as the dial rests on the right number.
+                  Container(
                     key: const ValueKey('dial-status'),
-                    style: kBody.copyWith(
-                      color: _message.isNotEmpty
-                          ? const Color(0xFFFF8A80)
-                          : kCream,
+                    width: 150,
+                    height: 38,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: _onTheNumber ? kGold : kInk,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: kGold, width: 2),
                     ),
+                    child: Text(
+                      _onTheNumber ? 'click' : '',
+                      style: kHeading.copyWith(color: kInk, letterSpacing: 2),
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    _message.isEmpty ? ' ' : _message,
+                    style: kBody.copyWith(color: const Color(0xFFFF8A80)),
                   ),
                 ],
               ),

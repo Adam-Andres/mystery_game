@@ -29,13 +29,19 @@ class SilentPlayer implements ClipPlayer {
   void setMuted(bool muted) {}
 }
 
+const _clickSound = 'assets/sfx/click.wav';
+const _tickSound = 'assets/sfx/tick.wav';
+
 /// The game's voices: speaks pre-recorded lines, and remembers the mute setting.
 class Voice extends ChangeNotifier {
   Voice([ClipPlayer? player, ClipPlayer? effects])
     : _player = player ?? createClipPlayer(),
       // A voice that was given a player is under test, and stays quiet.
       _effects =
-          effects ?? (player == null ? createClipPlayer() : SilentPlayer());
+          effects ??
+          (player == null
+              ? createEffectsPlayer(const [_clickSound, _tickSound])
+              : SilentPlayer());
 
   final ClipPlayer _player;
 
@@ -43,10 +49,10 @@ class Voice extends ChangeNotifier {
   final ClipPlayer _effects;
 
   /// The loud click of a lock's tumbler falling into place.
-  void click() => _effects.play('assets/sfx/click.mp3');
+  void click() => _effects.play(_clickSound);
 
   /// The faint tick of a dial passing a notch.
-  void tick() => _effects.play('assets/sfx/tick.mp3');
+  void tick() => _effects.play(_tickSound);
 
   bool _muted = false;
   bool get muted => _muted;
@@ -81,7 +87,14 @@ class Voice extends ChangeNotifier {
       ..start();
     // Lines are played even when muted, only silently, so that narration
     // keeps its place and its timing.
-    await _player.play(clipAsset(line));
+    // Nothing in the game may wait for ever on a sound: if the browser
+    // never reports the clip as finished, carry on once it must be over.
+    await _player
+        .play(clipAsset(line))
+        .timeout(
+          Duration(milliseconds: 4000 + line.text.length * 110),
+          onTimeout: () {},
+        );
     if (turn != _turn) return;
     _playing = false;
     // A clip that ends at once never played: the browser refused it, or
