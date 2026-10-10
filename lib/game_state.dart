@@ -128,6 +128,10 @@ class GameState extends ChangeNotifier {
   /// True once the strip torn from the list of suspects has been put back.
   bool sheetAttached = false;
 
+  /// True while the list of suspects has a strip torn off it: only in the
+  /// mystery where somebody had a reason to tear it.
+  bool get listTorn => mystery.id == twistCase.id && !sheetAttached;
+
   /// Whether the torn strip has been found and is waiting to be put back.
   bool get canAttachSheet => found.contains('tornsheet') && !sheetAttached;
 

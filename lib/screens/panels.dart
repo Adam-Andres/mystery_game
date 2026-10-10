@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../data/cases.dart';
 import '../data/house.dart';
 import '../data/models.dart';
 import '../game_state.dart';
@@ -355,14 +356,14 @@ class AccusePanel extends StatelessWidget {
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 14),
-          // The sergeant's list of everyone in the house. Its right-hand
-          // edge has been torn away, in every mystery.
+          // The sergeant's list of everyone in the house. In one mystery
+          // its right-hand edge has been torn away.
           Expanded(
             child: ClipPath(
-              key: ValueKey(g.sheetAttached ? 'list-whole' : 'list-torn'),
-              clipper: g.sheetAttached ? null : const _TornEdge(),
+              key: ValueKey(g.listTorn ? 'list-torn' : 'list-whole'),
+              clipper: g.listTorn ? const _TornEdge() : null,
               child: Container(
-                padding: EdgeInsets.fromLTRB(8, 6, g.sheetAttached ? 8 : 34, 6),
+                padding: EdgeInsets.fromLTRB(8, 6, g.listTorn ? 34 : 8, 6),
                 decoration: BoxDecoration(
                   color: kCream.withValues(alpha: .09),
                   borderRadius: const BorderRadius.horizontal(
@@ -401,8 +402,11 @@ class AccusePanel extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(height: 4),
-          const _IdleScrollbar(),
+          // A scroll bar that scrolls nothing, where the list was wider.
+          if (g.mystery.id == twistCase.id) ...[
+            const SizedBox(height: 4),
+            const _IdleScrollbar(),
+          ],
           const SizedBox(height: 8),
           Wrap(
             alignment: WrapAlignment.center,

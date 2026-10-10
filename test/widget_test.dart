@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import 'dart:io';
 
@@ -208,6 +209,32 @@ void main() {
     expect(extra, isEmpty, reason: 'unused clips');
   });
 
+  testWidgets('the arrow keys go back to moving once the dial is closed', (
+    tester,
+  ) async {
+    final g = GameState(random: Random(2));
+    await tester.pumpWidget(MysteryApp(state: g, voice: Voice(SilentPlayer())));
+    g.newGame(caseIndex: 0, skipIntro: true);
+    g.enter(roomById('study'));
+    await tester.pump();
+    g.search(nookById('desk'));
+    await tester.pump();
+    await tester.pump();
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+    await tester.pump();
+    expect(find.textContaining('Dial reads  1'), findsOneWidget);
+    expect(g.roomId, 'study');
+    g.closePanel();
+    await tester.pump();
+    await tester.pump();
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowLeft);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 1800));
+    await tester.pump(const Duration(milliseconds: 1800));
+    await tester.pump();
+    expect(g.roomId, 'landing');
+  });
+
   testWidgets('the desk dial clicks only at the number it wants', (
     tester,
   ) async {
@@ -226,7 +253,7 @@ void main() {
       ),
     );
     for (var n = 0; n < 12; n++) {
-      await tester.tap(_key('dial-right'));
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
     }
     await tester.pump();
     final clicks = [
@@ -241,12 +268,39 @@ void main() {
     // With the sound off, the click is shown instead.
     voice.toggleMute();
     for (var n = 0; n < 98; n++) {
-      await tester.tap(_key('dial-right'));
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
     }
     await tester.pump();
     expect(find.text('(click)'), findsOneWidget);
     await tester.pump(const Duration(seconds: 1));
     expect(find.text('(click)'), findsNothing);
+
+    // Dragging round the dial turns it too.
+    await tester.tap(_key('dial-reset'));
+    await tester.pump();
+    final centre = tester.getCenter(_key('dial'));
+    final finger = await tester.startGesture(centre + const Offset(0, -80));
+    for (var deg = 3; deg <= 90; deg += 3) {
+      final a = deg * pi / 180;
+      await finger.moveTo(centre + Offset(80 * sin(a), -80 * cos(a)));
+    }
+    await finger.up();
+    await tester.pump();
+    final reading = int.parse(
+      RegExp(r'Dial reads\s+(\d+)')
+          .firstMatch(
+            tester
+                .widget<Text>(
+                  find.descendant(
+                    of: _key('dial-readout'),
+                    matching: find.byType(Text),
+                  ),
+                )
+                .data!,
+          )!
+          .group(1)!,
+    );
+    expect(reading, inInclusiveRange(15, 25));
   });
 
   group('the rare mystery', () {
@@ -315,8 +369,8 @@ void main() {
       await tester.pump();
       expect(g.mystery.id, twistCase.id);
 
-      // The list of suspects is torn in every mystery, with a scroll bar
-      // that scrolls nothing; here there is nobody extra to accuse yet.
+      // The list of suspects is torn, with a scroll bar that scrolls
+      // nothing, and there is nobody extra to accuse yet.
       g.openPanel(Panel.accuse);
       await tester.pump();
       expect(_key('list-torn'), findsOneWidget);
@@ -401,6 +455,16 @@ void main() {
       await tester.tap(_key('hidden-jewels'));
       await tester.pump();
       expect(g.dialogue!.text, looseCorner.text);
+      g.closeDialogue();
+      g.closePanel();
+
+      // And nobody has torn the list of suspects.
+      g.openPanel(Panel.accuse);
+      await tester.pump();
+      expect(_key('list-whole'), findsOneWidget);
+      expect(_key('list-torn'), findsNothing);
+      expect(_key('idle-scrollbar'), findsNothing);
+      expect(_key('attach-sheet'), findsNothing);
     });
 
     test('the dial has a new combination every game', () {
@@ -721,34 +785,41 @@ void main() {
     expect(g.found, contains('solicitor'));
     g.closeDialogue();
 
-    // The desk has a dial: right, left, right, pressing the knob at each
-    // number. The dial will not turn the wrong way.
+    // The desk has a dial, turned with the arrow keys: right, left, right.
+    // Turning back sets a number, and reaching the last one opens it.
     final desk = nookById('desk');
     g.search(desk);
     await tester.pump();
-    var at = 0;
-    Future<void> dial(List<int> code) async {
-      for (final (i, number) in code.indexed) {
-        final right = i.isEven;
-        var turns = right ? (number - at) % 100 : (at - number) % 100;
-        if (turns == 0) turns = 100;
-        for (var n = 0; n < turns; n++) {
-          await tester.tap(_key(right ? 'dial-right' : 'dial-left'));
-        }
-        await tester.pump();
-        at = number;
-        await tester.tap(_key('dial-set'));
-        await tester.pump(const Duration(milliseconds: 200));
+    Future<void> turn(bool right, int notches) async {
+      for (var n = 0; n < notches; n++) {
+        await tester.sendKeyEvent(
+          right ? LogicalKeyboardKey.arrowRight : LogicalKeyboardKey.arrowLeft,
+        );
       }
+      await tester.pump(const Duration(milliseconds: 200));
     }
 
-    await tester.tap(_key('dial-left'));
+    // It will not turn left to begin with.
+    await turn(false, 3);
+    expect(find.textContaining('Dial reads  0'), findsOneWidget);
+    expect(find.text('RIGHT'), findsOneWidget);
+    // Turning back at the wrong number drops the tumblers.
+    final [first, second, third] = g.combination;
+    await turn(true, first + 1);
+    await turn(false, 1);
+    expect(find.textContaining('did not catch'), findsOneWidget);
+    expect(find.textContaining('Dial reads  0'), findsOneWidget);
+    // The right numbers, with the reset button tried on the way.
+    await turn(true, first);
+    await tester.tap(_key('dial-reset'));
     await tester.pump();
     expect(find.textContaining('Dial reads  0'), findsOneWidget);
-    await dial([for (final n in g.combination) (n + 50) % 100]);
+    await turn(true, first);
+    await turn(false, (first - second) % 100);
+    expect(find.text('LEFT'), findsOneWidget);
+    expect(find.textContaining('Set so far  $first  '), findsOneWidget);
     expect(g.isOpen(desk), isFalse);
-    expect(find.textContaining('does not give'), findsOneWidget);
-    await dial(g.combination);
+    await turn(true, (third - second) % 100);
     expect(g.isOpen(desk), isTrue);
     await tester.tap(_key('evidence-planner'));
     await tester.pump();

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../audio/voice.dart';
 import '../data/house.dart';
@@ -524,9 +525,11 @@ class PrintPainter extends CustomPainter {
 }
 
 /// The combination dial on the study desk. Nothing in the house says what
-/// the combination is: it is found by ear. The dial turns one way for each
-/// number and the other way for the next, as the arrow shows, and gives a
-/// loud click when it passes the number that tumbler wants.
+/// the combination is: it is found by ear. The dial is turned by dragging
+/// round it or with the arrow keys, one way for each number and the other
+/// way for the next. It gives a loud click as it passes the number each
+/// tumbler wants; turning back sets the number it had reached, and the last
+/// number opens the lock as soon as the dial arrives at it.
 class DialLock extends StatefulWidget {
   const DialLock({super.key, required this.combination, required this.onTry});
 
@@ -541,6 +544,7 @@ class DialLock extends StatefulWidget {
 
 class _DialLockState extends State<DialLock> {
   static const _notches = 100;
+  static const _size = 230.0;
 
   /// Notches turned since the dial was last at rest on zero; right is up.
   int _steps = 0;
@@ -548,7 +552,6 @@ class _DialLockState extends State<DialLock> {
   final _set = <int>[];
   String _message = '';
   double _drag = 0;
-  Timer? _held;
 
   /// True for a moment after the dial has clicked, for players with the
   /// sound off.
@@ -560,15 +563,57 @@ class _DialLockState extends State<DialLock> {
   /// The first and third numbers are dialled to the right.
   bool get _rightward => _set.length.isEven;
 
+  bool get _last => _set.length == widget.combination.length - 1;
+
+  // The arrow keys turn the dial while it is on screen, and go back to
+  // whatever had them before when it is not.
+  final _focus = FocusNode(debugLabel: 'dial');
+  FocusNode? _previous;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _previous = FocusManager.instance.primaryFocus;
+      _focus.requestFocus();
+    });
+  }
+
   @override
   void dispose() {
-    _held?.cancel();
     _catchTimer?.cancel();
+    final previous = _previous;
+    if (_focus.hasFocus && previous != null && previous.context != null) {
+      previous.requestFocus();
+    }
+    _focus.dispose();
     super.dispose();
   }
 
+  void _reset([String message = '']) {
+    _catchTimer?.cancel();
+    setState(() {
+      _steps = 0;
+      _moved = 0;
+      _drag = 0;
+      _set.clear();
+      _caught = false;
+      _message = message;
+    });
+  }
+
   void _turn({required bool right}) {
-    if (right != _rightward) return;
+    if (right != _rightward) {
+      // Turning back sets the number the dial had reached.
+      if (_moved == 0) return;
+      if (_last || _reading != widget.combination[_set.length]) {
+        _reset('That did not catch. The tumblers drop back.');
+        return;
+      }
+      _set.add(_reading);
+      _moved = 0;
+    }
     final voice = VoiceScope.maybeOf(context);
     setState(() {
       _steps += right ? 1 : -1;
@@ -581,6 +626,8 @@ class _DialLockState extends State<DialLock> {
       return;
     }
     voice?.click();
+    // The last tumbler opens the lock the moment the dial reaches it.
+    if (_last && widget.onTry([..._set, _reading].join('-'))) return;
     // With the sound off there is nothing to hear, so it is shown instead.
     if (voice?.muted ?? false) {
       setState(() => _caught = true);
@@ -591,79 +638,38 @@ class _DialLockState extends State<DialLock> {
     }
   }
 
-  void _press() {
-    if (_moved == 0) return;
-    setState(() {
-      _set.add(_reading);
-      _moved = 0;
-      _caught = false;
-    });
-    if (_set.length < widget.combination.length) return;
-    if (!widget.onTry(_set.join('-'))) {
-      setState(() {
-        _set.clear();
-        _message = 'It does not give. The tumblers drop back.';
-      });
-    }
-  }
-
-  /// Dragging round the dial turns it a notch at a time.
+  /// Dragging round the dial, with a finger or the mouse, turns it a notch
+  /// at a time. It takes a firmer pull to turn it back than to keep going,
+  /// so that a wobble does not set a number by accident.
   void _onDrag(DragUpdateDetails d) {
-    final from = d.localPosition - d.delta - const Offset(105, 105);
-    final to = d.localPosition - const Offset(105, 105);
+    const centre = Offset(_size / 2, _size / 2);
+    final from = d.localPosition - d.delta - centre;
+    final to = d.localPosition - centre;
     var swept = to.direction - from.direction;
     if (swept > pi) swept -= 2 * pi;
     if (swept < -pi) swept += 2 * pi;
     _drag += swept;
     const notch = 2 * pi / _notches;
-    while (_drag.abs() >= notch) {
+    while (true) {
       final right = _drag > 0;
-      _drag -= right ? notch : -notch;
+      final needed = right == _rightward || _moved == 0 ? notch : notch * 3;
+      if (_drag.abs() < needed) break;
+      _drag -= right ? needed : -needed;
       _turn(right: right);
     }
   }
 
-  /// Holding an arrow keeps the dial turning.
-  void _hold({required bool right}) {
-    _held?.cancel();
-    _held = Timer.periodic(
-      const Duration(milliseconds: 70),
-      (_) => _turn(right: right),
-    );
-  }
-
-  void _release() => _held?.cancel();
-
-  Widget _arrow({required bool right}) {
-    final live = right == _rightward;
-    return Opacity(
-      opacity: live ? 1 : .25,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          GestureDetector(
-            onLongPressStart: (_) => _hold(right: right),
-            onLongPressEnd: (_) => _release(),
-            onLongPressCancel: _release,
-            child: IconButton(
-              key: ValueKey(right ? 'dial-right' : 'dial-left'),
-              iconSize: 46,
-              onPressed: () => _turn(right: right),
-              icon: Icon(
-                right ? Icons.rotate_right : Icons.rotate_left,
-                color: kGold,
-              ),
-            ),
-          ),
-          Text(
-            right ? 'Right' : 'Left',
-            style: kBody.copyWith(
-              fontWeight: live ? FontWeight.bold : FontWeight.normal,
-            ),
-          ),
-        ],
-      ),
-    );
+  KeyEventResult _onKey(FocusNode node, KeyEvent event) {
+    if (event is KeyUpEvent) return KeyEventResult.ignored;
+    final key = event.logicalKey;
+    if (key == LogicalKeyboardKey.arrowRight) {
+      _turn(right: true);
+    } else if (key == LogicalKeyboardKey.arrowLeft) {
+      _turn(right: false);
+    } else {
+      return KeyEventResult.ignored;
+    }
+    return KeyEventResult.handled;
   }
 
   @override
@@ -672,105 +678,113 @@ class _DialLockState extends State<DialLock> {
       for (var i = 0; i < widget.combination.length; i++)
         i < _set.length ? '${_set[i]}' : '··',
     ].join('  ');
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        const Text(
-          'A brass combination dial, and no note of the numbers anywhere. '
-          'Turn it slowly and listen: each tumbler clicks at its number.',
-          style: kBody,
-          textAlign: TextAlign.center,
-        ),
-        const SizedBox(height: 8),
-        Row(
-          mainAxisSize: MainAxisSize.min,
+    final dial = SizedBox(
+      width: _size,
+      height: _size + 10,
+      child: Stack(
+        alignment: Alignment.topCenter,
+        children: [
+          Positioned(
+            top: 10,
+            child: MouseRegion(
+              cursor: SystemMouseCursors.grab,
+              child: GestureDetector(
+                key: const ValueKey('dial'),
+                onPanUpdate: _onDrag,
+                child: AnimatedRotation(
+                  turns: _steps / _notches,
+                  duration: const Duration(milliseconds: 60),
+                  child: CustomPaint(
+                    size: const Size(_size, _size),
+                    painter: _DialPainter(),
+                  ),
+                ),
+              ),
+            ),
+          ),
+          // The mark the numbers are read against.
+          const IgnorePointer(
+            child: Icon(Icons.arrow_drop_down, color: kRed, size: 34),
+          ),
+        ],
+      ),
+    );
+    return Focus(
+      focusNode: _focus,
+      onKeyEvent: _onKey,
+      child: SizedBox(
+        width: 560,
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            _arrow(right: false),
-            const SizedBox(width: 12),
-            SizedBox(
-              width: 210,
-              height: 220,
-              child: Stack(
-                alignment: Alignment.topCenter,
+            Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  _rightward ? 'RIGHT' : 'LEFT',
+                  key: const ValueKey('dial-way'),
+                  style: kHeading.copyWith(fontSize: 22, letterSpacing: 3),
+                ),
+                dial,
+                const SizedBox(height: 6),
+                GoldButton(
+                  key: const ValueKey('dial-reset'),
+                  label: 'Reset the dial',
+                  icon: Icons.restart_alt,
+                  onPressed: _reset,
+                ),
+              ],
+            ),
+            const SizedBox(width: 22),
+            Expanded(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Positioned(
-                    top: 10,
-                    child: GestureDetector(
-                      onPanUpdate: _onDrag,
-                      child: AnimatedRotation(
-                        turns: _steps / _notches,
-                        duration: const Duration(milliseconds: 60),
-                        child: CustomPaint(
-                          size: const Size(210, 210),
-                          painter: _DialPainter(),
-                        ),
-                      ),
+                  const Text(
+                    'A brass dial, and no note of the numbers anywhere. '
+                    'Drag round it, or use the arrow keys, and listen: each '
+                    'tumbler clicks at its number. Turn back the other way '
+                    'to set it.',
+                    style: kBody,
+                  ),
+                  const SizedBox(height: 12),
+                  Container(
+                    key: const ValueKey('dial-readout'),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 8,
+                    ),
+                    decoration: BoxDecoration(
+                      color: kInk,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: kGold, width: 2),
+                    ),
+                    child: Text(
+                      'Dial reads  $_reading\nSet so far  $entered',
+                      style: kHeading,
                     ),
                   ),
-                  // The mark the numbers are read against.
-                  const Icon(Icons.arrow_drop_down, color: kRed, size: 34),
-                  Positioned(
-                    top: 85,
-                    child: MouseRegion(
-                      cursor: SystemMouseCursors.click,
-                      child: GestureDetector(
-                        key: const ValueKey('dial-set'),
-                        onTap: _press,
-                        child: Container(
-                          width: 60,
-                          height: 60,
-                          alignment: Alignment.center,
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF8D6E1F),
-                            shape: BoxShape.circle,
-                            border: Border.all(color: kInk, width: 3),
-                          ),
-                          child: const Text(
-                            'SET',
-                            style: TextStyle(
-                              color: kCream,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ),
+                  const SizedBox(height: 8),
+                  Text(
+                    _message.isNotEmpty
+                        ? _message
+                        : _caught
+                        ? '(click)'
+                        : ' ',
+                    key: const ValueKey('dial-status'),
+                    style: kBody.copyWith(
+                      color: _message.isNotEmpty
+                          ? const Color(0xFFFF8A80)
+                          : kCream,
                     ),
                   ),
                 ],
               ),
             ),
-            const SizedBox(width: 12),
-            _arrow(right: true),
           ],
         ),
-        const SizedBox(height: 6),
-        Container(
-          key: const ValueKey('dial-readout'),
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-          decoration: BoxDecoration(
-            color: kInk,
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: kGold, width: 2),
-          ),
-          child: Text(
-            'Dial reads  $_reading        Set so far  $entered',
-            style: kHeading,
-          ),
-        ),
-        const SizedBox(height: 6),
-        Text(
-          _message.isNotEmpty
-              ? _message
-              : _caught
-              ? '(click)'
-              : 'Turn it ${_rightward ? 'RIGHT' : 'LEFT'} until it clicks, '
-                    'then press SET.',
-          key: const ValueKey('dial-status'),
-          style: kBody.copyWith(
-            color: _message.isNotEmpty ? const Color(0xFFFF8A80) : kCream,
-          ),
-        ),
-      ],
+      ),
     );
   }
 }
