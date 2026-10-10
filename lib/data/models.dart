@@ -10,6 +10,8 @@ enum Dessert {
   tiramisu,
   cannoli,
   cracker,
+  pupcake,
+  purrfait,
 }
 
 class Person {
@@ -125,6 +127,10 @@ class Nook {
     this.icon = Icons.door_sliding,
     this.junk = const [],
     this.locked = false,
+    this.needs,
+    this.barred = '',
+    this.action = '',
+    this.pick = false,
   });
 
   final String id;
@@ -139,6 +145,53 @@ class Nook {
 
   /// Whether a combination is needed to open it.
   final bool locked;
+
+  /// The id of the [Item] needed to get into it, if any.
+  final String? needs;
+
+  /// What Churlock thinks of it while he lacks that item.
+  final String barred;
+
+  /// The label of the button that uses the item on it.
+  final String action;
+
+  /// Whether using the item means picking a lock.
+  final bool pick;
+}
+
+/// A tool lying about the house, which Churlock can pocket and use to get
+/// at something he otherwise could not.
+class Item {
+  const Item({
+    required this.id,
+    required this.name,
+    required this.room,
+    required this.pos,
+    required this.description,
+    required this.icon,
+    this.color = const Color(0xFF80DEEA),
+  });
+
+  final String id;
+  final String name;
+  final String room;
+  final Offset pos;
+  final String description;
+  final IconData icon;
+  final Color color;
+}
+
+/// Something in a room that is worth a remark and nothing more.
+class Sight {
+  const Sight(this.id, this.room, this.pos, this.junk, {this.size = 60});
+
+  final String id;
+  final String room;
+  final Offset pos;
+  final Junk junk;
+
+  /// The side of the square that can be clicked.
+  final double size;
 }
 
 class Junk {
@@ -166,6 +219,9 @@ class MysteryCase {
     required this.deskCode,
     required this.hints,
     required this.accuseHints,
+    this.lies = const {},
+    this.greetings = const {},
+    this.shaky = const {},
     required this.topics,
     required this.solution,
     required this.nextVictims,
@@ -187,7 +243,7 @@ class MysteryCase {
   final Evidence prints;
   final List<String> printsOn;
 
-  /// The four-digit combination of the study desk in this mystery.
+  /// The year Senclair Confections was founded, in this mystery.
   final String deskCode;
 
   /// Evidence id -> what Watsonut makes of it, when asked.
@@ -195,6 +251,17 @@ class MysteryCase {
 
   /// Watsonut's nudges on the accusation screen, gentlest first.
   final List<String> accuseHints;
+
+  /// The hints in which Watsonut is lying: evidence ids, and `accuse:n` for
+  /// the nth nudge on the accusation screen. His moustache keeps still.
+  final Set<String> lies;
+
+  /// Person id -> what they say on being approached, where it differs from
+  /// their usual greeting.
+  final Map<String, String> greetings;
+
+  /// The hints he cannot give without his voice shaking, named likewise.
+  final Set<String> shaky;
 
   /// Person id -> everything they can be asked in this case.
   final Map<String, List<Topic>> topics;
@@ -245,5 +312,7 @@ class Room {
   final Color wall;
   final Color floor;
 
-  String get levelName => const ['Basement', 'Ground Floor', 'Attic'][level];
+  String get levelName => id == 'backyard'
+      ? 'Outside'
+      : const ['Basement', 'Ground Floor', 'Attic'][level];
 }

@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'data/cases.dart';
 import 'data/hints.dart';
 import 'data/house.dart';
+import 'data/house.dart' as house;
 import 'data/models.dart';
 
 /// The intro and outro are the narrated scenes outside the mansion.
@@ -24,6 +25,8 @@ class Dialogue {
     this.talk = false,
     this.note,
     this.evidence,
+    this.voice,
+    this.lying = false,
   });
 
   final Person speaker;
@@ -38,10 +41,27 @@ class Dialogue {
 
   /// The evidence being examined, about which Watsonut can be asked.
   final Evidence? evidence;
+
+  /// The voice to speak in, where it is not simply the speaker's own.
+  final String? voice;
+
+  /// True when the speaker does not believe a word of it.
+  final bool lying;
 }
 
+/// How often a new game is the rare mystery in which Watsonut did it.
+/// It is every game for now, to try it out; it is meant to be one in twenty.
+const twistOdds = 1.0;
+
+/// The voice Watsonut speaks in when the evidence is too close to home.
+const shakyVoice = 'watsonut-shaky';
+
 class GameState extends ChangeNotifier {
-  GameState({Random? random}) : _rng = random ?? Random();
+  GameState({Random? random, this.twistChance = twistOdds})
+    : _rng = random ?? Random();
+
+  /// The chance that a game chosen at random is the rare one.
+  final double twistChance;
 
   final Random _rng;
   int? _caseIndex;
@@ -69,6 +89,13 @@ class GameState extends ChangeNotifier {
   /// Locked furniture that has been opened.
   final unlocked = <String>{};
 
+  /// Ids of the tools Churlock is carrying, in the order he found them.
+  final items = <String>[];
+
+  /// The order in which the strongbox's pins must be set, which changes
+  /// from game to game.
+  List<int> pinOrder = const [0, 1, 2, 3];
+
   /// Statements already heard, as `person/topicId`.
   final asked = <String>{};
 
@@ -86,6 +113,22 @@ class GameState extends ChangeNotifier {
   /// in the entrance hall.
   bool arriving = false;
 
+  /// True once the strip torn from the list of suspects has been put back.
+  bool sheetAttached = false;
+
+  /// Whether the torn strip has been found and is waiting to be put back.
+  bool get canAttachSheet => found.contains('tornsheet') && !sheetAttached;
+
+  void attachSheet() {
+    if (!canAttachSheet) return;
+    sheetAttached = true;
+    notifyListeners();
+  }
+
+  /// Everyone who can be accused: the residents, and whoever else turns out
+  /// to have been on the sergeant's list.
+  List<Person> get suspects => [...residents, if (sheetAttached) watsonut];
+
   /// Suspects ticked in the accusation panel; the final verdict once ended.
   final accused = <String>{};
 
@@ -98,19 +141,32 @@ class GameState extends ChangeNotifier {
 
   Iterable<Nook> get nooksHere => nooks.where((n) => n.room == roomId);
 
+  /// Tools lying in the current room that have not been picked up yet.
+  Iterable<Item> get itemsHere =>
+      allItems.where((i) => i.room == roomId && !items.contains(i.id));
+
+  static const allItems = house.items;
+
+  Iterable<Sight> get sightsHere => sights.where((s) => s.room == roomId);
+
   Iterable<Evidence> evidenceIn(Nook n) =>
       evidence.where((e) => e.inside == n.id);
 
   /// Starts a fresh investigation with a randomly chosen mystery — never the
   /// one just played — and a fresh draw of its evidence.
-  void newGame({int? caseIndex, bool skipIntro = false}) {
+  void newGame({int? caseIndex, bool? twist, bool skipIntro = false}) {
     final previous = _caseIndex;
     var next = caseIndex ?? _rng.nextInt(allCases.length);
     if (caseIndex == null && next == previous) {
       next = (next + 1 + _rng.nextInt(allCases.length - 1)) % allCases.length;
     }
-    _caseIndex = next;
-    mystery = allCases[next];
+    if (twist ?? (caseIndex == null && _rng.nextDouble() < twistChance)) {
+      mystery = twistCase;
+    } else {
+      _caseIndex = next;
+      mystery = allCases[next];
+    }
+    sheetAttached = false;
     evidence = [
       ...mystery.core,
       for (final group in mystery.variants) group[_rng.nextInt(group.length)],
@@ -124,6 +180,8 @@ class GameState extends ChangeNotifier {
       ..clear()
       ..add(roomId);
     unlocked.clear();
+    items.clear();
+    pinOrder = [0, 1, 2, 3]..shuffle(_rng);
     hintsUsed = 0;
     accuseHintsGiven = 0;
     hintPrompt = false;
@@ -233,7 +291,7 @@ class GameState extends ChangeNotifier {
   }
 
   /// What Churlock says about [junk]. The certificate names a different
-  /// year in each mystery, because it is the combination of the desk.
+  /// year in each mystery.
   String junkText(Junk junk) =>
       junk.text.isEmpty ? certificateText(mystery.deskCode) : junk.text;
 
@@ -246,6 +304,24 @@ class GameState extends ChangeNotifier {
     );
     notifyListeners();
   }
+
+  /// Pockets a tool found lying about.
+  void take(Item item) {
+    if (!items.contains(item.id)) items.add(item.id);
+    showItem(item, isNew: true);
+  }
+
+  /// Churlock looks over a tool he is carrying.
+  void showItem(Item item, {bool isNew = false}) {
+    dialogue = Dialogue(
+      speaker: churlock,
+      title: isNew ? 'Picked up: ${item.name}' : item.name,
+      text: item.description,
+    );
+    notifyListeners();
+  }
+
+  bool has(String itemId) => items.contains(itemId);
 
   bool get moreAccuseHints => accuseHintsGiven < mystery.accuseHints.length;
 
@@ -276,10 +352,13 @@ class GameState extends ChangeNotifier {
     hintsUsed++;
     final String text;
     final String note;
+    final String id;
     if (about != null) {
+      id = about.id;
       text = hintFor(mystery, about);
       note = 'On: ${about.name}';
     } else {
+      id = 'accuse:$accuseHintsGiven';
       text = mystery.accuseHints[accuseHintsGiven++];
       note = 'Hint $accuseHintsGiven of ${mystery.accuseHints.length}';
     }
@@ -288,6 +367,8 @@ class GameState extends ChangeNotifier {
       title: watsonut.name,
       text: text,
       note: note,
+      voice: mystery.shaky.contains(id) ? shakyVoice : null,
+      lying: mystery.lies.contains(id),
     );
     notifyListeners();
   }
@@ -296,7 +377,7 @@ class GameState extends ChangeNotifier {
     dialogue = Dialogue(
       speaker: p,
       title: p.name,
-      text: p.greeting,
+      text: mystery.greetings[p.id] ?? p.greeting,
       talk: true,
     );
     notifyListeners();
@@ -355,11 +436,22 @@ class GameState extends ChangeNotifier {
     notifyListeners();
   }
 
-  bool isOpen(Nook n) => !n.locked || unlocked.contains(n.id);
+  bool isOpen(Nook n) =>
+      (!n.locked && n.needs == null) || unlocked.contains(n.id);
+
+  /// Whether Churlock has what it takes to get into [n].
+  bool canOpen(Nook n) => n.needs != null && has(n.needs!);
+
+  /// Uses the right tool on [n]: digs it up, picks it, or bribes the dog.
+  void forceOpen(Nook n) {
+    if (!canOpen(n)) return;
+    unlocked.add(n.id);
+    notifyListeners();
+  }
 
   /// Tries a combination on a locked piece of furniture.
   bool tryCode(Nook n, String code) {
-    if (code != mystery.deskCode) return false;
+    if (code != deskCombination.join('-')) return false;
     unlocked.add(n.id);
     notifyListeners();
     return true;

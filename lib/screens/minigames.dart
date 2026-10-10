@@ -1,7 +1,9 @@
+import 'dart:async';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
 
+import '../audio/voice.dart';
 import '../data/house.dart';
 import '../game_state.dart';
 import '../widgets/dessert_figure.dart' show fill, stroke;
@@ -521,26 +523,333 @@ class PrintPainter extends CustomPainter {
   bool shouldRepaint(PrintPainter old) => old.person != person || old.color != color;
 }
 
-/// A four-digit combination lock.
-class CodeLock extends StatefulWidget {
-  const CodeLock({super.key, required this.onTry});
+/// The combination dial on the study desk. Nothing in the house says what
+/// the combination is: it is found by ear. The dial turns one way for each
+/// number and the other way for the next, as the arrow shows, and gives a
+/// loud click when it passes the number that tumbler wants.
+class DialLock extends StatefulWidget {
+  const DialLock({super.key, required this.combination, required this.onTry});
 
-  /// Returns whether the combination opened the lock.
+  final List<int> combination;
+
+  /// Returns whether the numbers set, joined by dashes, opened the lock.
   final bool Function(String code) onTry;
 
   @override
-  State<CodeLock> createState() => _CodeLockState();
+  State<DialLock> createState() => _DialLockState();
 }
 
-class _CodeLockState extends State<CodeLock> {
-  final _digits = [0, 0, 0, 0];
-  bool _refused = false;
+class _DialLockState extends State<DialLock> {
+  static const _notches = 100;
 
-  void _turn(int wheel, int by) {
+  /// Notches turned since the dial was last at rest on zero; right is up.
+  int _steps = 0;
+  int _moved = 0;
+  final _set = <int>[];
+  String _message = '';
+  double _drag = 0;
+  Timer? _held;
+
+  /// True for a moment after the dial has clicked, for players with the
+  /// sound off.
+  bool _caught = false;
+  Timer? _catchTimer;
+
+  int get _reading => _steps % _notches;
+
+  /// The first and third numbers are dialled to the right.
+  bool get _rightward => _set.length.isEven;
+
+  @override
+  void dispose() {
+    _held?.cancel();
+    _catchTimer?.cancel();
+    super.dispose();
+  }
+
+  void _turn({required bool right}) {
+    if (right != _rightward) return;
+    final voice = VoiceScope.maybeOf(context);
     setState(() {
-      _digits[wheel] = (_digits[wheel] + by) % 10;
-      _refused = false;
+      _steps += right ? 1 : -1;
+      _moved++;
+      _message = '';
+      _caught = false;
     });
+    if (_reading != widget.combination[_set.length]) {
+      voice?.tick();
+      return;
+    }
+    voice?.click();
+    // With the sound off there is nothing to hear, so it is shown instead.
+    if (voice?.muted ?? false) {
+      setState(() => _caught = true);
+      _catchTimer?.cancel();
+      _catchTimer = Timer(const Duration(milliseconds: 700), () {
+        if (mounted) setState(() => _caught = false);
+      });
+    }
+  }
+
+  void _press() {
+    if (_moved == 0) return;
+    setState(() {
+      _set.add(_reading);
+      _moved = 0;
+      _caught = false;
+    });
+    if (_set.length < widget.combination.length) return;
+    if (!widget.onTry(_set.join('-'))) {
+      setState(() {
+        _set.clear();
+        _message = 'It does not give. The tumblers drop back.';
+      });
+    }
+  }
+
+  /// Dragging round the dial turns it a notch at a time.
+  void _onDrag(DragUpdateDetails d) {
+    final from = d.localPosition - d.delta - const Offset(105, 105);
+    final to = d.localPosition - const Offset(105, 105);
+    var swept = to.direction - from.direction;
+    if (swept > pi) swept -= 2 * pi;
+    if (swept < -pi) swept += 2 * pi;
+    _drag += swept;
+    const notch = 2 * pi / _notches;
+    while (_drag.abs() >= notch) {
+      final right = _drag > 0;
+      _drag -= right ? notch : -notch;
+      _turn(right: right);
+    }
+  }
+
+  /// Holding an arrow keeps the dial turning.
+  void _hold({required bool right}) {
+    _held?.cancel();
+    _held = Timer.periodic(
+      const Duration(milliseconds: 70),
+      (_) => _turn(right: right),
+    );
+  }
+
+  void _release() => _held?.cancel();
+
+  Widget _arrow({required bool right}) {
+    final live = right == _rightward;
+    return Opacity(
+      opacity: live ? 1 : .25,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          GestureDetector(
+            onLongPressStart: (_) => _hold(right: right),
+            onLongPressEnd: (_) => _release(),
+            onLongPressCancel: _release,
+            child: IconButton(
+              key: ValueKey(right ? 'dial-right' : 'dial-left'),
+              iconSize: 46,
+              onPressed: () => _turn(right: right),
+              icon: Icon(
+                right ? Icons.rotate_right : Icons.rotate_left,
+                color: kGold,
+              ),
+            ),
+          ),
+          Text(
+            right ? 'Right' : 'Left',
+            style: kBody.copyWith(
+              fontWeight: live ? FontWeight.bold : FontWeight.normal,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final entered = [
+      for (var i = 0; i < widget.combination.length; i++)
+        i < _set.length ? '${_set[i]}' : '··',
+    ].join('  ');
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        const Text(
+          'A brass combination dial, and no note of the numbers anywhere. '
+          'Turn it slowly and listen: each tumbler clicks at its number.',
+          style: kBody,
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: 8),
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _arrow(right: false),
+            const SizedBox(width: 12),
+            SizedBox(
+              width: 210,
+              height: 220,
+              child: Stack(
+                alignment: Alignment.topCenter,
+                children: [
+                  Positioned(
+                    top: 10,
+                    child: GestureDetector(
+                      onPanUpdate: _onDrag,
+                      child: AnimatedRotation(
+                        turns: _steps / _notches,
+                        duration: const Duration(milliseconds: 60),
+                        child: CustomPaint(
+                          size: const Size(210, 210),
+                          painter: _DialPainter(),
+                        ),
+                      ),
+                    ),
+                  ),
+                  // The mark the numbers are read against.
+                  const Icon(Icons.arrow_drop_down, color: kRed, size: 34),
+                  Positioned(
+                    top: 85,
+                    child: MouseRegion(
+                      cursor: SystemMouseCursors.click,
+                      child: GestureDetector(
+                        key: const ValueKey('dial-set'),
+                        onTap: _press,
+                        child: Container(
+                          width: 60,
+                          height: 60,
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF8D6E1F),
+                            shape: BoxShape.circle,
+                            border: Border.all(color: kInk, width: 3),
+                          ),
+                          child: const Text(
+                            'SET',
+                            style: TextStyle(
+                              color: kCream,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 12),
+            _arrow(right: true),
+          ],
+        ),
+        const SizedBox(height: 6),
+        Container(
+          key: const ValueKey('dial-readout'),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+          decoration: BoxDecoration(
+            color: kInk,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: kGold, width: 2),
+          ),
+          child: Text(
+            'Dial reads  $_reading        Set so far  $entered',
+            style: kHeading,
+          ),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          _message.isNotEmpty
+              ? _message
+              : _caught
+              ? '(click)'
+              : 'Turn it ${_rightward ? 'RIGHT' : 'LEFT'} until it clicks, '
+                    'then press SET.',
+          key: const ValueKey('dial-status'),
+          style: kBody.copyWith(
+            color: _message.isNotEmpty ? const Color(0xFFFF8A80) : kCream,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _DialPainter extends CustomPainter {
+  @override
+  void paint(Canvas c, Size s) {
+    final centre = s.center(Offset.zero);
+    final radius = s.width / 2;
+    c.drawCircle(centre, radius, fill(const Color(0xFF4A3A12)));
+    c.drawCircle(centre, radius - 5, fill(const Color(0xFFD4A537)));
+    for (var n = 0; n < 100; n++) {
+      // Turning right brings the next number up to the mark.
+      final a = -n * 2 * pi / 100 - pi / 2;
+      final d = Offset(cos(a), sin(a));
+      final long = n % 10 == 0;
+      c.drawLine(
+        centre + d * (radius - 8),
+        centre + d * (radius - (long ? 20 : n % 5 == 0 ? 15 : 12)),
+        stroke(kInk, long ? 2.5 : 1),
+      );
+      if (!long) continue;
+      final text = TextPainter(
+        text: TextSpan(
+          text: '$n',
+          style: const TextStyle(
+            color: kInk,
+            fontSize: 15,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        textDirection: TextDirection.ltr,
+      )..layout();
+      c.save();
+      c.translate(centre.dx + d.dx * (radius - 33), centre.dy + d.dy * (radius - 33));
+      c.rotate(a + pi / 2);
+      text.paint(c, Offset(-text.width / 2, -text.height / 2));
+      c.restore();
+    }
+  }
+
+  @override
+  bool shouldRepaint(_DialPainter old) => false;
+}
+
+/// Picking the strongbox: each pin binds in turn, and has to be found by
+/// feel. The right pin stays up with a click; a wrong one drops them all.
+class LockPickGame extends StatefulWidget {
+  const LockPickGame({super.key, required this.order, required this.onDone});
+
+  /// The pins, numbered from the left, in the order they must be set.
+  final List<int> order;
+  final VoidCallback onDone;
+
+  @override
+  State<LockPickGame> createState() => _LockPickGameState();
+}
+
+class _LockPickGameState extends State<LockPickGame> {
+  int _set = 0;
+  String _message = '';
+
+  void _lift(int pin) {
+    if (widget.order.indexOf(pin) < _set) return;
+    if (widget.order[_set] != pin) {
+      setState(() {
+        _message = _set == 0
+            ? 'That one will not bind yet. Try another.'
+            : 'Too soon. The pins drop, and I begin again.';
+        _set = 0;
+      });
+      return;
+    }
+    VoiceScope.maybeOf(context)?.click();
+    setState(() {
+      _set++;
+      _message = '';
+    });
+    if (_set == widget.order.length) widget.onDone();
   }
 
   @override
@@ -549,63 +858,67 @@ class _CodeLockState extends State<CodeLock> {
       mainAxisSize: MainAxisSize.min,
       children: [
         const Text(
-          'A brass lock with four wheels. Engraved beneath it: '
-          '“The year it all began.”',
+          'Four pins, and they bind one at a time. Lift them in the right '
+          'order. The right one stays up with a click.',
           style: kBody,
           textAlign: TextAlign.center,
         ),
-        const SizedBox(height: 12),
-        Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            for (var i = 0; i < 4; i++)
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 6),
-                child: Column(
-                  children: [
-                    IconButton(
-                      key: ValueKey('wheel-up-$i'),
-                      onPressed: () => _turn(i, 1),
-                      icon: const Icon(Icons.keyboard_arrow_up, color: kGold),
-                    ),
-                    Container(
-                      width: 54,
-                      height: 64,
-                      alignment: Alignment.center,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFD4A537),
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: kInk, width: 3),
+        const SizedBox(height: 14),
+        Container(
+          padding: const EdgeInsets.fromLTRB(18, 12, 18, 0),
+          decoration: BoxDecoration(
+            color: const Color(0xFF546E7A),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: kInk, width: 3),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              for (var pin = 0; pin < widget.order.length; pin++)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  child: MouseRegion(
+                    cursor: SystemMouseCursors.click,
+                    child: GestureDetector(
+                      key: ValueKey('pin-$pin'),
+                      behavior: HitTestBehavior.opaque,
+                      onTap: () => _lift(pin),
+                      child: SizedBox(
+                        width: 44,
+                        height: 130,
+                        child: Align(
+                          alignment: Alignment.bottomCenter,
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 140),
+                            width: 30,
+                            height:
+                                widget.order.indexOf(pin) < _set ? 118 : 64,
+                            decoration: BoxDecoration(
+                              color: widget.order.indexOf(pin) < _set
+                                  ? const Color(0xFFD4A537)
+                                  : const Color(0xFFB0BEC5),
+                              borderRadius: const BorderRadius.vertical(
+                                top: Radius.circular(8),
+                              ),
+                              border: Border.all(color: kInk, width: 2),
+                            ),
+                          ),
+                        ),
                       ),
-                      child: Text(
-                        '${_digits[i]}',
-                        style: const TextStyle(color: kInk, fontSize: 34, fontWeight: FontWeight.bold),
-                      ),
                     ),
-                    IconButton(
-                      key: ValueKey('wheel-down-$i'),
-                      onPressed: () => _turn(i, 9),
-                      icon: const Icon(Icons.keyboard_arrow_down, color: kGold),
-                    ),
-                  ],
+                  ),
                 ),
-              ),
-          ],
+            ],
+          ),
         ),
-        const SizedBox(height: 6),
-        GoldButton(
-          key: const ValueKey('try-lock'),
-          label: 'Try the lock',
-          icon: Icons.lock_open,
-          onPressed: () {
-            final opened = widget.onTry(_digits.join());
-            if (!opened) setState(() => _refused = true);
-          },
-        ),
-        const SizedBox(height: 6),
+        const SizedBox(height: 10),
         Text(
-          _refused ? 'It does not budge.' : ' ',
-          style: kBody.copyWith(color: const Color(0xFFFF8A80)),
+          _message.isEmpty ? 'Set: $_set of ${widget.order.length}' : _message,
+          key: const ValueKey('pick-status'),
+          style: kBody.copyWith(
+            color: _message.isEmpty ? kCream : const Color(0xFFFF8A80),
+          ),
         ),
       ],
     );

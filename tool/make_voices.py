@@ -20,6 +20,7 @@ VOICES = {
     "narrator": ("en_US-ryan-high", 1.12, 0.96),
     "churlock": ("en_US-hfc_male-medium", 1.0, 1.0),
     "watsonut": ("en_US-john-medium", 1.05, 0.97),
+    "watsonut-shaky": ("en_US-john-medium", 1.14, 1.0),
     "penny": ("en_GB-alba-medium", 1.0, 1.0),
     "graham": ("en_GB-alan-medium", 1.12, 1.0),
     "cannoli": ("en_US-norman-medium", 1.0, 0.93),
@@ -28,6 +29,9 @@ VOICES = {
     "sprinkles": ("en_US-joe-medium", 1.0, 1.0),
     "glaze": ("en_US-bryce-medium", 1.0, 1.05),
 }
+
+# Voices that tremble with fright: a wavering pitch and an unsteady breath.
+SHAKY = {"watsonut-shaky": "vibrato=f=6.5:d=0.45,tremolo=f=9:d=0.55"}
 
 # Lines that open with a bright ding, and are then delivered louder, higher
 # and with a little echo.
@@ -131,6 +135,8 @@ def main():
                 if pitch != 1.0:
                     filters += [f"asetrate={RATE * pitch:.0f}",
                                 f"aresample={RATE}", f"atempo={1 / pitch:.4f}"]
+                if voice in SHAKY:
+                    filters.append(SHAKY[voice])
                 filters.append("loudnorm=I=-17:TP=-1.5:LRA=11")
                 subprocess.run(
                     [ffmpeg, "-y", "-loglevel", "error",

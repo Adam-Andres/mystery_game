@@ -40,6 +40,7 @@ class ExteriorPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     c = canvas;
     _sky();
+    _yard();
     _mansion();
     _ground();
   }
@@ -121,6 +122,40 @@ class ExteriorPainter extends CustomPainter {
         c.drawCircle(p.translate(0, -6), 8, fill(_gumdrops[(i + colourOffset) % _gumdrops.length]));
       }
     }
+  }
+
+  /// Where Pupcake looks over the fence, when he has something to be
+  /// pleased about: the top of the fence, and the middle of the gap he uses.
+  static const fenceTop = 352.0;
+  static const fenceGap = 292.0;
+
+  /// The back yard, glimpsed round the side of the house: the greenhouse,
+  /// the kennel roof, and the wafer fence.
+  void _yard() {
+    final dim = gloomy ? .6 : 1.0;
+    final frame = stroke(_icing.withValues(alpha: .8 * dim), 3);
+    const panes = [Offset(196, 330), Offset(236, 300), Offset(276, 330), Offset(276, ground), Offset(196, ground)];
+    c.drawPath(Path()..addPolygon(panes, true), fill(const Color(0x4490CAF9)));
+    c.drawPath(Path()..addPolygon(panes, true), frame);
+    c.drawLine(const Offset(236, 300), const Offset(236, ground), frame);
+    c.drawLine(const Offset(196, 330), const Offset(276, 330), frame);
+    // Kennel roof.
+    c.drawPath(
+      Path()..addPolygon(const [Offset(340, 362), Offset(374, 328), Offset(408, 362)], true),
+      fill(Color.lerp(Colors.black, const Color(0xFF6E4520), dim)!),
+    );
+    c.drawLine(const Offset(340, 362), const Offset(374, 328), stroke(_icing.withValues(alpha: dim), 4));
+    c.drawLine(const Offset(408, 362), const Offset(374, 328), stroke(_icing.withValues(alpha: dim), 4));
+    c.drawCircle(const Offset(374, 328), 5, fill(const Color(0xFFD32F2F)));
+    // Wafer fence.
+    final wafer = fill(Color.lerp(Colors.black, const Color(0xFFB98443), dim)!);
+    for (var x = 186.0; x < 440; x += 18) {
+      c.drawRRect(
+        RRect.fromRectAndRadius(Rect.fromLTWH(x, fenceTop, 15, ground - fenceTop), const Radius.circular(3)),
+        wafer,
+      );
+    }
+    _rect(182, 366, 260, 5, Color.lerp(Colors.black, const Color(0xFF6B4226), dim)!);
   }
 
   void _mansion() {

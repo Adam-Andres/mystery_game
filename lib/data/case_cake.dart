@@ -9,6 +9,7 @@ const cakeCase = MysteryCase(
   title: 'The Twelve-Year Fruitcake',
   culprits: {'penny'},
   nextVictims: ['barry', 'graham', 'tira', 'cannoli'],
+  herringCount: 10,
   solution:
       "Thirty years ago Mrs. Senclair built her fortune on Penny Cotta's cream "
       "puff recipe and never paid her a cube; now she meant to retire Penny "
@@ -123,11 +124,20 @@ const cakeCase = MysteryCase(
         "It wants dusting for fingerprints.",
         inside: 'crates',
       ),
+      Evidence(
+        'cakekennel', 'Christmas Fruitcake', 'backyard', 0,
+        "Pushed to the back of the kennel: a fruitcake as hard as granite, "
+        "with tooth marks where Pupcake gave up on it. One corner is "
+        "freshly chipped, and there is custard on it. It wants dusting for "
+        "fingerprints.",
+        inside: 'kennel',
+      ),
     ],
   ],
   herrings: [
     will, bills, iou, regiment, dismissal, spade, jobAd, cocoa, crumbs,
-    threat, berryStain, sabre, betting, savings, diary,
+    threat, berryStain, sabre, betting, savings, diary, slipper, scratches,
+    letters, medal,
     Evidence(
       'ricottadrip', 'White Cream Drips', 'entrance', 4,
       "A few spots of thick white ricotta on the floor at the top of the "
@@ -135,7 +145,7 @@ const cakeCase = MysteryCase(
       icon: Icons.water_drop, color: Colors.white,
     ),
   ],
-  weapons: {'cakesack', 'cakecrate'},
+  weapons: {'cakesack', 'cakecrate', 'cakekennel'},
   printsOn: ['penny'],
   prints: Evidence.given(
     'prints', 'Prints on the Fruitcake', 'churlock',
@@ -147,6 +157,8 @@ const cakeCase = MysteryCase(
   deskCode: '1879',
   hints: {
     ...commonHints,
+    ...timeHints,
+    'boots': bootsHint,
     'phone': phoneHint,
     'souffle': "Everybody else's alibi is somebody's word. This one is a "
         "pudding. Can a pudding lie, Churlock?",
@@ -172,6 +184,8 @@ const cakeCase = MysteryCase(
         "house. I should dust it.",
     'cakecrate': "Hidden in a hurry, by someone who knows the nooks of this "
         "house. I should dust it.",
+    'cakekennel': "Out in the yard, and there is only one way into that "
+        "yard. Whose room is it? I should dust it.",
     'notepad': "A shopping note. But notice what it says about the larder, "
         "Churlock.",
     'prints': "Sharp, you say? After twelve years in a tin? Ask Officer "
@@ -299,6 +313,7 @@ const cakeCase = MysteryCase(
       ),
       pennyRecipe,
       ...pennyCommon,
+      ...pennyYard,
     ],
     'graham': [
       Topic(
@@ -337,6 +352,7 @@ const cakeCase = MysteryCase(
         needs: ['ricottadrip'],
       ),
       ...grahamCommon,
+      ...grahamYard,
     ],
     'cannoli': [
       Topic(
@@ -370,6 +386,7 @@ const cakeCase = MysteryCase(
       cannoliIou,
       cannoliProof,
       cannoliBetting,
+      cannoliMedal,
       cannoliRegiment,
       cannoliSabre,
     ],

@@ -13,6 +13,8 @@ import 'package:mystery/data/house.dart';
 import 'package:mystery/data/models.dart';
 import 'package:mystery/game_state.dart';
 import 'package:mystery/main.dart';
+import 'package:mystery/screens/minigames.dart';
+import 'package:mystery/widgets/dessert_figure.dart';
 
 Finder _key(String k) => find.byKey(ValueKey(k));
 
@@ -158,8 +160,26 @@ void main() {
       });
     }
 
+    test('every resident is a killer in exactly two mysteries', () {
+      for (final p in residents) {
+        expect(
+          allCases.where((c) => c.culprits.contains(p.id)),
+          hasLength(2),
+          reason: p.id,
+        );
+      }
+    });
+
+    test('every tool opens somewhere, and every such place has a tool', () {
+      final wanted = {
+        for (final n in nooks)
+          if (n.needs != null) n.needs!,
+      };
+      expect(wanted, {for (final i in items) i.id});
+    });
+
     test('a new game never repeats the previous mystery', () {
-      final g = GameState(random: Random(7));
+      final g = GameState(random: Random(7), twistChance: 0);
       final seen = <String>{};
       String? last;
       for (var i = 0; i < 60; i++) {
@@ -168,7 +188,7 @@ void main() {
         last = g.mystery.id;
         seen.add(last);
       }
-      expect(seen, hasLength(3));
+      expect(seen, hasLength(7));
     });
   });
 
@@ -186,6 +206,182 @@ void main() {
         .map((f) => f.uri.pathSegments.last)
         .where((f) => !wanted.contains(f));
     expect(extra, isEmpty, reason: 'unused clips');
+  });
+
+  testWidgets('the desk dial clicks only at the number it wants', (
+    tester,
+  ) async {
+    final effects = _RecordingPlayer();
+    final voice = Voice(SilentPlayer(), effects);
+    await tester.pumpWidget(
+      MaterialApp(
+        home: VoiceScope(
+          voice: voice,
+          child: Scaffold(
+            body: Center(
+              child: DialLock(combination: const [10, 69, 36], onTry: (_) => true),
+            ),
+          ),
+        ),
+      ),
+    );
+    for (var n = 0; n < 12; n++) {
+      await tester.tap(_key('dial-right'));
+    }
+    await tester.pump();
+    final clicks = [
+      for (final (i, clip) in effects.played.indexed)
+        if (clip.contains('click')) i,
+    ];
+    // The tenth notch, and no other.
+    expect(clicks, [9]);
+    expect(effects.played, hasLength(12));
+    expect(find.text('(click)'), findsNothing);
+
+    // With the sound off, the click is shown instead.
+    voice.toggleMute();
+    for (var n = 0; n < 98; n++) {
+      await tester.tap(_key('dial-right'));
+    }
+    await tester.pump();
+    expect(find.text('(click)'), findsOneWidget);
+    await tester.pump(const Duration(seconds: 1));
+    expect(find.text('(click)'), findsNothing);
+  });
+
+  group('the rare mystery', () {
+    test('turns up as often as it is set to', () {
+      final always = GameState(random: Random(1), twistChance: 1)..newGame();
+      expect(always.mystery.id, twistCase.id);
+      final never = GameState(random: Random(1), twistChance: 0)..newGame();
+      expect(never.mystery.id, isNot(twistCase.id));
+      final g = GameState(random: Random(5), twistChance: 1 / 20);
+      var twists = 0;
+      for (var i = 0; i < 2000; i++) {
+        g.newGame();
+        if (g.mystery.id == twistCase.id) twists++;
+      }
+      expect(twists, inInclusiveRange(60, 140));
+    });
+
+    test('is consistent, and none of the residents did it', () {
+      final m = twistCase;
+      expect(m.culprits, {watsonut.id});
+      expect(allCases, isNot(contains(m)));
+      final ids = {
+        ...m.pool.map((e) => e.id),
+        ...m.gifts.map((e) => e.id),
+        m.prints.id,
+      };
+      expect(ids.length, m.pool.length + m.gifts.length + 1);
+      expect(ids, containsAll(m.weapons));
+      for (final e in m.pool) {
+        if (e.inside != null) {
+          expect(nookById(e.inside!).room, e.room, reason: e.id);
+        } else {
+          expect(slots[e.room]!.length, greaterThan(e.slot), reason: e.id);
+        }
+      }
+      // The strip is in the locked desk, and nowhere else.
+      expect(m.core.singleWhere((e) => e.id == 'tornsheet').inside, 'desk');
+      for (final c in allCases) {
+        expect(c.pool.any((e) => e.id == 'tornsheet'), isFalse);
+        expect(c.lies, isEmpty);
+        expect(c.shaky, isEmpty);
+      }
+      final statements = {
+        for (final entry in m.topics.entries)
+          for (final t in entry.value) GameState.keyOf(entry.key, t),
+      };
+      for (final t in m.topics.values.expand((l) => l)) {
+        expect(ids, containsAll(t.needs), reason: t.id);
+        expect(statements, containsAll(t.heard), reason: t.id);
+      }
+      // He lies about some things and not others.
+      final hinted = {...ids, for (var i = 0; i < 4; i++) 'accuse:$i'};
+      expect(hinted, containsAll(m.lies));
+      expect(hinted, containsAll(m.shaky));
+      expect(m.lies.length, lessThan(hinted.length));
+      expect(m.lies.contains('souffle'), isFalse);
+    });
+
+    testWidgets('is solved by putting back the strip he tore off', (
+      tester,
+    ) async {
+      final g = GameState(random: Random(4));
+      final player = _RecordingPlayer();
+      await tester.pumpWidget(MysteryApp(state: g, voice: Voice(player)));
+      g.newGame(twist: true, skipIntro: true);
+      await tester.pump();
+      expect(g.mystery.id, twistCase.id);
+
+      // The list of suspects is torn in every mystery, with a scroll bar
+      // that scrolls nothing; here there is nobody extra to accuse yet.
+      g.openPanel(Panel.accuse);
+      await tester.pump();
+      expect(_key('list-torn'), findsOneWidget);
+      expect(_key('idle-scrollbar'), findsOneWidget);
+      await tester.drag(_key('idle-scrollbar'), const Offset(60, 0));
+      await tester.pump();
+      expect(_key('accuse-watsonut'), findsNothing);
+      expect(_key('attach-sheet'), findsNothing);
+      g.closePanel();
+
+      // His hints: a lie about what points at him, in a shaking voice and
+      // with a still moustache; the truth about the rest.
+      g.hintsUsed = 1;
+      final clue = g.evidence.firstWhere(
+        (e) => e.id == 'chainlink' || e.id == 'drizzle',
+      );
+      g.inspect(clue);
+      g.askHint(about: clue);
+      await tester.pump();
+      expect(g.dialogue!.lying, isTrue);
+      expect(g.dialogue!.voice, shakyVoice);
+      expect(player.played.last, contains(shakyVoice));
+      expect(
+        tester
+            .widgetList<DessertFigure>(find.byType(DessertFigure))
+            .where((f) => f.stiff),
+        isNotEmpty,
+      );
+      final souffle = g.evidence.firstWhere((e) => e.id == 'souffle');
+      g.askHint(about: souffle);
+      await tester.pump();
+      expect(g.dialogue!.lying, isFalse);
+      expect(g.dialogue!.voice, isNull);
+      g.closeDialogue();
+
+      // The strip is in the desk. Fitted back, it adds a sixth suspect.
+      final desk = nookById('desk');
+      expect(g.tryCode(desk, deskCombination.join('-')), isTrue);
+      g.inspect(g.evidence.firstWhere((e) => e.id == 'tornsheet'));
+      g.closeDialogue();
+      g.openPanel(Panel.accuse);
+      await tester.pump();
+      await tester.tap(_key('attach-sheet'));
+      await tester.pump();
+      expect(_key('list-whole'), findsOneWidget);
+      await tester.tap(_key('accuse-watsonut'));
+      await tester.pump();
+      await tester.tap(_key('arrest'));
+      await tester.pump();
+      expect(g.won, isTrue);
+      await tester.pump(const Duration(seconds: 4));
+      await tester.tap(_key('cutscene-done'));
+      await tester.pump();
+      expect(find.text('CASE CLOSED'), findsOneWidget);
+    });
+
+    test('is lost by arresting a resident', () {
+      final g = GameState()..newGame(twist: true, skipIntro: true);
+      g
+        ..toggleAccused('cannoli')
+        ..makeArrest();
+      expect(g.won, isFalse);
+      expect(g.freeKillers, {watsonut.id});
+      expect(g.nextVictim, isNotNull);
+    });
   });
 
   group('verdict', () {
@@ -466,22 +662,34 @@ void main() {
     expect(g.found, contains('solicitor'));
     g.closeDialogue();
 
-    // The desk needs this mystery's combination.
+    // The desk has a dial: right, left, right, pressing the knob at each
+    // number. The dial will not turn the wrong way.
     final desk = nookById('desk');
     g.search(desk);
     await tester.pump();
-    await tester.tap(_key('try-lock'));
-    await tester.pump();
-    expect(g.isOpen(desk), isFalse);
-    for (final (wheel, digit)
-        in g.mystery.deskCode.split('').map(int.parse).indexed) {
-      for (var i = 0; i < digit; i++) {
-        await tester.tap(_key('wheel-up-$wheel'));
+    var at = 0;
+    Future<void> dial(List<int> code) async {
+      for (final (i, number) in code.indexed) {
+        final right = i.isEven;
+        var turns = right ? (number - at) % 100 : (at - number) % 100;
+        if (turns == 0) turns = 100;
+        for (var n = 0; n < turns; n++) {
+          await tester.tap(_key(right ? 'dial-right' : 'dial-left'));
+        }
+        await tester.pump();
+        at = number;
+        await tester.tap(_key('dial-set'));
+        await tester.pump(const Duration(milliseconds: 200));
       }
     }
+
+    await tester.tap(_key('dial-left'));
     await tester.pump();
-    await tester.tap(_key('try-lock'));
-    await tester.pump();
+    expect(find.textContaining('Dial reads  0'), findsOneWidget);
+    await dial([5, 3, 8]);
+    expect(g.isOpen(desk), isFalse);
+    expect(find.textContaining('does not give'), findsOneWidget);
+    await dial(deskCombination);
     expect(g.isOpen(desk), isTrue);
     await tester.tap(_key('evidence-planner'));
     await tester.pump();
@@ -615,6 +823,85 @@ void main() {
       expect(voice.isSpeaking('penny'), isFalse);
     });
 
+    testWidgets('tools are picked up, shown in boxes, and open things', (
+      tester,
+    ) async {
+      final g = GameState(random: Random(3));
+      await tester.pumpWidget(
+        MysteryApp(state: g, voice: Voice(SilentPlayer())),
+      );
+      g.newGame(caseIndex: 4, skipIntro: true);
+      await tester.pump();
+      expect(_key('held-shovel'), findsNothing);
+
+      // The earth cannot be dug without the shovel.
+      final dirt = nookById('dirt');
+      g.enter(roomById('backyard'));
+      await tester.pump();
+      expect(_key('sight-pupcake'), findsOneWidget);
+      g.search(dirt);
+      await tester.pump();
+      expect(g.isOpen(dirt), isFalse);
+      expect(_key('use-item'), findsNothing);
+      expect(find.text(dirt.barred), findsOneWidget);
+      g.closePanel();
+
+      g.enter(roomById('boiler'));
+      await tester.pump();
+      await tester.tap(_key('item-shovel'));
+      await approach(tester);
+      expect(g.items, ['shovel']);
+      expect(find.textContaining('Picked up'), findsOneWidget);
+      g.closeDialogue();
+      await tester.pump();
+      expect(_key('item-shovel'), findsNothing);
+      expect(_key('held-shovel'), findsOneWidget);
+
+      g.enter(roomById('backyard'));
+      g.search(dirt);
+      await tester.pump();
+      await tester.tap(_key('use-item'));
+      await tester.pump();
+      expect(g.isOpen(dirt), isTrue);
+      expect(g.evidenceIn(dirt), isNotEmpty);
+      g.closePanel();
+
+      // The strongbox wants its pins lifted in this game's order.
+      final box = nookById('strongbox');
+      g.take(itemById('lockpicks'));
+      g.closeDialogue();
+      g.enter(roomById('cellar'));
+      g.search(box);
+      await tester.pump();
+      await tester.tap(_key('pin-${g.pinOrder[1]}'));
+      await tester.pump();
+      expect(g.isOpen(box), isFalse);
+      for (final pin in g.pinOrder) {
+        await tester.tap(_key('pin-$pin'));
+        await tester.pump(const Duration(milliseconds: 200));
+      }
+      expect(g.isOpen(box), isTrue);
+      g.closePanel();
+
+      // Pupcake moves out of his doorway for a biscuit.
+      final kennel = nookById('kennel');
+      g.take(itemById('biscuit'));
+      g.closeDialogue();
+      g.enter(roomById('backyard'));
+      g.search(kennel);
+      await tester.pump();
+      final before = tester.getCenter(_key('sight-pupcake'));
+      await tester.tap(_key('use-item'));
+      await tester.pump();
+      expect(g.isOpen(kennel), isTrue);
+      g.closePanel();
+      await tester.pump();
+      expect(tester.getCenter(_key('sight-pupcake')), isNot(before));
+      for (final item in items) {
+        expect(_key('held-${item.id}'), findsOneWidget);
+      }
+    });
+
     testWidgets('explains himself once, on the way in', (tester) async {
       final g = GameState(random: Random(2));
       await tester.pumpWidget(
@@ -723,7 +1010,7 @@ void main() {
         for (final n in g.nooksHere) {
           g.search(n);
           await tester.pump();
-          expect(g.tryCode(n, g.mystery.deskCode), isTrue);
+          expect(g.tryCode(n, deskCombination.join('-')), isTrue);
           await tester.pump();
           for (final e in g.evidenceIn(n).toList()) {
             await examine(e);

@@ -9,6 +9,7 @@ const brewCase = MysteryCase(
   title: 'A Bitter Brew',
   culprits: {'tira', 'graham'},
   nextVictims: ['penny', 'cannoli', 'barry'],
+  herringCount: 10,
   solution:
       "Mrs. Senclair was about to sign a new will, cutting off her niece Tira "
       "and dismissing Graham without a pension for helping Tira pawn her "
@@ -71,12 +72,12 @@ const brewCase = MysteryCase(
     ],
     [
       Evidence(
-        'newwill', 'Unsigned New Will', 'study', 0,
-        "A draft on Mrs. Senclair's desk, to be signed today: “I revoke all "
+        'newwill', 'Unsigned New Will', 'cellar', 0,
+        "Locked in the strongbox, a draft to be signed today: “I revoke all "
         "bequests to my niece Tira Misu. My butler, G. Cracker, is dismissed "
         "without pension. Both know why. Everything goes to the Donut County "
         "Home for Day-Old Pastries.”",
-        icon: Icons.description, color: Colors.white,
+        icon: Icons.description, color: Colors.white, inside: 'strongbox',
       ),
       Evidence(
         'solicitor', "Solicitor's Letter", 'entrance', 3,
@@ -112,10 +113,10 @@ const brewCase = MysteryCase(
     ],
     [
       Evidence(
-        'gloves', 'Coffee-Stained Gloves', 'bedroom', 1,
-        "Stuffed under Tira's mattress: a pair of elegant evening gloves, "
-        "soaked through with espresso and still damp.",
-        icon: Icons.back_hand, color: Color(0xFFBCAAA4),
+        'gloves', 'Coffee-Stained Gloves', 'backyard', 0,
+        "Buried in the loose earth by the kennel: a pair of elegant "
+        "evening gloves, soaked through with espresso and still damp.",
+        icon: Icons.back_hand, color: Color(0xFFBCAAA4), inside: 'dirt',
       ),
       Evidence(
         'tickets', 'Packed Suitcase', 'storage', 0,
@@ -143,7 +144,8 @@ const brewCase = MysteryCase(
   ],
   herrings: [
     iou, sabre, dismissal, spade, recipe, berryStain, sauceDrip, threat,
-    cocoa, crumbs, jobAd, betting, savings, diary,
+    cocoa, crumbs, jobAd, betting, savings, diary, slipper, scratches,
+    letters, medal,
     Evidence(
       'ricottadrip', 'White Cream Drips', 'landing', 4,
       "A little pool of thick white ricotta on the landing floorboards, "
@@ -170,6 +172,8 @@ const brewCase = MysteryCase(
   deskCode: '1892',
   hints: {
     ...commonHints,
+    ...timeHints,
+    'boots': bootsHint,
     'souffle': souffleHint,
     'phone': "The operator's own record. I should call that one alibi we "
         "need not worry about.",
@@ -302,6 +306,7 @@ const brewCase = MysteryCase(
       pennyRecipe,
       pennySauce,
       ...pennyCommon,
+      ...pennyYard,
     ],
     'graham': [
       Topic(
@@ -387,6 +392,7 @@ const brewCase = MysteryCase(
         needs: ['prints'],
       ),
       ...grahamCommon,
+      ...grahamYard,
     ],
     'tira': [
       Topic(
@@ -488,6 +494,7 @@ const brewCase = MysteryCase(
       cannoliIou,
       cannoliProof,
       cannoliBetting,
+      cannoliMedal,
       cannoliSabre,
     ],
     'barry': [

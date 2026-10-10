@@ -1,6 +1,7 @@
 import '../data/cases.dart';
 import '../data/hints.dart';
 import '../data/house.dart';
+import '../game_state.dart' show shakyVoice;
 
 /// One spoken line: who says it, and what they say.
 typedef VoiceLine = ({String voice, String text});
@@ -115,8 +116,18 @@ List<VoiceLine> allVoiceLines() {
       add(churlock.id, junk.text);
     }
   }
-  for (final mystery in allCases) {
+  for (final item in items) {
+    add(churlock.id, item.description);
+  }
+  add(churlock.id, pupcakeRemark.text);
+  for (final sight in sights) {
+    add(churlock.id, sight.junk.text);
+  }
+  for (final mystery in [...allCases, twistCase]) {
     add(narrator, mystery.solution);
+    for (final entry in mystery.greetings.entries) {
+      add(entry.key, entry.value);
+    }
     // Churlock reads out what he finds, what dusting turns up, and (from
     // the notebook) what he has been handed.
     for (final e in [...mystery.pool, ...mystery.gifts, mystery.prints]) {
@@ -124,11 +135,13 @@ List<VoiceLine> allVoiceLines() {
     }
     add(churlock.id, certificateText(mystery.deskCode));
     // Watsonut has something to say about every piece of evidence.
+    String voiceOf(String id) =>
+        mystery.shaky.contains(id) ? shakyVoice : watsonut.id;
     for (final e in [...mystery.pool, ...mystery.gifts, mystery.prints]) {
-      add(watsonut.id, hintFor(mystery, e));
+      add(voiceOf(e.id), hintFor(mystery, e));
     }
-    for (final hint in mystery.accuseHints) {
-      add(watsonut.id, hint);
+    for (final (i, hint) in mystery.accuseHints.indexed) {
+      add(voiceOf('accuse:$i'), hint);
     }
     for (final entry in mystery.topics.entries) {
       for (final t in entry.value) {

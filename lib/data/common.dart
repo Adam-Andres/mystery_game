@@ -33,17 +33,20 @@ const souffleHint =
     "If that log is honest, Penny never left her oven. I should ask to see "
     "the log itself.";
 
+const bootsHint =
+    "Locked out until midnight, by the look of it. Who latches the doors in "
+    "this house, and when?";
+
+const _fivePast =
+    "Five past eleven, then. Never mind who had a reason, Churlock. Who can "
+    "prove where they stood at five past eleven? And I mean prove, not say.";
+
+/// What he makes of the stopped watch or clock, when it can be trusted.
+const timeHints = <String, String>{'watch': _fivePast, 'clock': _fivePast};
+
 /// Watsonut's thoughts on evidence that turns up in every mystery. He says
 /// the same of a document whether it is genuine or forged.
 const commonHints = <String, String>{
-  'watch': "Five past eleven, then. Never mind who had a reason, Churlock. "
-      "Who can prove where they stood at five past eleven? And I mean prove, "
-      "not say.",
-  'clock': "Five past eleven, then. Never mind who had a reason, Churlock. "
-      "Who can prove where they stood at five past eleven? And I mean prove, "
-      "not say.",
-  'boots': "Locked out until midnight, by the look of it. Who latches the "
-      "doors in this house, and when?",
   'chart': "Splendid. Now all we want is the weapon.",
   'cellarbook': "Useful for knowing who had honest business in the cellar, "
       "and when. Compare it with whatever you find down there.",
@@ -225,6 +228,81 @@ const diary = Evidence(
   "scream. Must be sweeter to her. Madame Leine telephones tonight.”",
   icon: Icons.book, color: Color(0xFFF8BBD0), inside: 'chest',
 );
+
+/// A game of chess with no gaps in it.
+const steadyScoresheet = Evidence(
+  'scoresheet', 'Chess Scoresheet', 'parlor', 0,
+  "Graham's meticulous record of last night's game. A move is entered "
+  "every two or three minutes from 10:32 until 11:58 without a break, "
+  "each one initialled by both players.",
+  icon: Icons.assignment, color: paper,
+);
+
+// Red herrings out in the yard, and in the places that want a tool to open.
+
+const medal = Evidence(
+  'medal', 'Chewed Medal', 'backyard', 0,
+  "Buried a hand deep among the biscuit bones: one of the Colonel's medals, "
+  "gnawed along one edge. Under the gilt it is solid chocolate.",
+  icon: Icons.military_tech, color: gold, inside: 'dirt',
+);
+
+const slipper = Evidence(
+  'slipper', 'Chewed Slipper', 'backyard', 0,
+  "At the back of the kennel, under the blanket: a left slipper, monogrammed "
+  "G.C. and chewed to a rag. There is cellar dust on the sole.",
+  icon: Icons.ice_skating, color: _dull, inside: 'kennel',
+);
+
+const scratches = Evidence(
+  'scratches', 'Scratched Back Door', 'backyard', 3,
+  "Deep fresh scratches low down on the back door, and the paint gouged "
+  "away in strips. Something wanted very badly to be let in last night.",
+  icon: Icons.door_back_door, color: _dull,
+);
+
+const letters = Evidence(
+  'letters', 'Bundle of Letters', 'cellar', 0,
+  "In the strongbox, tied with a faded ribbon: thirty-year-old letters "
+  "beginning “My dearest Éclaire” and ending “Your devoted G.” Every one "
+  "has been opened, read, and kept.",
+  icon: Icons.mail, color: Color(0xFFF8BBD0), inside: 'strongbox',
+);
+
+const cannoliMedal = Topic(
+  'medal', 'One of your medals was buried in the yard.',
+  "That hound, sir! He has had three of them off my dressing table. The "
+  "ones he buries are the stage set, for the Fort Fondant theatricals. One "
+  "doesn't leave the real ones lying about. Chocolate, yes. What of it?",
+  needs: ['medal'],
+);
+
+const grahamYard = [
+  Topic(
+    'slipper', 'Your slipper was in the kennel, with cellar dust on it.',
+    "The animal has stolen my left slipper every week since it was a pup, "
+    "sir. I wear them when I do the cellar book. I have asked Madam for a "
+    "taller shoe rack on four occasions.",
+    needs: ['slipper'],
+  ),
+  Topic(
+    'letters', 'Who is “Your devoted G.”?',
+    "A youthful indiscretion, sir, of thirty years' standing. Madam "
+    "declined. I stayed. One does not strike down a lady after thirty years "
+    "for saying no in the first week.",
+    needs: ['letters'],
+  ),
+];
+
+const pennyYard = [
+  Topic(
+    'scratches', 'Something has clawed at the back door.',
+    "Pupcake. He wants in every time it rains, and I won't have it. He "
+    "sheds sprinkles into everything. He scratched at that door half the "
+    "night, the little beast.",
+    needs: ['scratches'],
+  ),
+];
 
 // Things the residents and the police hand over when asked.
 
@@ -461,7 +539,7 @@ const barryAbout = Topic(
   "shed leaks. Can't say fairer than that.",
 );
 
-const barryCommon = [
+const barryBasics = [
   Topic(
     'lockedout', 'Graham latches the doors at ten.',
     "Too right he does. I hammered on the back door a good while before "
@@ -486,8 +564,9 @@ const barryCommon = [
     "floor ain't neither.",
     needs: ['berrystain'],
   ),
-  barrySavings,
 ];
+
+const barryCommon = [...barryBasics, barrySavings];
 
 const whoWasHome = Topic(
   'home', 'Who was in the house?',

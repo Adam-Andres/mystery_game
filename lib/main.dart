@@ -50,7 +50,7 @@ class _MysteryAppState extends State<MysteryApp> {
     if (d == null) {
       voice.release(this);
     } else {
-      voice.say((voice: d.speaker.id, text: d.text), owner: this);
+      voice.say((voice: d.voice ?? d.speaker.id, text: d.text), owner: this);
     }
   }
 

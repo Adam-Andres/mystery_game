@@ -13,8 +13,15 @@ them alone, or two of them together.
 - **Click** glowing objects to collect evidence, and click desserts to question
   them. Churlock walks over to whatever you click.
 - **Search the furniture.** Closets, trunks, drawers and sacks can be opened,
-  and some evidence is only found inside them. The study desk is locked; its
-  combination is somewhere in the house.
+  and some evidence is only found inside them. The study desk has a
+  combination dial with three numbers, and the combination is written down
+  nowhere. Turn it the way the arrow shows and listen: it ticks at every
+  notch and gives a loud click at the right number. Press SET there.
+- **Pick up tools.** A coal shovel, a lock pick box and a dog biscuit are lying
+  about the house. What you carry shows in boxes at the top of the screen.
+  Each one opens somewhere else: loose earth in the backyard, an iron
+  strongbox in the cellar, and the kennel of Pupcake, the cupcake dog, who
+  will not budge from his doorway unless bribed.
 - **Follow up.** Evidence unlocks new questions, and so does testimony: when one
   dessert tells you something, you can put it to the others.
 - **Ask for things.** Some characters will hand over documents. Not all of
@@ -38,7 +45,12 @@ Everybody has a motive and nobody confesses. Most of what you find is a red
 herring with an innocent explanation, so the case is solved by checking every
 alibi against the evidence and against the other residents.
 
-There are three mysteries, chosen at random. Each game also draws its evidence
+There are seven mysteries, chosen at random, and across them every resident
+is a killer exactly twice. Three have one killer and four have two.
+
+There is also an eighth, rare mystery that breaks the rules of the other
+seven. It is meant to turn up about one game in twenty; while it is being
+tried out it is every game (`twistOdds` in `lib/game_state.dart`). Each game also draws its evidence
 at random from that mystery's pool — key clues turn up in different forms and
 places, and a different set of red herrings is scattered about — so replaying
 a case is not the same hunt twice.
@@ -76,7 +88,7 @@ The voice chosen for each character is the `VOICES` table at the top of
 
 ## Layout
 
-- `lib/data/` — the house, the residents, the three cases, and their shared red herrings
+- `lib/data/` — the house, the residents, the seven cases, and their shared red herrings
 - `lib/audio/` — the spoken lines and the clip player
 - `lib/game_state.dart` — game logic and the verdict
 - `lib/screens/` — title, opening and closing scenes, game, panels, and verdict

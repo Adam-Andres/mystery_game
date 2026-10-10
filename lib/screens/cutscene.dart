@@ -301,8 +301,33 @@ class _CutsceneState extends State<Cutscene> with TickerProviderStateMixin {
     final happy = widget.kind == CutsceneKind.solved;
     final hop = happy ? -sin(t * 2 * pi * 12).abs() * 6 : 0.0;
     return [
+      // Pupcake bounces up to look over the fence when the right dessert
+      // is driven away.
+      if (happy)
+        Positioned(
+          left: ExteriorPainter.fenceGap - 36,
+          top: ExteriorPainter.fenceTop - 62,
+          width: 72,
+          height: 62,
+          child: ClipRect(
+            child: OverflowBox(
+              alignment: Alignment.topCenter,
+              maxHeight: 120,
+              child: Transform.translate(
+                offset: Offset(0, 8 + hop),
+                child: const DessertFigure(
+                  Dessert.pupcake,
+                  width: 72,
+                  animate: true,
+                ),
+              ),
+            ),
+          ),
+        ),
       _car(90, roll: 0, lights: false),
-      _detective(const Offset(300, 506), partner: true),
+      // Unless he is in the wagon himself.
+      if (!widget.prisoners.contains(watsonut))
+        _detective(const Offset(300, 506), partner: true),
       _detective(Offset(370, 506 + hop), sway: happy ? 0 : -.1),
       Positioned(
         left: wagonX,

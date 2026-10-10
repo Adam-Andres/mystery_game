@@ -31,9 +31,22 @@ class SilentPlayer implements ClipPlayer {
 
 /// The game's voices: speaks pre-recorded lines, and remembers the mute setting.
 class Voice extends ChangeNotifier {
-  Voice([ClipPlayer? player]) : _player = player ?? createClipPlayer();
+  Voice([ClipPlayer? player, ClipPlayer? effects])
+    : _player = player ?? createClipPlayer(),
+      // A voice that was given a player is under test, and stays quiet.
+      _effects =
+          effects ?? (player == null ? createClipPlayer() : SilentPlayer());
 
   final ClipPlayer _player;
+
+  /// A second player, so that a sound effect does not cut off a voice.
+  final ClipPlayer _effects;
+
+  /// The loud click of a lock's tumbler falling into place.
+  void click() => _effects.play('assets/sfx/click.mp3');
+
+  /// The faint tick of a dial passing a notch.
+  void tick() => _effects.play('assets/sfx/tick.mp3');
 
   bool _muted = false;
   bool get muted => _muted;
@@ -51,7 +64,7 @@ class Voice extends ChangeNotifier {
   /// True while the character whose voice is [id] is saying something,
   /// whether or not the sound is muted.
   bool isSpeaking(String id) =>
-      _speaker == id && (_playing || (_guessing && _clock.elapsed < _length));
+      _speaker?.split('-').first == id && (_playing || (_guessing && _clock.elapsed < _length));
 
   /// Speaks [line], cutting off whatever was being said before. [owner]
   /// identifies who asked, so that it alone can [release] the line later.
@@ -92,6 +105,7 @@ class Voice extends ChangeNotifier {
   void toggleMute() {
     _muted = !_muted;
     _player.setMuted(_muted);
+    _effects.setMuted(_muted);
     notifyListeners();
   }
 }

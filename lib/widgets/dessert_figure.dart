@@ -24,6 +24,7 @@ class DessertFigure extends StatefulWidget {
     this.jailed = false,
     this.animate = false,
     this.speaker,
+    this.stiff = false,
   });
 
   final Dessert dessert;
@@ -31,6 +32,9 @@ class DessertFigure extends StatefulWidget {
   final bool jailed;
   final bool animate;
   final String? speaker;
+
+  /// Keeps the upper lip still while talking: Watsonut's tell.
+  final bool stiff;
 
   @override
   State<DessertFigure> createState() => _DessertFigureState();
@@ -81,7 +85,12 @@ class _DessertFigureState extends State<DessertFigure>
 
     Widget paint(double? time, [double talk = 0]) => CustomPaint(
       size: size,
-      painter: _DessertPainter(widget.dessert, time: time, talk: talk),
+      painter: _DessertPainter(
+        widget.dessert,
+        time: time,
+        talk: talk,
+        stiff: widget.stiff,
+      ),
       foregroundPainter: widget.jailed ? _BarsPainter() : null,
     );
 
@@ -105,6 +114,33 @@ class _DessertFigureState extends State<DessertFigure>
   }
 }
 
+/// A [DessertFigure] standing with its feet at [feet] in the scene.
+class DessertFigureAt extends StatelessWidget {
+  const DessertFigureAt(
+    this.dessert, {
+    super.key,
+    required this.feet,
+    this.width = 100,
+  });
+
+  final Dessert dessert;
+  final Offset feet;
+  final double width;
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      children: [
+        Positioned(
+          left: feet.dx - width / 2,
+          top: feet.dy - width * 1.3 * .95,
+          child: DessertFigure(dessert, width: width, animate: true),
+        ),
+      ],
+    );
+  }
+}
+
 class _BarsPainter extends CustomPainter {
   @override
   void paint(Canvas c, Size s) {
@@ -122,7 +158,14 @@ class _BarsPainter extends CustomPainter {
 }
 
 class _DessertPainter extends CustomPainter {
-  _DessertPainter(this.dessert, {required this.time, this.talk = 0});
+  _DessertPainter(
+    this.dessert, {
+    required this.time,
+    this.talk = 0,
+    this.stiff = false,
+  });
+
+  final bool stiff;
 
   final Dessert dessert;
 
@@ -276,6 +319,10 @@ class _DessertPainter extends CustomPainter {
         _cannoli();
       case Dessert.cracker:
         _cracker();
+      case Dessert.pupcake:
+        _pupcake();
+      case Dessert.purrfait:
+        _purrfait();
     }
   }
 
@@ -419,7 +466,7 @@ class _DessertPainter extends CustomPainter {
         );
       }
       // His moustache bobs up and down as he speaks.
-      final lift = talk * radius * .14;
+      final lift = stiff ? 0.0 : talk * radius * .14;
       final tache = _line(const Color(0xFFF5E6C8), w * .045);
       c.drawArc(
         Rect.fromCenter(
@@ -676,7 +723,185 @@ class _DessertPainter extends CustomPainter {
     c.drawCircle(o(.5, .72), w * .03, fill(const Color(0xFF6D1B1B)));
   }
 
+  /// Purrfait: a cat in a parfait glass, cream on top and berries below.
+  void _purrfait() {
+    const cream = Color(0xFFFFF8E7);
+    const berry = Color(0xFFC2185B);
+    const granola = Color(0xFFC8843C);
+    // Tail: a wafer curl, swishing.
+    final swish = _wave(4) * .05;
+    c.drawPath(
+      Path()
+        ..moveTo(w * .7, h * .78)
+        ..quadraticBezierTo(w * (.98 + swish), h * .72, w * (.88 + swish), h * .5),
+      _line(granola, w * .06),
+    );
+    // The glass: wide at the top, on a stem and a foot.
+    c.drawOval(r(.3, .9, .7, .97), fill(const Color(0xFFB3E5FC)));
+    c.drawRect(r(.47, .82, .53, .93), fill(const Color(0xFFB3E5FC)));
+    final glass = Path()
+      ..moveTo(w * .2, h * .42)
+      ..lineTo(w * .8, h * .42)
+      ..lineTo(w * .62, h * .84)
+      ..lineTo(w * .38, h * .84)
+      ..close();
+    c.save();
+    c.clipPath(glass);
+    c.drawRect(r(0, .42, 1, .56), fill(cream));
+    c.drawRect(r(0, .56, 1, .66), fill(berry));
+    c.drawRect(r(0, .66, 1, .74), fill(cream));
+    c.drawRect(r(0, .74, 1, .85), fill(granola));
+    c.restore();
+    c.drawPath(glass, _line(const Color(0xFFB3E5FC), w * .025));
+    c.drawLine(o(.28, .46), o(.4, .78), _line(Colors.white54, w * .02));
+    // Head: a dome of whipped cream, with ears and a cherry nose.
+    final head = o(.5, .32);
+    for (final sx in [-1.0, 1.0]) {
+      c.drawPath(
+        Path()..addPolygon(
+          [
+            head.translate(sx * w * .24, -w * .05),
+            head.translate(sx * w * .2, -w * .3),
+            head.translate(sx * w * .04, -w * .17),
+          ],
+          true,
+        ),
+        fill(cream),
+      );
+      c.drawPath(
+        Path()..addPolygon(
+          [
+            head.translate(sx * w * .2, -w * .1),
+            head.translate(sx * w * .18, -w * .23),
+            head.translate(sx * w * .09, -w * .16),
+          ],
+          true,
+        ),
+        fill(const Color(0xFFF8BBD0)),
+      );
+    }
+    c.drawOval(
+      Rect.fromCenter(center: head, width: w * .56, height: w * .44),
+      fill(cream),
+    );
+    for (final sx in [-1.0, 1.0]) {
+      final e = head.translate(sx * w * .11, -w * .03);
+      if (_blinking) {
+        c.drawLine(e.translate(-w * .04, 0), e.translate(w * .04, 0), _line(_dark, w * .02));
+      } else {
+        c.drawOval(
+          Rect.fromCenter(center: e, width: w * .09, height: w * .1),
+          fill(const Color(0xFF7CB342)),
+        );
+        c.drawOval(
+          Rect.fromCenter(center: e, width: w * .025, height: w * .09),
+          fill(_dark),
+        );
+      }
+      // Whiskers.
+      final whisker = _line(_dark.withValues(alpha: .6), w * .012);
+      for (final dy in [-.01, .03]) {
+        c.drawLine(
+          head.translate(sx * w * .1, w * (.07 + dy)),
+          head.translate(sx * w * .32, w * (.05 + dy * 2)),
+          whisker,
+        );
+      }
+    }
+    c.drawCircle(head.translate(0, w * .05), w * .03, fill(const Color(0xFFD32F2F)));
+    c.drawArc(
+      Rect.fromCenter(center: head.translate(-w * .035, w * .085), width: w * .07, height: w * .06),
+      0, pi, false, _line(_dark, w * .015),
+    );
+    c.drawArc(
+      Rect.fromCenter(center: head.translate(w * .035, w * .085), width: w * .07, height: w * .06),
+      0, pi, false, _line(_dark, w * .015),
+    );
+  }
+
+  /// Pupcake: a cupcake on four paws, with a cherry for a tail.
+  void _pupcake() {
+    const sponge = Color(0xFFE2B66E);
+    const frosting = Color(0xFFF8BBD0);
+    const wrapper = Color(0xFF7CB7E8);
+    final wag = _wave(.6) * .05;
+    final pant = time == null ? 0.0 : (_wave(.5) + 1) * .012;
+    // Tail: a cherry on a stalk, wagging.
+    c.drawLine(o(.2, .7), o(.1 + wag, .52), _line(const Color(0xFF5D7A2E), w * .025));
+    c.drawCircle(o(.1 + wag, .5), w * .06, fill(const Color(0xFFD32F2F)));
+    c.drawCircle(o(.085 + wag, .485), w * .015, fill(Colors.white70));
+    // Paws.
+    for (final x in [.3, .45, .6, .75]) {
+      c.drawOval(
+        Rect.fromCenter(center: o(x, .95), width: w * .13, height: h * .05),
+        fill(sponge),
+      );
+    }
+    // Body: a pleated paper case.
+    final body = Path()
+      ..moveTo(w * .2, h * .66)
+      ..lineTo(w * .82, h * .66)
+      ..lineTo(w * .76, h * .93)
+      ..lineTo(w * .26, h * .93)
+      ..close();
+    c.drawPath(body, fill(wrapper));
+    final pleat = _line(const Color(0xFF4F8FC4), w * .018);
+    for (var i = 1; i < 7; i++) {
+      final t = i / 7;
+      c.drawLine(o(.2 + t * .62, .66), o(.26 + t * .5, .93), pleat);
+    }
+    c.drawOval(r(.16, .58, .86, .72), fill(sponge));
+    // Head: a swirl of frosting with floppy sponge ears.
+    final head = o(.62, .5);
+    for (final sx in [-1.0, 1.0]) {
+      c.save();
+      c.translate(head.dx + sx * w * .2, head.dy - w * .1);
+      c.rotate(sx * (.35 + wag * 1.5));
+      c.drawOval(
+        Rect.fromLTWH(-w * .06, 0, w * .12, w * .26),
+        fill(const Color(0xFFC8843C)),
+      );
+      c.restore();
+    }
+    c.drawCircle(head, w * .21, fill(frosting));
+    c.drawCircle(head.translate(0, -w * .13), w * .13, fill(frosting));
+    c.drawCircle(head.translate(0, -w * .23), w * .07, fill(frosting));
+    const colours = [Color(0xFF42A5F5), Color(0xFFFFEE58), Color(0xFF66BB6A)];
+    const spots = [(-.12, -.12, .4), (.1, -.16, 1.9), (.0, -.24, .9), (-.15, .02, 2.4), (.15, -.02, 1.2)];
+    for (var i = 0; i < spots.length; i++) {
+      final (x, y, a) = spots[i];
+      final p = head.translate(w * x, w * y);
+      final d = Offset(cos(a), sin(a)) * (w * .02);
+      c.drawLine(p - d, p + d, _line(colours[i % 3], w * .02));
+    }
+    for (final sx in [-1.0, 1.0]) {
+      final e = head.translate(sx * w * .08, -w * .02);
+      if (_blinking) {
+        c.drawLine(e.translate(-w * .03, 0), e.translate(w * .03, 0), _line(_dark, w * .02));
+      } else {
+        c.drawCircle(e, w * .032, fill(_dark));
+        c.drawCircle(e.translate(-w * .01, -w * .01), w * .01, fill(Colors.white));
+      }
+    }
+    // Muzzle, nose, and a tongue that pants.
+    c.drawOval(
+      Rect.fromCenter(center: head.translate(0, w * .09), width: w * .2, height: w * .13),
+      fill(Colors.white),
+    );
+    c.drawCircle(head.translate(0, w * .05), w * .03, fill(_dark));
+    c.drawRRect(
+      RRect.fromRectAndRadius(
+        Rect.fromLTWH(head.dx - w * .03, head.dy + w * .1, w * .06, w * .07 + h * pant),
+        Radius.circular(w * .03),
+      ),
+      fill(const Color(0xFFEC407A)),
+    );
+  }
+
   @override
   bool shouldRepaint(_DessertPainter old) =>
-      old.dessert != dessert || old.time != time || old.talk != talk;
+      old.dessert != dessert ||
+      old.time != time ||
+      old.talk != talk ||
+      old.stiff != stiff;
 }

@@ -115,6 +115,8 @@ class RoomPainter extends CustomPainter {
         _bedroom();
       case 'storage':
         _storage();
+      case 'backyard':
+        _backyard();
     }
     final bounds = Offset.zero & size;
     c.drawRect(
@@ -404,6 +406,11 @@ class RoomPainter extends CustomPainter {
 
   void _kitchen() {
     _window();
+    // The back door, out to the yard.
+    _rect(4, 120, 62, 230, _darkWood, 4);
+    _rect(12, 130, 46, 100, _wood, 3);
+    _rect(12, 240, 46, 100, _wood, 3);
+    c.drawCircle(const Offset(54, 236), 5, fill(_brass));
     _shelves(740, 90, 180, 130, 2);
     // Stove.
     _rect(80, 140, 150, 20, const Color(0xFF616161), 4);
@@ -429,6 +436,14 @@ class RoomPainter extends CustomPainter {
       final marble = i == 3;
       _rect(x - 2, 138, 4, 54, marble ? const Color(0xFFB0BEC5) : _wood);
       _rect(x - 6, 146, 12, 38, marble ? const Color(0xFFECEFF1) : const Color(0xFFD9A05B), 5);
+    }
+    // Purrfait's dish, under a card with her name on it.
+    _rect(578, 384, 84, 20, const Color(0xFFFFF3DC), 4);
+    _label('PURRFAIT', const Offset(620, 394), 12, const Color(0xFF7B1F1F));
+    c.drawOval(const Rect.fromLTWH(590, 424, 60, 20), fill(const Color(0xFFB3E5FC)));
+    c.drawOval(const Rect.fromLTWH(596, 420, 48, 14), fill(const Color(0xFFFFF8E7)));
+    for (final x in [606.0, 620.0, 634.0]) {
+      c.drawCircle(Offset(x, 424), 5, fill(const Color(0xFFD9A05B)));
     }
     // The soufflé.
     _rect(538, 226, 44, 16, Colors.white, 3);
@@ -460,6 +475,14 @@ class RoomPainter extends CustomPainter {
   void _cellar() {
     _stairs(300, -1);
     _hangingLamp(480, 70);
+    // The strongbox, bolted to the wall.
+    _rect(558, 292, 86, 60, const Color(0xFF37474F), 5);
+    _rect(564, 298, 74, 48, const Color(0xFF546E7A), 3);
+    for (final (x, y) in [(569.0, 303.0), (633.0, 303.0), (569.0, 341.0), (633.0, 341.0)]) {
+      c.drawCircle(Offset(x, y), 3, fill(const Color(0xFF263238)));
+    }
+    c.drawCircle(const Offset(601, 322), 9, fill(_brass));
+    _rect(599, 320, 4, 10, const Color(0xFF263238));
     _barrel(380, 295, 50);
     _barrel(480, 295, 50);
     _barrel(430, 215, 46);
@@ -637,5 +660,155 @@ class RoomPainter extends CustomPainter {
     // Trunks.
     _trunk(560, 380, 110, 60, const Color(0xFF4E342E));
     _trunk(410, 350, 150, 90, const Color(0xFF2E5D3A));
+  }
+
+  // Outside
+
+  void _label(String text, Offset centre, double size, Color colour) {
+    final painter = TextPainter(
+      text: TextSpan(
+        text: text,
+        style: TextStyle(
+          color: colour,
+          fontSize: size,
+          fontWeight: FontWeight.w900,
+          letterSpacing: 1.5,
+        ),
+      ),
+      textDirection: TextDirection.ltr,
+    )..layout();
+    painter.paint(c, centre - Offset(painter.width / 2, painter.height / 2));
+  }
+
+  void _backyard() {
+    const gingerbread = Color(0xFF8A5A2B);
+    const icing = Color(0xFFFFF3DC);
+    const sky = Rect.fromLTWH(0, 0, sceneW, 320);
+    c.drawRect(sky, Paint()..shader = _stormSky.createShader(sky));
+    // Hills, and a lollipop tree beyond the fence.
+    c.drawPath(
+      Path()
+        ..moveTo(0, 250)
+        ..quadraticBezierTo(240, 170, 480, 240)
+        ..quadraticBezierTo(700, 190, sceneW, 250)
+        ..lineTo(sceneW, 330)
+        ..lineTo(0, 330)
+        ..close(),
+      fill(const Color(0xFF211D29)),
+    );
+    c.drawLine(const Offset(660, 300), const Offset(660, 170), stroke(icing.withValues(alpha: .7), 5));
+    c.drawCircle(const Offset(660, 150), 30, fill(const Color(0xFF9C2A5B)));
+    c.drawArc(Rect.fromCircle(center: const Offset(660, 150), radius: 18), 0, 4.2, false, stroke(icing.withValues(alpha: .7), 4));
+    // Wafer fence.
+    for (var x = 250.0; x < 760; x += 34) {
+      _rect(x, 222, 28, 100, const Color(0xFFB98443), 4);
+      c.drawLine(Offset(x + 14, 232), Offset(x + 14, 318), stroke(const Color(0xFF8D6233), 2));
+    }
+    _rect(244, 250, 520, 9, const Color(0xFF6B4226));
+    _rect(244, 296, 520, 9, const Color(0xFF6B4226));
+    // Lawn.
+    _rect(0, 318, sceneW, sceneH - 318, const Color(0xFF27382A));
+    for (var i = 0; i < 60; i++) {
+      final x = scatter(i, 7) * sceneW;
+      final y = 330 + scatter(i, 8) * 200;
+      c.drawLine(Offset(x, y), Offset(x + 3, y - 9), stroke(const Color(0xFF3F5A3C), 2));
+    }
+    // Greenhouse.
+    final glass = fill(const Color(0x5590CAF9));
+    final frame = stroke(icing.withValues(alpha: .85), 4);
+    c.drawPath(
+      Path()..addPolygon(const [Offset(30, 190), Offset(140, 120), Offset(250, 190), Offset(250, 340), Offset(30, 340)], true),
+      glass,
+    );
+    c.drawPath(
+      Path()..addPolygon(const [Offset(30, 190), Offset(140, 120), Offset(250, 190), Offset(250, 340), Offset(30, 340)], true),
+      frame,
+    );
+    for (final x in [85.0, 140.0, 195.0]) {
+      c.drawLine(Offset(x, x == 140 ? 120 : 155), Offset(x, 340), frame);
+    }
+    c.drawLine(const Offset(30, 190), const Offset(250, 190), frame);
+    c.drawLine(const Offset(30, 265), const Offset(250, 265), frame);
+    // Strawberry beds. In one mystery nobody covered them.
+    final dead = caseId == 'cask';
+    for (final y in [392.0, 428.0]) {
+      _rect(96, y, 200, 24, const Color(0xFF4A2F1B), 6);
+      for (var x = 112.0; x < 290; x += 26) {
+        c.drawOval(
+          Rect.fromCenter(center: Offset(x, y + 4), width: 22, height: dead ? 8 : 16),
+          fill(dead ? const Color(0xFF2B2A22) : const Color(0xFF3E8E41)),
+        );
+        if (!dead) c.drawCircle(Offset(x + 5, y + 8), 3.5, fill(const Color(0xFFD32F2F)));
+      }
+    }
+    // The back of the house, with the kitchen door and the coal hatch.
+    _rect(740, 0, 220, 420, gingerbread);
+    for (var y = 40.0; y < 420; y += 46) {
+      c.drawLine(Offset(740, y), Offset(sceneW, y), stroke(const Color(0xFF6E4520), 2));
+    }
+    c.drawLine(const Offset(742, 0), const Offset(742, 420), stroke(icing, 6));
+    _rect(826, 176, 96, 244, const Color(0xFF7B1F1F), 6);
+    _rect(836, 188, 76, 96, const Color(0xFF5A1414), 4);
+    _rect(836, 296, 76, 112, const Color(0xFF5A1414), 4);
+    c.drawCircle(const Offset(842, 300), 5, fill(_brass));
+    c.drawArc(const Rect.fromLTWH(820, 160, 108, 50), pi, pi, false, stroke(icing, 6));
+    _rect(758, 372, 62, 46, const Color(0xFF37474F), 4);
+    _rect(764, 378, 50, 34, const Color(0xFF263238), 3);
+    _rect(784, 368, 10, 10, _brass, 2);
+    // The loose earth.
+    c.drawOval(const Rect.fromLTWH(232, 440, 122, 40), fill(const Color(0xFF3A2414)));
+    c.drawOval(const Rect.fromLTWH(246, 434, 92, 28), fill(const Color(0xFF523320)));
+    for (final (x, y) in [(262.0, 446.0), (300.0, 440.0), (322.0, 452.0), (282.0, 458.0)]) {
+      c.drawCircle(Offset(x, y), 4, fill(const Color(0xFF2B190D)));
+    }
+    // Pupcake's gingerbread kennel.
+    _rect(440, 300, 136, 118, gingerbread, 4);
+    c.drawPath(
+      Path()..addPolygon(const [Offset(424, 306), Offset(508, 232), Offset(592, 306)], true),
+      fill(const Color(0xFF6E4520)),
+    );
+    for (var i = 0; i < 7; i++) {
+      c.drawCircle(Offset(436 + i * 24.0, 306), 12, fill(icing));
+    }
+    c.drawLine(const Offset(424, 306), const Offset(508, 232), stroke(icing, 7));
+    c.drawLine(const Offset(592, 306), const Offset(508, 232), stroke(icing, 7));
+    c.drawCircle(const Offset(508, 232), 9, fill(const Color(0xFFD32F2F)));
+    c.drawRRect(
+      RRect.fromRectAndCorners(
+        const Rect.fromLTWH(476, 352, 64, 66),
+        topLeft: const Radius.circular(32),
+        topRight: const Radius.circular(32),
+      ),
+      fill(const Color(0xFF1B120B)),
+    );
+    _rect(462, 322, 92, 22, icing, 5);
+    _label('PUPCAKE', const Offset(508, 333), 13, const Color(0xFF7B1F1F));
+    for (final x in [450.0, 566.0]) {
+      c.drawCircle(Offset(x, 386), 6, fill(const Color(0xFF42A5F5)));
+      c.drawCircle(Offset(x, 404), 6, fill(const Color(0xFFFFEE58)));
+    }
+    // His bowl: a sugar bowl, heaped with kibble.
+    const bowl = Offset(396, 430);
+    for (final sx in [-1.0, 1.0]) {
+      c.drawCircle(bowl.translate(sx * 36, -4), 9, stroke(Colors.white, 5));
+    }
+    for (final (x, y, colour) in const [
+      (-16.0, -20.0, Color(0xFFC8843C)), (0.0, -26.0, Color(0xFFF48FB1)),
+      (15.0, -20.0, Color(0xFFC8843C)), (-6.0, -17.0, Color(0xFF90CAF9)),
+      (8.0, -16.0, Color(0xFFFFEE58)),
+    ]) {
+      c.drawCircle(bowl.translate(x, y), 8, fill(colour));
+    }
+    c.drawPath(
+      Path()
+        ..moveTo(bowl.dx - 34, bowl.dy - 16)
+        ..lineTo(bowl.dx + 34, bowl.dy - 16)
+        ..quadraticBezierTo(bowl.dx + 30, bowl.dy + 18, bowl.dx, bowl.dy + 18)
+        ..quadraticBezierTo(bowl.dx - 30, bowl.dy + 18, bowl.dx - 34, bowl.dy - 16)
+        ..close(),
+      fill(Colors.white),
+    );
+    _rect(bowl.dx - 36, bowl.dy - 20, 72, 7, const Color(0xFF90CAF9), 3);
+    _label('DOG', bowl.translate(0, 1), 14, const Color(0xFF1565C0));
   }
 }

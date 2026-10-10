@@ -9,6 +9,7 @@ const flatCase = MysteryCase(
   title: 'The Flat Truth',
   culprits: {'cannoli'},
   nextVictims: ['graham', 'penny', 'barry', 'tira'],
+  herringCount: 10,
   solution:
       "Colonel Cannoli owed Mrs. Senclair 50,000 sugar cubes, and she had "
       "learned that his medals were chocolate coins. At 10:45 he left the chess "
@@ -81,11 +82,11 @@ const flatCase = MysteryCase(
     ],
     [
       Evidence(
-        'ledger', 'Debt Ledger', 'study', 0,
-        "Mrs. Senclair's ledger, open on her desk. “Col. Cannoli owes 50,000 "
-        "sugar cubes. FINAL notice given. He pays by tomorrow or he leaves "
-        "this house.”",
-        icon: Icons.menu_book, color: Color(0xFFD7CCC8),
+        'ledger', 'Debt Ledger', 'cellar', 0,
+        "Mrs. Senclair's private ledger, locked in the strongbox. “Col. "
+        "Cannoli owes 50,000 sugar cubes. FINAL notice given. He pays by "
+        "tomorrow or he leaves this house.”",
+        icon: Icons.menu_book, color: Color(0xFFD7CCC8), inside: 'strongbox',
       ),
       Evidence(
         'notice', 'Final Notice', 'parlor', 1,
@@ -138,20 +139,23 @@ const flatCase = MysteryCase(
   ],
   herrings: [
     will, bills, cocoa, dismissal, spade, berryStain, jobAd, crumbs, recipe,
-    sauceDrip, threat, betting, savings, diary,
+    sauceDrip, threat, betting, savings, diary, slipper, scratches, letters,
   ],
   weapons: {'pinboiler', 'pinpantry'},
-  printsOn: ['penny', 'cannoli'],
+  printsOn: ['penny', 'graham', 'cannoli'],
   prints: Evidence.given(
     'prints', 'Prints on the Rolling Pin', 'churlock',
-    "Two sets of prints came up under the powder. One is Penny Cotta's, all "
-    "over both handles: it is her rolling pin. The other is a single clear "
-    "print on the marble barrel, and it belongs to Colonel Cannoli.",
+    "Three sets of prints came up under the powder. Penny Cotta's are all "
+    "over both handles: it is her rolling pin. Graham Cracker's are on the "
+    "very tip of one handle. And Colonel Cannoli's are on the marble barrel "
+    "itself, where the weight is.",
     icon: Icons.fingerprint, color: Color(0xFFB2EBF2),
   ),
   deskCode: '1887',
   hints: {
     ...commonHints,
+    ...timeHints,
+    'boots': bootsHint,
     'phone': phoneHint,
     'souffle': souffleHint,
     'ricotta': "Not hers, you say. Then ask the one dessert who knows every "
@@ -181,8 +185,9 @@ const flatCase = MysteryCase(
         "tells us where two of them meant to be.",
     'planner': "No more extensions, whatever he says. Her own hand, this "
         "very week. Has anyone shown you something that says otherwise?",
-    'prints': "A print tells you who touched it, not when. One of those two "
-        "has every reason to have touched it. What reason has the other?",
+    'prints': "A print tells you who touched it, not when. And where it "
+        "sits tells you how the thing was held. Two of those three have a "
+        "reason to have touched it. Ask all three.",
   },
   accuseHints: [
     "Before you name anyone, Churlock: do we know the very minute she died? "
@@ -274,6 +279,7 @@ const flatCase = MysteryCase(
       pennyRecipe,
       pennySauce,
       ...pennyCommon,
+      ...pennyYard,
     ],
     'graham': [
       Topic(
@@ -317,7 +323,16 @@ const flatCase = MysteryCase(
         "the level in pencil, and I am rather proud of the dust it gathers.",
         needs: ['decanter'],
       ),
+      Topic(
+        'prints', 'Your fingerprints are on the rolling pin.',
+        "On the tip of the left handle, I imagine, sir. I hang Mrs. "
+        "Cotta's pins back on their hooks each evening when the washing-up "
+        "is done. One lifts them by the end. One does not grasp the "
+        "barrel.",
+        needs: ['prints'],
+      ),
       ...grahamCommon,
+      ...grahamYard,
     ],
     'cannoli': [
       Topic(

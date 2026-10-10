@@ -31,6 +31,7 @@ class DialoguePanel extends StatelessWidget {
             width: 96,
             animate: true,
             speaker: d.speaker.id,
+            stiff: d.lying,
           ),
           const SizedBox(width: 14),
           Expanded(
@@ -354,22 +355,60 @@ class AccusePanel extends StatelessWidget {
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 14),
+          // The sergeant's list of everyone in the house. Its right-hand
+          // edge has been torn away, in every mystery.
           Expanded(
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                for (final p in residents)
-                  _SuspectCard(
-                    key: ValueKey('accuse-${p.id}'),
-                    person: p,
-                    selected: g.accused.contains(p.id),
-                    enabled: !full || g.accused.contains(p.id),
-                    onTap: () => g.toggleAccused(p.id),
+            child: ClipPath(
+              key: ValueKey(g.sheetAttached ? 'list-whole' : 'list-torn'),
+              clipper: g.sheetAttached ? null : const _TornEdge(),
+              child: Container(
+                padding: EdgeInsets.fromLTRB(
+                  8,
+                  6,
+                  g.sheetAttached ? 8 : 34,
+                  6,
+                ),
+                decoration: BoxDecoration(
+                  color: kCream.withValues(alpha: .09),
+                  borderRadius: const BorderRadius.horizontal(
+                    left: Radius.circular(8),
                   ),
-              ],
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    for (final p in g.suspects) ...[
+                      // The seam where the strip was put back.
+                      if (p.id == watsonut.id)
+                        const SizedBox(
+                          width: 6,
+                          child: CustomPaint(
+                            size: Size(6, double.infinity),
+                            painter: _SeamPainter(),
+                          ),
+                        ),
+                      // Six cards are a squeeze, so each shrinks to fit.
+                      Flexible(
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: _SuspectCard(
+                            key: ValueKey('accuse-${p.id}'),
+                            person: p,
+                            selected: g.accused.contains(p.id),
+                            enabled: !full || g.accused.contains(p.id),
+                            onTap: () => g.toggleAccused(p.id),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 4),
+          const _IdleScrollbar(),
+          const SizedBox(height: 8),
           Wrap(
             alignment: WrapAlignment.center,
             spacing: 14,
@@ -380,6 +419,14 @@ class AccusePanel extends StatelessWidget {
                 label: 'Keep investigating',
                 onPressed: g.closePanel,
               ),
+              if (g.canAttachSheet)
+                GoldButton(
+                  key: const ValueKey('attach-sheet'),
+                  label: 'Fit the torn strip back on',
+                  icon: Icons.content_cut,
+                  color: const Color(0xFF8D4B2B),
+                  onPressed: g.attachSheet,
+                ),
               GoldButton(
                 key: const ValueKey('accuse-hint'),
                 label: g.moreAccuseHints
@@ -402,6 +449,100 @@ class AccusePanel extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// Cuts a ragged right-hand edge, as of paper torn off in a hurry.
+class _TornEdge extends CustomClipper<Path> {
+  const _TornEdge();
+
+  @override
+  Path getClip(Size size) {
+    final path = Path()
+      ..moveTo(0, 0)
+      ..lineTo(size.width - 14, 0);
+    const teeth = 22;
+    for (var i = 1; i <= teeth; i++) {
+      // Uneven, but the same every time.
+      final jag = ((i * 37) % 11) + (i.isEven ? 12 : 0);
+      path.lineTo(size.width - jag.toDouble(), size.height * i / teeth);
+    }
+    return path
+      ..lineTo(0, size.height)
+      ..close();
+  }
+
+  @override
+  bool shouldReclip(_TornEdge old) => false;
+}
+
+/// The join where the torn strip has been fitted back.
+class _SeamPainter extends CustomPainter {
+  const _SeamPainter();
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final path = Path()..moveTo(3, 0);
+    const teeth = 22;
+    for (var i = 1; i <= teeth; i++) {
+      path.lineTo(i.isEven ? 1 : 5, size.height * i / teeth);
+    }
+    canvas.drawPath(
+      path,
+      Paint()
+        ..color = kCream.withValues(alpha: .6)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.2,
+    );
+  }
+
+  @override
+  bool shouldRepaint(_SeamPainter old) => false;
+}
+
+/// A scroll bar under the list of suspects. It slides, and scrolls nothing:
+/// the list was once wider than it is.
+class _IdleScrollbar extends StatefulWidget {
+  const _IdleScrollbar();
+
+  @override
+  State<_IdleScrollbar> createState() => _IdleScrollbarState();
+}
+
+class _IdleScrollbarState extends State<_IdleScrollbar> {
+  double _at = 0;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, box) {
+        final thumb = box.maxWidth * .82;
+        final travel = box.maxWidth - thumb;
+        return GestureDetector(
+          key: const ValueKey('idle-scrollbar'),
+          behavior: HitTestBehavior.opaque,
+          onHorizontalDragUpdate: (d) =>
+              setState(() => _at = (_at + d.delta.dx).clamp(0, travel)),
+          child: Container(
+            height: 10,
+            decoration: BoxDecoration(
+              color: Colors.white10,
+              borderRadius: BorderRadius.circular(5),
+            ),
+            alignment: Alignment.centerLeft,
+            child: Container(
+              width: thumb,
+              height: 10,
+              margin: EdgeInsets.only(left: _at),
+              decoration: BoxDecoration(
+                color: kGold.withValues(alpha: .55),
+                borderRadius: BorderRadius.circular(5),
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }
@@ -539,12 +680,57 @@ class NookPanel extends StatelessWidget {
                         ],
                       ),
                     )
-                  : FittedBox(
-                      fit: BoxFit.scaleDown,
-                      child: CodeLock(onTry: (code) => g.tryCode(nook, code)),
-                    ),
+                  : FittedBox(fit: BoxFit.scaleDown, child: _barrier(nook)),
             ),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+extension on NookPanel {
+  /// Whatever stands between Churlock and the inside of [nook].
+  Widget _barrier(Nook nook) {
+    if (nook.locked) {
+      return DialLock(
+        combination: deskCombination,
+        onTry: (code) => g.tryCode(nook, code),
+      );
+    }
+    final tool = itemById(nook.needs!);
+    if (g.canOpen(nook) && nook.pick) {
+      return LockPickGame(
+        order: g.pinOrder,
+        onDone: () => g.forceOpen(nook),
+      );
+    }
+    return SizedBox(
+      width: 520,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            g.canOpen(nook) ? tool.icon : Icons.block,
+            color: g.canOpen(nook) ? tool.color : kCream,
+            size: 44,
+          ),
+          const SizedBox(height: 10),
+          Text(
+            g.canOpen(nook) ? 'I have the ${tool.name.toLowerCase()}.' : nook.barred,
+            key: const ValueKey('barred'),
+            style: kBody,
+            textAlign: TextAlign.center,
+          ),
+          if (g.canOpen(nook)) ...[
+            const SizedBox(height: 12),
+            GoldButton(
+              key: const ValueKey('use-item'),
+              label: nook.action,
+              icon: tool.icon,
+              onPressed: () => g.forceOpen(nook),
+            ),
+          ],
         ],
       ),
     );

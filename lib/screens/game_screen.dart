@@ -10,6 +10,7 @@ import '../data/house.dart';
 import '../data/models.dart';
 import '../game_state.dart';
 import '../widgets/dessert_figure.dart';
+import '../widgets/exterior_painter.dart' show RainPainter;
 import '../widgets/room_painter.dart';
 import '../widgets/ui.dart';
 import 'minigames.dart';
@@ -348,6 +349,37 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                             ),
                           ),
                         ),
+                      if (room.id == 'backyard')
+                        Positioned.fill(
+                          child: IgnorePointer(
+                            child: DessertFigureAt(
+                              pupcake.dessert,
+                              feet: _dogFeet,
+                              width: 84,
+                            ),
+                          ),
+                        ),
+                      if (room.id == 'entrance')
+                        const Positioned.fill(
+                          child: IgnorePointer(
+                            child: DessertFigureAt(
+                              Dessert.purrfait,
+                              feet: purrfaitSpot,
+                              width: 66,
+                            ),
+                          ),
+                        ),
+                      for (final item in g.itemsHere)
+                        Positioned(
+                          left: item.pos.dx - 24,
+                          top: item.pos.dy - 24,
+                          child: _ItemSpot(
+                            key: ValueKey('item-${item.id}'),
+                            item: item,
+                            onTap: () =>
+                                _walkTo(item.pos, () => g.take(item)),
+                          ),
+                        ),
                       for (final e in g.evidenceHere)
                         Positioned(
                           left: evidencePos(e).dx - 24,
@@ -405,10 +437,37 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
               for (final (id, x)
                   in placements[room.id] ?? const <(String, double)>[])
                 _character(personById(id), x),
+              if (room.id == 'backyard') ...[
+                Positioned.fill(
+                  child: IgnorePointer(
+                    child: AnimatedBuilder(
+                      animation: _rain,
+                      builder: (context, _) => CustomPaint(
+                        painter: RainPainter(cycle: _rain.value, flash: 0),
+                      ),
+                    ),
+                  ),
+                ),
+                _tapTarget(
+                  'pupcake',
+                  _dogFeet.translate(0, -45),
+                  90,
+                  () => g.remark(pupcakeRemark),
+                ),
+              ],
+              for (final s in g.sightsHere)
+                _tapTarget(s.id, s.pos, s.size, () => g.remark(s.junk)),
               for (final n in g.nooksHere) _nook(n),
               for (final d in Dir.values)
                 if (neighbor(room, d) case final Room next) _arrow(d, next),
               if (_remark != null && !_moving) _remarkBubble(_remark!),
+              if (g.items.isNotEmpty)
+                Positioned(
+                  top: 88,
+                  left: 0,
+                  right: 0,
+                  child: Center(child: _Inventory(g)),
+                ),
               Positioned(left: 14, top: 12, child: _RoomLabel(room)),
               Positioned(right: 14, top: 12, child: _Hud(g, widget.voice)),
               if (room.id == 'entrance')
@@ -499,6 +558,28 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     );
   }
 
+  /// Where Pupcake's paws are: in his doorway until he has been bribed.
+  Offset get _dogFeet =>
+      g.unlocked.contains('kennel') ? pupcakeFed : pupcakeGuarding;
+
+  /// An unmarked part of the scene that can be clicked for a remark.
+  Widget _tapTarget(String id, Offset centre, double size, VoidCallback then) {
+    return Positioned(
+      left: centre.dx - size / 2,
+      top: centre.dy - size / 2,
+      width: size,
+      height: size,
+      child: MouseRegion(
+        cursor: SystemMouseCursors.click,
+        child: GestureDetector(
+          key: ValueKey('sight-$id'),
+          behavior: HitTestBehavior.opaque,
+          onTap: () => _walkTo(centre, then),
+        ),
+      ),
+    );
+  }
+
   /// Watsonut's little jump of surprise on finding Churlock already gone,
   /// in the moment before he sets off after him, [t] of the way through.
   static double _startle(double t) => t < _lag ? -sin(pi * t / _lag) * 18 : 0;
@@ -567,6 +648,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
         // They stop fidgeting while they walk.
         animate: !_moving,
         speaker: partner ? watsonut.id : churlock.id,
+        stiff: partner && (g.dialogue?.lying ?? false),
       ),
     );
     return Positioned(
@@ -799,7 +881,7 @@ class _Hud extends StatelessWidget {
                 Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    for (var col = 0; col < 4; col++) _cell(level, col),
+                    for (var col = -1; col < 4; col++) _cell(level, col),
                   ],
                 ),
             ],
@@ -924,6 +1006,82 @@ class _EvidenceSpotState extends State<_EvidenceSpot>
                   ),
                 ),
         ),
+      ),
+    );
+  }
+}
+
+/// A tool lying in the room, waiting to be picked up.
+class _ItemSpot extends StatelessWidget {
+  const _ItemSpot({super.key, required this.item, required this.onTap});
+
+  final Item item;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: onTap,
+        child: Container(
+          width: 48,
+          height: 48,
+          decoration: BoxDecoration(
+            color: kInk.withValues(alpha: .7),
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: item.color, width: 2),
+            boxShadow: [
+              BoxShadow(color: item.color.withValues(alpha: .5), blurRadius: 12),
+            ],
+          ),
+          child: Icon(item.icon, color: item.color, size: 28),
+        ),
+      ),
+    );
+  }
+}
+
+/// The tools Churlock is carrying: a box for each, three to a row and up
+/// to nine in all, so the grid is only ever as big as it needs to be.
+class _Inventory extends StatelessWidget {
+  const _Inventory(this.g);
+
+  final GameState g;
+
+  @override
+  Widget build(BuildContext context) {
+    final held = [for (final id in g.items.take(9)) itemById(id)];
+    return SizedBox(
+      width: 3 * 46,
+      child: Wrap(
+        alignment: WrapAlignment.center,
+        spacing: 4,
+        runSpacing: 4,
+        children: [
+          for (final item in held)
+            Tooltip(
+              message: item.name,
+              child: MouseRegion(
+                cursor: SystemMouseCursors.click,
+                child: GestureDetector(
+                  key: ValueKey('held-${item.id}'),
+                  onTap: () => g.showItem(item),
+                  child: Container(
+                    width: 42,
+                    height: 42,
+                    decoration: BoxDecoration(
+                      color: kInk.withValues(alpha: .85),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: kGold, width: 2),
+                    ),
+                    child: Icon(item.icon, color: item.color, size: 24),
+                  ),
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }
