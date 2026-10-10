@@ -49,9 +49,9 @@ class Dialogue {
   final bool lying;
 }
 
-/// How often a new game is the rare mystery in which Watsonut did it.
-/// It is every game for now, to try it out; it is meant to be one in twenty.
-const twistOdds = 1.0;
+/// How often a new game is the rare mystery in which Watsonut did it: one
+/// game in twenty.
+const twistOdds = 1 / 20;
 
 /// The voice Watsonut speaks in when the evidence is too close to home.
 const shakyVoice = 'watsonut-shaky';

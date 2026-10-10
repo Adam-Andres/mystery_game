@@ -49,8 +49,8 @@ There are seven mysteries, chosen at random, and across them every resident
 is a killer exactly twice. Three have one killer and four have two.
 
 There is also an eighth, rare mystery that breaks the rules of the other
-seven. It is meant to turn up about one game in twenty; while it is being
-tried out it is every game (`twistOdds` in `lib/game_state.dart`). Each game also draws its evidence
+seven. It turns up about one game in twenty (`twistOdds` in
+`lib/game_state.dart`). Each game also draws its evidence
 at random from that mystery's pool — key clues turn up in different forms and
 places, and a different set of red herrings is scattered about — so replaying
 a case is not the same hunt twice.
