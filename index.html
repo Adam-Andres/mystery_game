@@ -65,6 +65,11 @@
     // After the device is turned, the browser reports its new size late and
     // sometimes leaves the page scrolled. Put the page back at the top and
     // have Flutter measure the screen again, a few times as it settles.
+    // On an iPhone, let the game's sounds play like a game's and not like
+    // background noise, so the silent switch does not take half of them.
+    if (navigator.audioSession) {
+      try { navigator.audioSession.type = 'playback'; } catch (e) {}
+    }
     (function () {
       var timers = [];
       function settle() {
