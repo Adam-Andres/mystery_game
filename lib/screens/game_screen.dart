@@ -192,7 +192,8 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
 
   void _scheduleCreature([Duration? wait]) {
     _nextCreature = Timer(
-      wait ?? Duration(milliseconds: 9000 + _random.nextInt(26000)),
+      // Never more than a quarter of a minute apart.
+      wait ?? Duration(milliseconds: 5000 + _random.nextInt(10000)),
       () {
         if (!mounted) return;
         // They do not talk over anybody: the wait is held until whoever is
@@ -209,10 +210,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
           'backyard' => 'bark',
           _ => null,
         };
-        // Not every time. Animals are like that.
-        if (sound != null && _random.nextDouble() < .6) {
-          AmbienceScope.maybeOf(context)?.creature(sound);
-        }
+        if (sound != null) AmbienceScope.maybeOf(context)?.creature(sound);
         _scheduleCreature();
       },
     );

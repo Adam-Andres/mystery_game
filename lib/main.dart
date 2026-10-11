@@ -80,6 +80,7 @@ class _MysteryAppState extends State<MysteryApp> {
     if (voice.muted == settings.voices) voice.toggleMute();
     // The voices and the sounds of the house are switched off separately.
     ambience.setMuted(!settings.haptics);
+    ambience.setMusicMuted(!settings.music);
   }
 
   /// The rain is loud outside, drums on the attic roof, and is all but
@@ -93,8 +94,12 @@ class _MysteryAppState extends State<MysteryApp> {
         _ => Weather.indoors,
       },
       Phase.outro || Phase.ended => g.won ? Weather.none : Weather.outside,
+      // It is quiet on the title screen, and pours as he arrives.
+      Phase.title => Weather.none,
       _ => Weather.outside,
     });
+    // The title screen has its music, which fades as the story begins.
+    ambience.setMusic(g.phase == Phase.title);
   }
 
   @override

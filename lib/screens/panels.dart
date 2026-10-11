@@ -1012,9 +1012,13 @@ class HintPrompt extends StatelessWidget {
 
 /// The menu: settings, the way back to the title screen, and a reset.
 class MenuPanel extends StatelessWidget {
-  const MenuPanel(this.g, {super.key});
+  const MenuPanel(this.g, {super.key, this.onClose});
 
   final GameState g;
+
+  /// Given on the title screen, where there is no case to go back to, to
+  /// leave, or to reset: only the settings are shown, and this closes them.
+  final VoidCallback? onClose;
 
   @override
   Widget build(BuildContext context) {
@@ -1044,7 +1048,7 @@ class MenuPanel extends StatelessWidget {
 
     return Center(
       child: SizedBox(
-        width: 520,
+        width: 660,
         child: Plaque(
           child: SingleChildScrollView(
             child: Column(
@@ -1058,8 +1062,8 @@ class MenuPanel extends StatelessWidget {
                     const Expanded(child: Text('Menu', style: kHeading)),
                     GoldButton(
                       key: const ValueKey('close-panel'),
-                      label: 'Back to the case',
-                      onPressed: g.closePanel,
+                      label: onClose == null ? 'Back to the case' : 'Done',
+                      onPressed: onClose ?? g.closePanel,
                     ),
                   ],
                 ),
@@ -1072,29 +1076,44 @@ class MenuPanel extends StatelessWidget {
                     letterSpacing: 2,
                   ),
                 ),
-                toggle(
-                  'voices',
-                  'Voices',
-                  settings.voices,
-                  (s, v) => s.voices = v,
-                ),
-                toggle(
-                  'haptics',
-                  'Haptics: the rain, thunder and lamps',
-                  settings.haptics,
-                  (s, v) => s.haptics = v,
-                ),
-                toggle(
-                  'remarks',
-                  'Watsonut speaks up when I stand idle',
-                  settings.remarks,
-                  (s, v) => s.remarks = v,
-                ),
-                toggle(
-                  'quick',
-                  'Hurry from room to room',
-                  settings.quickWalk,
-                  (s, v) => s.quickWalk = v,
+                // Two to a row, so that the whole menu fits without scrolling.
+                Wrap(
+                  spacing: 20,
+                  children: [
+                    for (final t in [
+                      toggle(
+                        'voices',
+                        'Voices',
+                        settings.voices,
+                        (s, v) => s.voices = v,
+                      ),
+                      toggle(
+                        'music',
+                        'Title music',
+                        settings.music,
+                        (s, v) => s.music = v,
+                      ),
+                      toggle(
+                        'haptics',
+                        'Haptics: rain, thunder, lamps',
+                        settings.haptics,
+                        (s, v) => s.haptics = v,
+                      ),
+                      toggle(
+                        'remarks',
+                        "Watsonut's idle remarks",
+                        settings.remarks,
+                        (s, v) => s.remarks = v,
+                      ),
+                      toggle(
+                        'quick',
+                        'Hurry between rooms',
+                        settings.quickWalk,
+                        (s, v) => s.quickWalk = v,
+                      ),
+                    ])
+                      SizedBox(width: 296, child: t),
+                  ],
                 ),
                 Wrap(
                   crossAxisAlignment: WrapCrossAlignment.center,
@@ -1119,26 +1138,28 @@ class MenuPanel extends StatelessWidget {
                       ),
                   ],
                 ),
-                const Divider(color: kGold),
-                Wrap(
-                  alignment: WrapAlignment.spaceBetween,
-                  spacing: 12,
-                  runSpacing: 8,
-                  children: [
-                    GoldButton(
-                      key: const ValueKey('to-title'),
-                      label: 'Main menu',
-                      icon: Icons.home,
-                      onPressed: g.toTitle,
-                    ),
-                    ResetButton(onReset: g.reset),
-                  ],
-                ),
-                const SizedBox(height: 4),
-                const Text(
-                  'The main menu keeps this case in its file. Reset throws it away.',
-                  style: TextStyle(color: Colors.white54, fontSize: 12),
-                ),
+                if (onClose == null) ...[
+                  const Divider(color: kGold),
+                  Wrap(
+                    alignment: WrapAlignment.spaceBetween,
+                    spacing: 12,
+                    runSpacing: 8,
+                    children: [
+                      GoldButton(
+                        key: const ValueKey('to-title'),
+                        label: 'Main menu',
+                        icon: Icons.home,
+                        onPressed: g.toTitle,
+                      ),
+                      ResetButton(onReset: g.reset),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  const Text(
+                    'The main menu keeps this case in its file. Reset throws it away.',
+                    style: TextStyle(color: Colors.white54, fontSize: 12),
+                  ),
+                ],
               ],
             ),
           ),

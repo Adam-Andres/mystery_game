@@ -69,13 +69,13 @@ class Voice extends ChangeNotifier {
 
   /// True while anybody at all is saying something.
   bool get speaking =>
-      _speaker != null &&
-      (_playing || (_guessing && _clock.elapsed < _length));
+      _speaker != null && (_playing || (_guessing && _clock.elapsed < _length));
 
   /// True while the character whose voice is [id] is saying something,
   /// whether or not the sound is muted.
   bool isSpeaking(String id) =>
-      _speaker?.split('-').first == id && (_playing || (_guessing && _clock.elapsed < _length));
+      _speaker?.split('-').first == id &&
+      (_playing || (_guessing && _clock.elapsed < _length));
 
   /// Speaks [line], cutting off whatever was being said before. [owner]
   /// identifies who asked, so that it alone can [release] the line later.

@@ -309,7 +309,10 @@ class GameState extends ChangeNotifier {
     try {
       final json = jsonDecode(saved) as Map<String, dynamic>;
       if (json['version'] != _saveVersion) throw const FormatException();
-      final m = [...allCases, twistCase].firstWhere((c) => c.id == json['case']);
+      final m = [
+        ...allCases,
+        twistCase,
+      ].firstWhere((c) => c.id == json['case']);
       final known = {
         for (final e in [...m.pool, ...m.gifts, m.prints]) e.id: e,
       };

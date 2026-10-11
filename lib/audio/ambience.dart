@@ -47,6 +47,11 @@ abstract class Ambience {
   /// One of the animals speaks: `bark` or `meow`.
   void creature(String sound);
 
+  /// Starts the title music, or lets it fade away.
+  void setMusic(bool playing);
+
+  void setMusicMuted(bool muted);
+
   /// Called whenever the player touches the page, since a browser will not
   /// start any sound until they have.
   void wake();
@@ -76,6 +81,15 @@ class SilentAmbience implements Ambience {
   @override
   void creature(String sound) => creatures.add(sound);
 
+  bool music = false;
+  bool musicMuted = false;
+
+  @override
+  void setMusic(bool playing) => music = playing;
+
+  @override
+  void setMusicMuted(bool muted) => musicMuted = muted;
+
   @override
   void wake() {}
 
@@ -88,7 +102,11 @@ Ambience createAmbience() => createPlatformAmbience();
 /// Makes the [Ambience] available to the scenes beneath it, so that they
 /// can call for thunder when they show lightning.
 class AmbienceScope extends InheritedWidget {
-  const AmbienceScope({super.key, required this.ambience, required super.child});
+  const AmbienceScope({
+    super.key,
+    required this.ambience,
+    required super.child,
+  });
 
   final Ambience ambience;
 

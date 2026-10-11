@@ -16,6 +16,9 @@ class _WebAmbience implements Ambience {
   web.GainNode? _master;
   web.GainNode? _rain;
   web.GainNode? _hum;
+  web.GainNode? _music;
+  bool _musicOn = false;
+  bool _musicMuted = false;
   web.AudioBuffer? _thunder;
   web.AudioBuffer? _buzz;
   web.HTMLAudioElement? _keepAwake;
@@ -32,6 +35,18 @@ class _WebAmbience implements Ambience {
   @override
   void setMuted(bool muted) {
     _muted = muted;
+    _apply();
+  }
+
+  @override
+  void setMusic(bool playing) {
+    _musicOn = playing;
+    _apply();
+  }
+
+  @override
+  void setMusicMuted(bool muted) {
+    _musicMuted = muted;
     _apply();
   }
 
@@ -137,6 +152,14 @@ class _WebAmbience implements Ambience {
       _apply();
       _hum = _loop(context, await _load(context, 'hum.wav'), master);
       _apply();
+      // The music has its own switch, and does not pass through the
+      // haptics' one.
+      _music = _loop(
+        context,
+        await _load(context, 'title.wav'),
+        context.destination,
+      );
+      _apply();
       _thunder = await _load(context, 'thunder.wav');
       _buzz = await _load(context, 'buzz.wav');
       for (final sound in const ['bark', 'meow']) {
@@ -158,5 +181,12 @@ class _WebAmbience implements Ambience {
     _filter?.frequency.setTargetAtTime(_weather.cutoff, now, .35);
     _rain?.gain.setTargetAtTime(_weather.volume, now, .35);
     _hum?.gain.setTargetAtTime(_weather.hum, now, .35);
+    // The music comes up gently, and fades out over a few seconds as the
+    // opening scene takes over.
+    _music?.gain.setTargetAtTime(
+      _musicOn && !_musicMuted ? .5 : 0,
+      now,
+      _musicOn ? .6 : 1.3,
+    );
   }
 }

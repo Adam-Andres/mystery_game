@@ -14,6 +14,7 @@ class Settings extends ChangeNotifier {
       voices = json['voices'] as bool? ?? voices;
       // It used to be only the rain, and was called so.
       haptics = (json['haptics'] ?? json['rain']) as bool? ?? haptics;
+      music = json['music'] as bool? ?? music;
       remarks = json['remarks'] as bool? ?? remarks;
       quickWalk = json['quickWalk'] as bool? ?? quickWalk;
       final size = json['textSize'] as int? ?? textSize;
@@ -36,6 +37,9 @@ class Settings extends ChangeNotifier {
   /// and sputter of the basement lamps.
   bool haptics = true;
 
+  /// Whether the title screen plays its music.
+  bool music = true;
+
   /// Whether Watsonut pipes up when Churlock stands idle.
   bool remarks = true;
 
@@ -54,6 +58,7 @@ class Settings extends ChangeNotifier {
       jsonEncode({
         'voices': voices,
         'haptics': haptics,
+        'music': music,
         'remarks': remarks,
         'quickWalk': quickWalk,
         'textSize': textSize,

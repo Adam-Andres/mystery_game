@@ -5,14 +5,43 @@ import '../game_state.dart';
 import '../save.dart';
 import '../widgets/dessert_figure.dart';
 import '../widgets/ui.dart';
+import 'panels.dart';
 
-class TitleScreen extends StatelessWidget {
+class TitleScreen extends StatefulWidget {
   const TitleScreen(this.g, {super.key});
 
   final GameState g;
 
   @override
+  State<TitleScreen> createState() => _TitleScreenState();
+}
+
+class _TitleScreenState extends State<TitleScreen> {
+  GameState get g => widget.g;
+
+  bool _settings = false;
+
+  @override
   Widget build(BuildContext context) {
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        _menu(context),
+        if (_settings) ...[
+          Scrim(onTap: () => setState(() => _settings = false)),
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 30),
+            child: MenuPanel(
+              g,
+              onClose: () => setState(() => _settings = false),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _menu(BuildContext context) {
     return DecoratedBox(
       decoration: const BoxDecoration(
         gradient: RadialGradient(
@@ -88,6 +117,33 @@ class TitleScreen extends StatelessWidget {
                                         onReset: () => g.erase(slot),
                                       ),
                                     ),
+                                    // The settings, under the middle file.
+                                    if (slot == saveSlots ~/ 2) ...[
+                                      const SizedBox(height: 6),
+                                      FittedBox(
+                                        fit: BoxFit.scaleDown,
+                                        child: TextButton(
+                                          key: const ValueKey('title-settings'),
+                                          onPressed: () =>
+                                              setState(() => _settings = true),
+                                          style: TextButton.styleFrom(
+                                            foregroundColor: kGold,
+                                            backgroundColor: kInk.withValues(
+                                              alpha: .9,
+                                            ),
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 16,
+                                              vertical: 12,
+                                            ),
+                                            textStyle: const TextStyle(
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                          child: const Text('Settings'),
+                                        ),
+                                      ),
+                                    ],
                                   ],
                                 ),
                               ),

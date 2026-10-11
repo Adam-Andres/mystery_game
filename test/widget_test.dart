@@ -579,6 +579,37 @@ void main() {
       await tester.pump(const Duration(seconds: 14));
     });
 
+    testWidgets('the settings can be opened from the title screen', (
+      tester,
+    ) async {
+      final settings = Settings();
+      final music = SilentAmbience();
+      final g = GameState();
+      await tester.pumpWidget(
+        MysteryApp(
+          state: g,
+          voice: Voice(SilentPlayer()),
+          settings: settings,
+          ambience: music,
+        ),
+      );
+      await tester.tap(_key('title-settings'));
+      await tester.pump();
+      await tester.tap(_key('setting-haptics'));
+      await tester.pump();
+      expect(settings.haptics, isFalse);
+      await tester.tap(_key('setting-music'));
+      await tester.pump();
+      expect(music.musicMuted, isTrue);
+      // Only the settings: there is no case here to leave or reset.
+      expect(_key('to-title'), findsNothing);
+      expect(_key('reset'), findsNothing);
+      await tester.tap(_key('close-panel'));
+      await tester.pump();
+      expect(_key('setting-haptics'), findsNothing);
+      expect(g.phase, Phase.title);
+    });
+
     testWidgets('a case file can be reset from the title screen', (
       tester,
     ) async {
@@ -682,9 +713,11 @@ void main() {
       );
       g.newGame(caseIndex: 0, skipIntro: true);
       await tester.pump();
-      // Purrfait, in the hall, now and then.
-      await tester.pump(const Duration(minutes: 4));
-      expect(house.creatures, isNotEmpty);
+      // Purrfait, in the hall, never more than fifteen seconds apart.
+      await tester.pump(const Duration(seconds: 16));
+      expect(house.creatures, hasLength(1));
+      await tester.pump(const Duration(seconds: 15));
+      expect(house.creatures.length, greaterThanOrEqualTo(2));
       expect(house.creatures.toSet(), {'meow'});
       expect(house.flickers, 0);
       // Never while somebody is talking, however long they go on.
@@ -716,8 +749,21 @@ void main() {
       await tester.pumpWidget(
         MysteryApp(state: g, voice: Voice(SilentPlayer()), ambience: rain),
       );
-      expect(rain.weather, Weather.outside);
+      // On the title screen there is no rain, only the music, whether or
+      // not a case has just been left.
+      expect(rain.weather, Weather.none);
+      expect(rain.music, isTrue);
       g.newGame(caseIndex: 0, skipIntro: true);
+      expect(rain.weather, Weather.indoors);
+      expect(rain.music, isFalse);
+      g.toTitle();
+      expect(rain.weather, Weather.none);
+      expect(rain.music, isTrue);
+      // The music gives way to the storm as the opening scene begins.
+      g.newGame(caseIndex: 0);
+      expect(rain.weather, Weather.outside);
+      expect(rain.music, isFalse);
+      g.beginInvestigation();
       expect(rain.weather, Weather.indoors);
       g.enter(roomById('cellar'));
       expect(rain.weather, Weather.basement);
