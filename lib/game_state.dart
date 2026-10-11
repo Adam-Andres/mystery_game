@@ -372,12 +372,11 @@ class GameState extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Abandons the investigation for good and goes back to the title screen,
-  /// where the next game will be a different mystery.
+  /// Abandons the investigation for good and begins a different mystery in
+  /// the same case file.
   void reset() {
-    _leave();
-    store?.clear(slot);
-    notifyListeners();
+    if (phase != Phase.playing) return;
+    newGame();
   }
 
   /// Ends the arrival scene and puts Churlock in the entrance hall.

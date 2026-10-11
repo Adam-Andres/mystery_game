@@ -78,6 +78,7 @@ class _MysteryAppState extends State<MysteryApp> {
   /// The settings that are about sound take effect at once.
   void _applySettings() {
     if (voice.muted == settings.voices) voice.toggleMute();
+    // The voices and the rain are switched off separately.
     ambience.setMuted(!settings.rain);
   }
 
@@ -162,22 +163,25 @@ class _MysteryAppState extends State<MysteryApp> {
         // The whole game is laid out on a fixed 960x540 stage and scaled to fit.
         body: SettingsScope(
           settings: settings,
-          child: Listener(
-            // A browser plays nothing until the page has been touched.
-            onPointerDown: (_) => ambience.wake(),
-            child: VoiceScope(
-              voice: voice,
-              child: SizedBox.expand(
-                child: FittedBox(
-                  child: SizedBox(
-                    width: sceneW,
-                    height: sceneH,
-                    child: ClipRect(
-                      child: ListenableBuilder(
-                        listenable: g,
-                        builder: (context, _) => KeyedSubtree(
-                          key: ValueKey(g.phase),
-                          child: _screen(),
+          child: AmbienceScope(
+            ambience: ambience,
+            child: Listener(
+              // A browser plays nothing until the page has been touched.
+              onPointerDown: (_) => ambience.wake(),
+              child: VoiceScope(
+                voice: voice,
+                child: SizedBox.expand(
+                  child: FittedBox(
+                    child: SizedBox(
+                      width: sceneW,
+                      height: sceneH,
+                      child: ClipRect(
+                        child: ListenableBuilder(
+                          listenable: g,
+                          builder: (context, _) => KeyedSubtree(
+                            key: ValueKey(g.phase),
+                            child: _screen(),
+                          ),
                         ),
                       ),
                     ),

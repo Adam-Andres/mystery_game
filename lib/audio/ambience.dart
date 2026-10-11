@@ -1,3 +1,5 @@
+import 'package:flutter/widgets.dart';
+
 import 'ambience_stub.dart' if (dart.library.js_interop) 'ambience_web.dart';
 
 /// How the rain sounds from where Churlock is standing.
@@ -29,6 +31,9 @@ abstract class Ambience {
   /// Changes how the rain sounds, smoothly.
   void set(Weather weather);
 
+  /// A roll of thunder, heard through the same walls as the rain.
+  void thunder();
+
   /// Called whenever the player touches the page, since a browser will not
   /// start any sound until they have.
   void wake();
@@ -39,15 +44,34 @@ abstract class Ambience {
 /// No rain at all: for tests, and platforms that cannot play it.
 class SilentAmbience implements Ambience {
   Weather? weather;
+  bool muted = false;
+  int rumbles = 0;
 
   @override
   void set(Weather weather) => this.weather = weather;
 
   @override
+  void thunder() => rumbles++;
+
+  @override
   void wake() {}
 
   @override
-  void setMuted(bool muted) {}
+  void setMuted(bool muted) => this.muted = muted;
 }
 
 Ambience createAmbience() => createPlatformAmbience();
+
+/// Makes the [Ambience] available to the scenes beneath it, so that they
+/// can call for thunder when they show lightning.
+class AmbienceScope extends InheritedWidget {
+  const AmbienceScope({super.key, required this.ambience, required super.child});
+
+  final Ambience ambience;
+
+  static Ambience? maybeOf(BuildContext context) =>
+      context.getInheritedWidgetOfExactType<AmbienceScope>()?.ambience;
+
+  @override
+  bool updateShouldNotify(AmbienceScope old) => old.ambience != ambience;
+}

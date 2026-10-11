@@ -4,6 +4,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../audio/ambience.dart';
 import '../audio/lines.dart';
 import '../audio/voice.dart';
 import '../data/house.dart';
@@ -128,6 +129,44 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     duration: const Duration(milliseconds: 900),
   )..repeat();
 
+  // Lightning, every so often, seen through the windows and out in the
+  // yard. The thunder follows a few seconds behind.
+  late final AnimationController _lightning = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 700),
+  );
+  Timer? _nextStrike;
+  Timer? _rumble;
+
+  void _scheduleStrike() {
+    // Anything from a quarter of a minute to a minute apart.
+    _nextStrike = Timer(
+      Duration(milliseconds: 14000 + _random.nextInt(46000)),
+      () {
+        if (!mounted) return;
+        _lightning.forward(from: 0);
+        final ambience = AmbienceScope.maybeOf(context);
+        _rumble?.cancel();
+        _rumble = Timer(
+          // Never less than four fifths of a second behind the flash.
+          Duration(milliseconds: 800 + _random.nextInt(3700)),
+          () {
+            ambience?.thunder();
+          },
+        );
+        _scheduleStrike();
+      },
+    );
+  }
+
+  /// How bright the lightning is at point [t] of a strike: a flash, a
+  /// flicker, and an afterglow.
+  static double _glare(double t) => t <= 0 || t >= 1
+      ? 0
+      : t < .14 || (t > .3 && t < .4)
+      ? 1
+      : .3 * (1 - t);
+
   // The basement lamps gutter now and then, never more than once in twenty
   // seconds.
   late final AnimationController _flicker = AnimationController(
@@ -149,6 +188,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
   void initState() {
     super.initState();
     _scheduleFlicker();
+    _scheduleStrike();
     _idleTimer = Timer(_idleAfter, _onIdle);
     // Anything the game does counts as activity, not only clicks.
     g.addListener(_onGameChanged);
@@ -247,6 +287,9 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     _remarkTimer?.cancel();
     widget.voice.release(this);
     _nextFlicker?.cancel();
+    _nextStrike?.cancel();
+    _rumble?.cancel();
+    _lightning.dispose();
     _flicker.dispose();
     _walk.dispose();
     _approach.dispose();
@@ -413,8 +456,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                           child: _ItemSpot(
                             key: ValueKey('item-${item.id}'),
                             item: item,
-                            onTap: () =>
-                                _walkTo(item.pos, () => g.take(item)),
+                            onTap: () => _walkTo(item.pos, () => g.take(item)),
                           ),
                         ),
                       for (final e in g.evidenceHere)
@@ -474,6 +516,22 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
               for (final (id, x)
                   in placements[room.id] ?? const <(String, double)>[])
                 _character(personById(id), x),
+              // Lightning: the windows flare, or out of doors the whole sky.
+              if (room.id == 'backyard' || roomWindows.containsKey(room.id))
+                Positioned.fill(
+                  child: IgnorePointer(
+                    child: AnimatedBuilder(
+                      animation: _lightning,
+                      builder: (context, _) => CustomPaint(
+                        painter: _LightningPainter(
+                          roomWindows[room.id],
+                          round: room.id == 'landing',
+                          glare: _glare(_lightning.value),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
               if (room.id == 'backyard') ...[
                 Positioned.fill(
                   child: IgnorePointer(
@@ -506,22 +564,17 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                   child: Center(child: _Inventory(g)),
                 ),
               Positioned(left: 14, top: 12, child: _RoomLabel(room)),
-              // Under the room's name, clear of the arrows.
+              // Kept to the right of the arrow up, whatever the font does.
               Positioned(
-                left: 14,
-                top: 84,
-                child: IconButton(
-                  key: const ValueKey('menu'),
-                  tooltip: 'Menu',
-                  onPressed: () => g.openPanel(Panel.menu),
-                  style: IconButton.styleFrom(
-                    backgroundColor: kInk.withValues(alpha: .9),
-                    side: const BorderSide(color: kGold, width: 2),
-                  ),
-                  icon: const Icon(Icons.menu, color: kGold),
+                right: 14,
+                top: 12,
+                width: 430,
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.topRight,
+                  child: _Hud(g, widget.voice),
                 ),
               ),
-              Positioned(right: 14, top: 12, child: _Hud(g, widget.voice)),
               if (room.id == 'entrance')
                 Positioned(
                   left: 60,
@@ -941,12 +994,25 @@ class _Hud extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        MuteButton(voice),
-        const SizedBox(width: 8),
+        TextButton(
+          key: const ValueKey('menu'),
+          onPressed: () => g.openPanel(Panel.menu),
+          style: TextButton.styleFrom(
+            foregroundColor: kGold,
+            backgroundColor: kInk.withValues(alpha: .9),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+            minimumSize: Size.zero,
+            textStyle: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          child: const Text('Settings'),
+        ),
+        const SizedBox(width: 6),
         GoldButton(
           key: const ValueKey('notebook'),
-          label: 'Notebook  ${g.found.length}/${g.evidence.length}',
-          icon: Icons.menu_book,
+          label: 'Notebook ${g.found.length}/${g.evidence.length}',
           onPressed: () => g.openPanel(Panel.notebook),
         ),
         const SizedBox(width: 10),
@@ -1110,7 +1176,10 @@ class _ItemSpot extends StatelessWidget {
             borderRadius: BorderRadius.circular(10),
             border: Border.all(color: item.color, width: 2),
             boxShadow: [
-              BoxShadow(color: item.color.withValues(alpha: .5), blurRadius: 12),
+              BoxShadow(
+                color: item.color.withValues(alpha: .5),
+                blurRadius: 12,
+              ),
             ],
           ),
           child: Icon(item.icon, color: item.color, size: 28),
@@ -1200,4 +1269,33 @@ class _DoorPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(_DoorPainter old) => old.open != open || old.door != door;
+}
+
+/// A flash of lightning: in a window pane, or with no pane, over everything.
+class _LightningPainter extends CustomPainter {
+  _LightningPainter(this.pane, {required this.round, required this.glare});
+
+  final Rect? pane;
+  final bool round;
+  final double glare;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (glare <= 0) return;
+    final pane = this.pane;
+    final light = Paint()
+      ..color = Colors.white.withValues(
+        alpha: (pane == null ? .32 : .75) * glare,
+      );
+    if (pane == null) {
+      canvas.drawRect(Offset.zero & size, light);
+    } else if (round) {
+      canvas.drawOval(pane, light);
+    } else {
+      canvas.drawRect(pane, light);
+    }
+  }
+
+  @override
+  bool shouldRepaint(_LightningPainter old) => old.glare != glare;
 }

@@ -382,17 +382,11 @@ void main() {
       expect(again.itemsHere, isEmpty);
     });
 
-    test('nothing is kept once the case is over, or thrown in', () {
+    test('nothing is kept once the case is over', () {
       final store = MemoryStore();
       final g = GameState(random: Random(3), twistChance: 0, store: store)
         ..newGame(skipIntro: true);
-      final first = g.mystery.id;
       expect(store.saved, isNotNull);
-      g.reset();
-      expect(g.phase, Phase.title);
-      expect(store.saved, isNull);
-      g.newGame(skipIntro: true);
-      expect(g.mystery.id, isNot(first));
       g
         ..toggleAccused('penny')
         ..makeArrest();
@@ -438,13 +432,20 @@ void main() {
       // Left alone, it goes back to being a button that does nothing rash.
       await tester.pump(const Duration(seconds: 5));
       expect(find.textContaining('Really?'), findsNothing);
+      final before = g.mystery.id;
       await tester.tap(_key('reset'));
       await tester.pump();
       await tester.tap(_key('reset'));
       await tester.pump();
-      expect(g.phase, Phase.title);
-      expect(store.saved, isNull);
-      expect(find.text('New case'), findsNWidgets(3));
+      // A different mystery, from its beginning, in the same case file.
+      expect(g.phase, Phase.intro);
+      expect(g.mystery.id, isNot(before));
+      expect(g.slot, 0);
+      expect(g.found, isEmpty);
+      g.beginInvestigation();
+      await tester.pump();
+      expect(store.slots.keys, [0]);
+      await tester.pump(const Duration(seconds: 14));
     });
 
     testWidgets('three case files are kept apart on the title screen', (
@@ -516,12 +517,13 @@ void main() {
       await tester.tap(_key('text-size-3'));
       await tester.pump();
       expect(settings.textScale, greaterThan(1.3));
-      // The loudspeaker button on screen is the same switch.
+      // There is no loudspeaker button any more: it is all in here.
+      expect(_key('mute'), findsNothing);
+      await tester.tap(_key('setting-voices'));
+      await tester.pump();
+      expect(voice.muted, isFalse);
       g.closePanel();
       await tester.pump();
-      await tester.tap(_key('mute'));
-      await tester.pump();
-      expect(settings.voices, isTrue);
 
       final again = Settings(store);
       expect(again.voices, isTrue);
@@ -532,6 +534,64 @@ void main() {
       g.talkTo(personById('penny'));
       await tester.pump();
       expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('the voices and the rain are switched off separately', (
+      tester,
+    ) async {
+      final rain = SilentAmbience();
+      final voice = Voice(SilentPlayer());
+      final settings = Settings();
+      await tester.pumpWidget(
+        MysteryApp(
+          state: GameState(),
+          voice: voice,
+          settings: settings,
+          ambience: rain,
+        ),
+      );
+      expect(rain.muted, isFalse);
+      settings.update((s) => s.rain = false);
+      expect(rain.muted, isTrue);
+      expect(voice.muted, isFalse);
+      settings.update((s) => s.rain = true);
+      settings.update((s) => s.voices = false);
+      expect(voice.muted, isTrue);
+      expect(rain.muted, isFalse);
+    });
+
+    testWidgets('thunder follows the lightning by a few seconds', (tester) async {
+      final storm = SilentAmbience();
+      final g = GameState(random: Random(3), twistChance: 0);
+      await tester.pumpWidget(
+        MysteryApp(state: g, voice: Voice(SilentPlayer()), ambience: storm),
+      );
+      g.newGame(caseIndex: 0, skipIntro: true);
+      await tester.pump();
+      expect(storm.rumbles, 0);
+      // Within a minute there has been a strike, and its thunder.
+      await tester.pump(const Duration(seconds: 61));
+      await tester.pump(const Duration(seconds: 5));
+      expect(storm.rumbles, greaterThan(0));
+      // And in the opening scene, after each flash.
+      final arrival = SilentAmbience();
+      final g2 = GameState(random: Random(3), twistChance: 0);
+      await tester.pumpWidget(
+        MysteryApp(
+          key: UniqueKey(),
+          state: g2,
+          voice: Voice(SilentPlayer()),
+          ambience: arrival,
+        ),
+      );
+      g2.newGame(caseIndex: 0);
+      await tester.pump();
+      // Never sooner than the first flash and its four fifths of a second.
+      await tester.pump(const Duration(milliseconds: 1800));
+      expect(arrival.rumbles, 0);
+      await tester.pump(const Duration(seconds: 6));
+      await tester.pump();
+      expect(arrival.rumbles, 1);
     });
 
     testWidgets('the rain sounds different from room to room', (tester) async {

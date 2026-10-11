@@ -3,6 +3,7 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 
+import '../audio/ambience.dart';
 import '../audio/lines.dart';
 import '../audio/voice.dart';
 import '../data/house.dart';
@@ -75,6 +76,7 @@ class _CutsceneState extends State<Cutscene> with TickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
+    _scene.addListener(_thunder);
     _narrate();
   }
 
@@ -117,14 +119,43 @@ class _CutsceneState extends State<Cutscene> with TickerProviderStateMixin {
   static double _span(double t, double from, double to) =>
       ((t - from) / (to - from)).clamp(0.0, 1.0);
 
+  // When the lightning strikes in this showing of the scene, as fractions
+  // of its length, and how long after each the thunder is heard: never
+  // less than four fifths of a second. Both differ every time.
+  static final _chance = Random();
+  late final List<double> _strikes = [
+    for (final (from, to)
+        in _arrival
+            ? const [(.05, .15), (.35, .55), (.7, .85)]
+            : const [(.12, .28), (.5, .66)])
+      from + _chance.nextDouble() * (to - from),
+  ];
+  late final List<double> _delays = [
+    for (final _ in _strikes) (.8 + _chance.nextDouble() * 2.7) / 22,
+  ];
+  final _heard = <int>{};
+
+  void _thunder() {
+    if (!_gloomy) return;
+    for (var i = 0; i < _strikes.length; i++) {
+      if (_scene.value >= _strikes[i] + _delays[i] && _heard.add(i)) {
+        AmbienceScope.maybeOf(context)?.thunder();
+      }
+    }
+  }
+
   /// A brief double flicker of lightning around each strike time.
   double _flash(double t) {
     if (!_gloomy) return 0;
-    final strikes = _arrival ? const [.09, .46, .8] : const [.2, .58];
     var flash = 0.0;
-    for (final s in strikes) {
+    for (final s in _strikes) {
       final d = (t - s) * 22;
-      if (d >= 0 && d < .5) flash = max(flash, d < .08 || (d > .16 && d < .22) ? 1 : .25 * (1 - d * 2));
+      if (d >= 0 && d < .5) {
+        flash = max(
+          flash,
+          d < .08 || (d > .16 && d < .22) ? 1 : .25 * (1 - d * 2),
+        );
+      }
     }
     return flash;
   }
@@ -132,7 +163,9 @@ class _CutsceneState extends State<Cutscene> with TickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
     final line = widget.lines[_line];
-    final speaker = line.voice == narrator ? 'Narrator' : personById(line.voice).name;
+    final speaker = line.voice == narrator
+        ? 'Narrator'
+        : personById(line.voice).name;
     return Stack(
       children: [
         // The stage sits high in the frame so the lane clears the subtitles.
@@ -188,10 +221,13 @@ class _CutsceneState extends State<Cutscene> with TickerProviderStateMixin {
   }
 
   Widget _stage(double t) {
-    final lurking = widget.kind == CutsceneKind.struckAgain ? _span(t, .5, .62) : 0.0;
+    final lurking = widget.kind == CutsceneKind.struckAgain
+        ? _span(t, .5, .62)
+        : 0.0;
     // The door opens as Churlock reaches it, and shuts behind Watsonut.
     final door = _arrival
-        ? Curves.easeOut.transform(_span(t, .64, .71)) * (1 - _span(t, .86, .91))
+        ? Curves.easeOut.transform(_span(t, .64, .71)) *
+              (1 - _span(t, .86, .91))
         : 0.0;
     return Stack(
       children: [
@@ -267,12 +303,20 @@ class _CutsceneState extends State<Cutscene> with TickerProviderStateMixin {
     final walk = Curves.easeInOut.transform(_span(t, .3, .72));
     final step = t * 2 * pi * 34;
     final walking = walk > 0 && walk < 1;
-    final feet = Offset.lerp(const Offset(350, 506), const Offset(681, 404), walk)!;
+    final feet = Offset.lerp(
+      const Offset(350, 506),
+      const Offset(681, 404),
+      walk,
+    )!;
     // Watsonut climbs out a moment after him and has to step a little
     // quicker to keep up.
     final follow = Curves.easeInOut.transform(_span(t, .35, .74));
     final following = follow > 0 && follow < 1;
-    final heel = Offset.lerp(const Offset(300, 506), const Offset(681, 404), follow)!;
+    final heel = Offset.lerp(
+      const Offset(300, 506),
+      const Offset(681, 404),
+      follow,
+    )!;
     return [
       _car(carX, roll: drive * 22, lights: true),
       if (t > .29)
@@ -339,7 +383,10 @@ class _CutsceneState extends State<Cutscene> with TickerProviderStateMixin {
             children: [
               Positioned.fill(
                 child: CustomPaint(
-                  painter: WagonPainter(roll: drive * 26, blink: (t * 40).floor().isEven),
+                  painter: WagonPainter(
+                    roll: drive * 26,
+                    blink: (t * 40).floor().isEven,
+                  ),
                 ),
               ),
               Positioned.fromRect(

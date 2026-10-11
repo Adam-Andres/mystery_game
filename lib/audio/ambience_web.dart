@@ -12,6 +12,7 @@ class _WebAmbience implements Ambience {
   web.AudioContext? _context;
   web.BiquadFilterNode? _filter;
   web.GainNode? _gain;
+  web.AudioBuffer? _thunder;
   bool _starting = false;
   bool _muted = false;
   Weather _weather = Weather.outside;
@@ -38,17 +39,37 @@ class _WebAmbience implements Ambience {
     }
   }
 
+  Future<web.AudioBuffer> _load(web.AudioContext context, String name) async {
+    final response = await web.window
+        .fetch('assets/assets/sfx/$name'.toJS)
+        .toDart;
+    final bytes = await response.arrayBuffer().toDart;
+    return context.decodeAudioData(bytes).toDart;
+  }
+
+  /// Thunder goes through the same filter and volume as the rain, so it is
+  /// a crash out of doors and a far-off grumble in the cellar.
+  @override
+  void thunder() {
+    final context = _context;
+    final filter = _filter;
+    final buffer = _thunder;
+    if (context == null || filter == null || buffer == null) return;
+    if (context.state != 'running') return;
+    final source = context.createBufferSource()..buffer = buffer;
+    final boost = context.createGain()..gain.value = 2.4;
+    source.connect(boost);
+    boost.connect(filter);
+    source.start();
+  }
+
   Future<void> _start() async {
     if (_starting) return;
     _starting = true;
     try {
       final context = web.AudioContext();
       context.resume();
-      final response = await web.window
-          .fetch('assets/assets/sfx/rain.wav'.toJS)
-          .toDart;
-      final bytes = await response.arrayBuffer().toDart;
-      final buffer = await context.decodeAudioData(bytes).toDart;
+      final buffer = await _load(context, 'rain.wav');
       final source = context.createBufferSource()
         ..buffer = buffer
         ..loop = true;
@@ -62,6 +83,7 @@ class _WebAmbience implements Ambience {
       _filter = filter;
       _gain = gain;
       _apply();
+      _thunder = await _load(context, 'thunder.wav');
     } catch (_) {
       // No rain, then. The game is none the worse for it.
       _starting = false;
