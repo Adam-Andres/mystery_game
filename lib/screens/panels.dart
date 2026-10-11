@@ -1087,12 +1087,15 @@ class MenuPanel extends StatelessWidget {
                         settings.voices,
                         (s, v) => s.voices = v,
                       ),
-                      toggle(
-                        'music',
-                        'Title music',
-                        settings.music,
-                        (s, v) => s.music = v,
-                      ),
+                      // The title screen's music is a matter for the title
+                      // screen: it is not offered during a case.
+                      if (onClose != null)
+                        toggle(
+                          'music',
+                          'Title music',
+                          settings.music,
+                          (s, v) => s.music = v,
+                        ),
                       toggle(
                         'haptics',
                         'Haptics: rain, thunder, lamps',

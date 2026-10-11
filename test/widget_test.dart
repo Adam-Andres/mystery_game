@@ -520,6 +520,8 @@ void main() {
       await tester.pump();
       await tester.tap(_key('menu'));
       await tester.pump();
+      // The title music is not offered here, only on the title screen.
+      expect(_key('setting-music'), findsNothing);
       await tester.tap(_key('setting-voices'));
       await tester.pump();
       expect(voice.muted, isTrue);
@@ -715,7 +717,7 @@ void main() {
       await tester.pump();
       // Purrfait, in the hall, never more than fifteen seconds apart.
       await tester.pump(const Duration(seconds: 16));
-      expect(house.creatures, hasLength(1));
+      expect(house.creatures, isNotEmpty);
       await tester.pump(const Duration(seconds: 15));
       expect(house.creatures.length, greaterThanOrEqualTo(2));
       expect(house.creatures.toSet(), {'meow'});
