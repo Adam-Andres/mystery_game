@@ -28,52 +28,79 @@ class TitleScreen extends StatelessWidget {
             const SizedBox(width: 40),
             Expanded(
               child: Center(
-                child: SingleChildScrollView(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'A CHURLOCK MYSTERY',
-                        style: TextStyle(
-                          color: kCream,
-                          fontSize: 16,
-                          letterSpacing: 6,
+                // Shrunk to fit if need be, so nothing is ever off screen.
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: SizedBox(
+                    width: 570,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'A CHURLOCK MYSTERY',
+                          style: TextStyle(
+                            color: kCream,
+                            fontSize: 16,
+                            letterSpacing: 6,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 6),
-                      const Text(
-                        'The Senclair Affair',
-                        style: TextStyle(
-                          color: kGold,
-                          fontSize: 58,
-                          fontWeight: FontWeight.bold,
-                          height: 1.05,
+                        const SizedBox(height: 6),
+                        const Text(
+                          'The Senclair Affair',
+                          style: TextStyle(
+                            color: kGold,
+                            fontSize: 58,
+                            fontWeight: FontWeight.bold,
+                            height: 1.05,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 18),
-                      const Text(
-                        'Mrs. Senclair, the éclair of Donut County, has been murdered in '
-                        'her own cellar. Five desserts were in the house. Search three '
-                        'floors, gather the evidence, question the residents — and name '
-                        'the killer, or killers, before somebody else gets creamed.',
-                        style: kBody,
-                      ),
-                      const SizedBox(height: 18),
-                      // Three investigations can be kept on the go at once.
-                      Row(
-                        children: [
-                          for (var slot = 0; slot < saveSlots; slot++) ...[
-                            if (slot > 0) const SizedBox(width: 10),
-                            Expanded(child: _SlotCard(g, slot)),
+                        const SizedBox(height: 10),
+                        const Text(
+                          'Mrs. Senclair, the éclair of Donut County, has been murdered in '
+                          'her own cellar. Five desserts were in the house. Search three '
+                          'floors, gather the evidence, question the residents — and name '
+                          'the killer, or killers, before somebody else gets creamed.',
+                          style: kBody,
+                        ),
+                        const SizedBox(height: 18),
+                        // Three investigations can be kept on the go at once.
+                        Row(
+                          children: [
+                            for (var slot = 0; slot < saveSlots; slot++) ...[
+                              if (slot > 0) const SizedBox(width: 10),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.stretch,
+                                  children: [
+                                    _SlotCard(g, slot),
+                                    const SizedBox(height: 6),
+                                    // To start this file afresh.
+                                    FittedBox(
+                                      fit: BoxFit.scaleDown,
+                                      child: ResetButton(
+                                        key: ValueKey(
+                                          'erase-$slot-${g.summaryOf(slot) != null}',
+                                        ),
+                                        buttonKey: ValueKey('erase-$slot'),
+                                        label: 'Reset',
+                                        enabled: g.summaryOf(slot) != null,
+                                        onReset: () => g.erase(slot),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
                           ],
-                        ],
-                      ),
-                      const SizedBox(height: 14),
-                      const Text(
-                        'Click to look and talk  •  Arrows (or arrow keys) to move',
-                        style: TextStyle(color: Colors.white54, fontSize: 13),
-                      ),
-                    ],
+                        ),
+                        const SizedBox(height: 14),
+                        const Text(
+                          'Click to look and talk  •  Arrows (or arrow keys) to move',
+                          style: TextStyle(color: Colors.white54, fontSize: 13),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),

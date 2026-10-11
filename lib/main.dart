@@ -78,8 +78,8 @@ class _MysteryAppState extends State<MysteryApp> {
   /// The settings that are about sound take effect at once.
   void _applySettings() {
     if (voice.muted == settings.voices) voice.toggleMute();
-    // The voices and the rain are switched off separately.
-    ambience.setMuted(!settings.rain);
+    // The voices and the sounds of the house are switched off separately.
+    ambience.setMuted(!settings.haptics);
   }
 
   /// The rain is loud outside, drums on the attic roof, and is all but

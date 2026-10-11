@@ -288,6 +288,12 @@ class GameState extends ChangeNotifier {
     }
   }
 
+  /// Throws away whatever is in [slot], from the title screen.
+  void erase(int slot) {
+    store?.clear(slot);
+    notifyListeners();
+  }
+
   /// Opens [slot] from the title screen: the investigation saved there, or
   /// a new one if there is none.
   void open(int slot) {

@@ -180,8 +180,42 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     _nextFlicker = Timer(Duration(seconds: 20 + _random.nextInt(25)), () {
       if (!mounted) return;
       _flicker.forward(from: 0);
+      // Down among the lamps, it can be heard as well as seen.
+      if (g.room.level == 0) AmbienceScope.maybeOf(context)?.flicker();
       _scheduleFlicker();
     });
+  }
+
+  // Now and then, if Churlock is in the same place, one of the animals
+  // has something to say: the cat in the hall, the dog in the yard.
+  Timer? _nextCreature;
+
+  void _scheduleCreature([Duration? wait]) {
+    _nextCreature = Timer(
+      wait ?? Duration(milliseconds: 9000 + _random.nextInt(26000)),
+      () {
+        if (!mounted) return;
+        // They do not talk over anybody: the wait is held until whoever is
+        // speaking has finished, and a little longer.
+        if (g.dialogue != null ||
+            _remark != null ||
+            _greeting ||
+            widget.voice.speaking) {
+          _scheduleCreature(const Duration(seconds: 3));
+          return;
+        }
+        final sound = switch (g.roomId) {
+          'entrance' => 'meow',
+          'backyard' => 'bark',
+          _ => null,
+        };
+        // Not every time. Animals are like that.
+        if (sound != null && _random.nextDouble() < .6) {
+          AmbienceScope.maybeOf(context)?.creature(sound);
+        }
+        _scheduleCreature();
+      },
+    );
   }
 
   @override
@@ -189,6 +223,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     super.initState();
     _scheduleFlicker();
     _scheduleStrike();
+    _scheduleCreature();
     _idleTimer = Timer(_idleAfter, _onIdle);
     // Anything the game does counts as activity, not only clicks.
     g.addListener(_onGameChanged);
@@ -288,6 +323,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     widget.voice.release(this);
     _nextFlicker?.cancel();
     _nextStrike?.cancel();
+    _nextCreature?.cancel();
     _rumble?.cancel();
     _lightning.dispose();
     _flicker.dispose();
@@ -379,192 +415,296 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
       onKeyEvent: _onKey,
       child: Listener(
         onPointerDown: (_) => _resetIdle(),
-        child: AbsorbPointer(
-          absorbing: _moving || _greeting,
-          child: Stack(
-            children: [
-              Positioned.fill(
-                child: RepaintBoundary(
-                  child: CustomPaint(
-                    painter: RoomPainter(room, caseId: g.mystery.id),
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            AbsorbPointer(
+              // Nothing can be touched while Watsonut explains himself, except
+              // the settings.
+              absorbing: _moving || (_greeting && g.panel != Panel.menu),
+              child: Stack(
+                children: [
+                  Positioned.fill(
+                    child: RepaintBoundary(
+                      child: CustomPaint(
+                        painter: RoomPainter(room, caseId: g.mystery.id),
+                      ),
+                    ),
                   ),
-                ),
-              ),
-              Positioned.fill(
-                child: RepaintBoundary(
-                  child: Stack(
-                    children: [
-                      if (roomWindows.containsKey(room.id))
-                        Positioned.fill(
-                          child: IgnorePointer(
-                            child: AnimatedBuilder(
-                              animation: _rain,
-                              builder: (context, _) => CustomPaint(
-                                painter: WindowRainPainter(
-                                  room.id,
-                                  _rain.value,
+                  Positioned.fill(
+                    child: RepaintBoundary(
+                      child: Stack(
+                        children: [
+                          if (roomWindows.containsKey(room.id))
+                            Positioned.fill(
+                              child: IgnorePointer(
+                                child: AnimatedBuilder(
+                                  animation: _rain,
+                                  builder: (context, _) => CustomPaint(
+                                    painter: WindowRainPainter(
+                                      room.id,
+                                      _rain.value,
+                                    ),
+                                  ),
                                 ),
                               ),
                             ),
+                          // A door that opens as they walk through it.
+                          Positioned.fill(
+                            child: IgnorePointer(
+                              child: AnimatedBuilder(
+                                animation: _walk,
+                                builder: (context, _) {
+                                  final (door, open) = _doorway();
+                                  if (door == null || open <= 0) {
+                                    return const SizedBox.shrink();
+                                  }
+                                  return CustomPaint(
+                                    painter: _DoorPainter(
+                                      door,
+                                      open,
+                                      outside: room.id == 'backyard',
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
                           ),
-                        ),
-                      // A door that opens as they walk through it.
-                      Positioned.fill(
-                        child: IgnorePointer(
-                          child: AnimatedBuilder(
-                            animation: _walk,
-                            builder: (context, _) {
-                              final (door, open) = _doorway();
-                              if (door == null || open <= 0) {
-                                return const SizedBox.shrink();
-                              }
-                              return CustomPaint(
-                                painter: _DoorPainter(
-                                  door,
-                                  open,
-                                  outside: room.id == 'backyard',
+                          if (room.id == 'backyard')
+                            Positioned.fill(
+                              child: IgnorePointer(
+                                child: DessertFigureAt(
+                                  pupcake.dessert,
+                                  feet: _dogFeet,
+                                  width: 84,
                                 ),
-                              );
-                            },
+                              ),
+                            ),
+                          if (room.id == 'entrance')
+                            const Positioned.fill(
+                              child: IgnorePointer(
+                                child: DessertFigureAt(
+                                  Dessert.purrfait,
+                                  feet: purrfaitSpot,
+                                  width: 66,
+                                ),
+                              ),
+                            ),
+                          for (final item in g.itemsHere)
+                            Positioned(
+                              left: item.pos.dx - 24,
+                              top: item.pos.dy - 24,
+                              child: _ItemSpot(
+                                key: ValueKey('item-${item.id}'),
+                                item: item,
+                                onTap: () =>
+                                    _walkTo(item.pos, () => g.take(item)),
+                              ),
+                            ),
+                          for (final e in g.evidenceHere)
+                            Positioned(
+                              left: evidencePos(e).dx - 24,
+                              top: evidencePos(e).dy - 24,
+                              child: _EvidenceSpot(
+                                key: ValueKey('evidence-${e.id}'),
+                                evidence: e,
+                                found: g.found.contains(e.id) && !g.canDust(e),
+                                dust: g.canDust(e),
+                                onTap: () =>
+                                    _walkTo(evidencePos(e), () => g.inspect(e)),
+                              ),
+                            ),
+                          for (final (id, x)
+                              in placements[room.id] ??
+                                  const <(String, double)>[])
+                            Positioned(
+                              left: x - 50,
+                              top: _standY - 130,
+                              child: IgnorePointer(
+                                child: DessertFigure(
+                                  personById(id).dessert,
+                                  animate: true,
+                                  speaker: id,
+                                ),
+                              ),
+                            ),
+                          AnimatedBuilder(
+                            animation: Listenable.merge([_walk, _approach]),
+                            builder: (context, _) => Stack(
+                              children: [
+                                _walker(partner: true),
+                                _walker(partner: false),
+                              ],
+                            ),
                           ),
-                        ),
+                        ],
                       ),
-                      if (room.id == 'backyard')
-                        Positioned.fill(
-                          child: IgnorePointer(
-                            child: DessertFigureAt(
-                              pupcake.dessert,
-                              feet: _dogFeet,
-                              width: 84,
-                            ),
-                          ),
-                        ),
-                      if (room.id == 'entrance')
-                        const Positioned.fill(
-                          child: IgnorePointer(
-                            child: DessertFigureAt(
-                              Dessert.purrfait,
-                              feet: purrfaitSpot,
-                              width: 66,
-                            ),
-                          ),
-                        ),
-                      for (final item in g.itemsHere)
-                        Positioned(
-                          left: item.pos.dx - 24,
-                          top: item.pos.dy - 24,
-                          child: _ItemSpot(
-                            key: ValueKey('item-${item.id}'),
-                            item: item,
-                            onTap: () => _walkTo(item.pos, () => g.take(item)),
-                          ),
-                        ),
-                      for (final e in g.evidenceHere)
-                        Positioned(
-                          left: evidencePos(e).dx - 24,
-                          top: evidencePos(e).dy - 24,
-                          child: _EvidenceSpot(
-                            key: ValueKey('evidence-${e.id}'),
-                            evidence: e,
-                            found: g.found.contains(e.id) && !g.canDust(e),
-                            dust: g.canDust(e),
-                            onTap: () =>
-                                _walkTo(evidencePos(e), () => g.inspect(e)),
-                          ),
-                        ),
-                      for (final (id, x)
-                          in placements[room.id] ?? const <(String, double)>[])
-                        Positioned(
-                          left: x - 50,
-                          top: _standY - 130,
-                          child: IgnorePointer(
-                            child: DessertFigure(
-                              personById(id).dessert,
-                              animate: true,
-                              speaker: id,
-                            ),
-                          ),
-                        ),
-                      AnimatedBuilder(
-                        animation: Listenable.merge([_walk, _approach]),
-                        builder: (context, _) => Stack(
-                          children: [
-                            _walker(partner: true),
-                            _walker(partner: false),
-                          ],
-                        ),
-                      ),
-                    ],
+                    ),
                   ),
-                ),
+                  if (room.level == 0)
+                    Positioned.fill(
+                      child: IgnorePointer(
+                        child: AnimatedBuilder(
+                          animation: _flicker,
+                          builder: (context, _) => ColoredBox(
+                            color: Colors.black.withValues(
+                              alpha: _flicker.isAnimating
+                                  ? _dimming(_flicker.value)
+                                  : 0,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  for (final (id, x)
+                      in placements[room.id] ?? const <(String, double)>[])
+                    _character(personById(id), x),
+                  // Lightning: the windows flare, or out of doors the whole sky.
+                  if (room.id == 'backyard' || roomWindows.containsKey(room.id))
+                    Positioned.fill(
+                      child: IgnorePointer(
+                        child: AnimatedBuilder(
+                          animation: _lightning,
+                          builder: (context, _) => CustomPaint(
+                            painter: _LightningPainter(
+                              roomWindows[room.id],
+                              round: room.id == 'landing',
+                              glare: _glare(_lightning.value),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  if (room.id == 'backyard') ...[
+                    Positioned.fill(
+                      child: IgnorePointer(
+                        child: AnimatedBuilder(
+                          animation: _rain,
+                          builder: (context, _) => CustomPaint(
+                            painter: RainPainter(cycle: _rain.value, flash: 0),
+                          ),
+                        ),
+                      ),
+                    ),
+                    _tapTarget(
+                      'pupcake',
+                      _dogFeet.translate(0, -45),
+                      90,
+                      () => g.remark(pupcakeRemark),
+                    ),
+                  ],
+                  for (final s in g.sightsHere)
+                    _tapTarget(s.id, s.pos, s.size, () => g.remark(s.junk)),
+                  for (final n in g.nooksHere) _nook(n),
+                  for (final d in Dir.values)
+                    if (neighbor(room, d) case final Room next) _arrow(d, next),
+                  if (_remark != null && !_moving) _remarkBubble(_remark!),
+                  if (g.items.isNotEmpty)
+                    Positioned(
+                      top: 88,
+                      left: 0,
+                      right: 0,
+                      child: Center(child: _Inventory(g)),
+                    ),
+                  Positioned(left: 14, top: 12, child: _RoomLabel(room)),
+                  // Kept to the right of the arrow up, whatever the font does.
+                  Positioned(
+                    right: 14,
+                    top: 12,
+                    width: 430,
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.topRight,
+                      child: _Hud(g, widget.voice),
+                    ),
+                  ),
+                  if (room.id == 'entrance')
+                    Positioned(
+                      left: 60,
+                      bottom: 16,
+                      child: GoldButton(
+                        key: const ValueKey('solve'),
+                        label: 'I solved the case',
+                        icon: Icons.gavel,
+                        color: kRed,
+                        onPressed: () {
+                          widget.voice.say(eurekaLine);
+                          g.openPanel(Panel.accuse);
+                        },
+                      ),
+                    ),
+                  // The fade between rooms, darkest at the moment of the switch.
+                  if (_dir != null)
+                    Positioned.fill(
+                      child: IgnorePointer(
+                        child: FadeTransition(
+                          opacity: _walk.drive(
+                            TweenSequence([
+                              TweenSequenceItem(
+                                tween: ConstantTween(0.0),
+                                weight: 34,
+                              ),
+                              TweenSequenceItem(
+                                tween: Tween(begin: 0.0, end: 1.0),
+                                weight: 14,
+                              ),
+                              TweenSequenceItem(
+                                tween: ConstantTween(1.0),
+                                weight: 4,
+                              ),
+                              TweenSequenceItem(
+                                tween: Tween(begin: 1.0, end: 0.0),
+                                weight: 14,
+                              ),
+                              TweenSequenceItem(
+                                tween: ConstantTween(0.0),
+                                weight: 34,
+                              ),
+                            ]),
+                          ),
+                          child: const ColoredBox(color: Colors.black),
+                        ),
+                      ),
+                    ),
+                  if (g.panel != Panel.none) ...[
+                    Scrim(onTap: g.panel == Panel.puzzle ? null : g.closePanel),
+                    Positioned.fill(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 50,
+                          vertical: 30,
+                        ),
+                        child: switch (g.panel) {
+                          Panel.notebook => NotebookPanel(g),
+                          Panel.accuse => AccusePanel(g),
+                          Panel.nook => NookPanel(g),
+                          Panel.menu => MenuPanel(g),
+                          _ => PuzzlePanel(g),
+                        },
+                      ),
+                    ),
+                  ],
+                  // Dialogue sits above the panels, so finds inside furniture can
+                  // be read without closing it.
+                  if (g.dialogue != null) ...[
+                    Scrim(onTap: g.closeDialogue, opacity: .25),
+                    Positioned(
+                      left: 20,
+                      right: 20,
+                      bottom: 14,
+                      height: 236,
+                      child: DialoguePanel(g),
+                    ),
+                  ],
+                  if (g.hintPrompt) ...[
+                    Scrim(onTap: () => g.answerHintPrompt(wanted: false)),
+                    Positioned.fill(child: HintPrompt(g)),
+                  ],
+                ],
               ),
-              if (room.level == 0)
-                Positioned.fill(
-                  child: IgnorePointer(
-                    child: AnimatedBuilder(
-                      animation: _flicker,
-                      builder: (context, _) => ColoredBox(
-                        color: Colors.black.withValues(
-                          alpha: _flicker.isAnimating
-                              ? _dimming(_flicker.value)
-                              : 0,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              for (final (id, x)
-                  in placements[room.id] ?? const <(String, double)>[])
-                _character(personById(id), x),
-              // Lightning: the windows flare, or out of doors the whole sky.
-              if (room.id == 'backyard' || roomWindows.containsKey(room.id))
-                Positioned.fill(
-                  child: IgnorePointer(
-                    child: AnimatedBuilder(
-                      animation: _lightning,
-                      builder: (context, _) => CustomPaint(
-                        painter: _LightningPainter(
-                          roomWindows[room.id],
-                          round: room.id == 'landing',
-                          glare: _glare(_lightning.value),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              if (room.id == 'backyard') ...[
-                Positioned.fill(
-                  child: IgnorePointer(
-                    child: AnimatedBuilder(
-                      animation: _rain,
-                      builder: (context, _) => CustomPaint(
-                        painter: RainPainter(cycle: _rain.value, flash: 0),
-                      ),
-                    ),
-                  ),
-                ),
-                _tapTarget(
-                  'pupcake',
-                  _dogFeet.translate(0, -45),
-                  90,
-                  () => g.remark(pupcakeRemark),
-                ),
-              ],
-              for (final s in g.sightsHere)
-                _tapTarget(s.id, s.pos, s.size, () => g.remark(s.junk)),
-              for (final n in g.nooksHere) _nook(n),
-              for (final d in Dir.values)
-                if (neighbor(room, d) case final Room next) _arrow(d, next),
-              if (_remark != null && !_moving) _remarkBubble(_remark!),
-              if (g.items.isNotEmpty)
-                Positioned(
-                  top: 88,
-                  left: 0,
-                  right: 0,
-                  child: Center(child: _Inventory(g)),
-                ),
-              Positioned(left: 14, top: 12, child: _RoomLabel(room)),
-              // Kept to the right of the arrow up, whatever the font does.
+            ),
+            // The way into the settings stays open over the top of all that.
+            if (_greeting && g.panel == Panel.none)
               Positioned(
                 right: 14,
                 top: 12,
@@ -572,93 +712,10 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                 child: FittedBox(
                   fit: BoxFit.scaleDown,
                   alignment: Alignment.topRight,
-                  child: _Hud(g, widget.voice),
+                  child: _Hud(g, widget.voice, settingsOnly: true),
                 ),
               ),
-              if (room.id == 'entrance')
-                Positioned(
-                  left: 60,
-                  bottom: 16,
-                  child: GoldButton(
-                    key: const ValueKey('solve'),
-                    label: 'I solved the case',
-                    icon: Icons.gavel,
-                    color: kRed,
-                    onPressed: () {
-                      widget.voice.say(eurekaLine);
-                      g.openPanel(Panel.accuse);
-                    },
-                  ),
-                ),
-              // The fade between rooms, darkest at the moment of the switch.
-              if (_dir != null)
-                Positioned.fill(
-                  child: IgnorePointer(
-                    child: FadeTransition(
-                      opacity: _walk.drive(
-                        TweenSequence([
-                          TweenSequenceItem(
-                            tween: ConstantTween(0.0),
-                            weight: 34,
-                          ),
-                          TweenSequenceItem(
-                            tween: Tween(begin: 0.0, end: 1.0),
-                            weight: 14,
-                          ),
-                          TweenSequenceItem(
-                            tween: ConstantTween(1.0),
-                            weight: 4,
-                          ),
-                          TweenSequenceItem(
-                            tween: Tween(begin: 1.0, end: 0.0),
-                            weight: 14,
-                          ),
-                          TweenSequenceItem(
-                            tween: ConstantTween(0.0),
-                            weight: 34,
-                          ),
-                        ]),
-                      ),
-                      child: const ColoredBox(color: Colors.black),
-                    ),
-                  ),
-                ),
-              if (g.panel != Panel.none) ...[
-                Scrim(onTap: g.panel == Panel.puzzle ? null : g.closePanel),
-                Positioned.fill(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 50,
-                      vertical: 30,
-                    ),
-                    child: switch (g.panel) {
-                      Panel.notebook => NotebookPanel(g),
-                      Panel.accuse => AccusePanel(g),
-                      Panel.nook => NookPanel(g),
-                      Panel.menu => MenuPanel(g),
-                      _ => PuzzlePanel(g),
-                    },
-                  ),
-                ),
-              ],
-              // Dialogue sits above the panels, so finds inside furniture can
-              // be read without closing it.
-              if (g.dialogue != null) ...[
-                Scrim(onTap: g.closeDialogue, opacity: .25),
-                Positioned(
-                  left: 20,
-                  right: 20,
-                  bottom: 14,
-                  height: 236,
-                  child: DialoguePanel(g),
-                ),
-              ],
-              if (g.hintPrompt) ...[
-                Scrim(onTap: () => g.answerHintPrompt(wanted: false)),
-                Positioned.fill(child: HintPrompt(g)),
-              ],
-            ],
-          ),
+          ],
         ),
       ),
     );
@@ -984,10 +1041,19 @@ class _RoomLabel extends StatelessWidget {
 }
 
 class _Hud extends StatelessWidget {
-  const _Hud(this.g, this.voice);
+  const _Hud(this.g, this.voice, {this.settingsOnly = false});
 
   final GameState g;
   final Voice voice;
+
+  /// Whether this is the copy laid over the scene while it is locked, in
+  /// which only the Settings button is there to be pressed.
+  final bool settingsOnly;
+
+  /// Keeps its place, unseen and untouchable, in the settings-only copy.
+  Widget _unless(Widget child) => settingsOnly
+      ? IgnorePointer(child: Opacity(opacity: 0, child: child))
+      : child;
 
   @override
   Widget build(BuildContext context) {
@@ -995,7 +1061,7 @@ class _Hud extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         TextButton(
-          key: const ValueKey('menu'),
+          key: ValueKey(settingsOnly ? 'menu-early' : 'menu'),
           onPressed: () => g.openPanel(Panel.menu),
           style: TextButton.styleFrom(
             foregroundColor: kGold,
@@ -1010,24 +1076,28 @@ class _Hud extends StatelessWidget {
           child: const Text('Settings'),
         ),
         const SizedBox(width: 6),
-        GoldButton(
-          key: const ValueKey('notebook'),
-          label: 'Notebook ${g.found.length}/${g.evidence.length}',
-          onPressed: () => g.openPanel(Panel.notebook),
+        _unless(
+          GoldButton(
+            key: settingsOnly ? null : const ValueKey('notebook'),
+            label: 'Notebook ${g.found.length}/${g.evidence.length}',
+            onPressed: () => g.openPanel(Panel.notebook),
+          ),
         ),
         const SizedBox(width: 10),
-        Plaque(
-          padding: const EdgeInsets.all(7),
-          child: Column(
-            children: [
-              for (var level = 2; level >= 0; level--)
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    for (var col = -1; col < 4; col++) _cell(level, col),
-                  ],
-                ),
-            ],
+        _unless(
+          Plaque(
+            padding: const EdgeInsets.all(7),
+            child: Column(
+              children: [
+                for (var level = 2; level >= 0; level--)
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      for (var col = -1; col < 4; col++) _cell(level, col),
+                    ],
+                  ),
+              ],
+            ),
           ),
         ),
       ],

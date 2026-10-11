@@ -38,9 +38,11 @@ them alone, or two of them together.
 - **Three case files.** The title screen has three save files. A game saves
   itself as you play, on the device, and is still there after the page is
   reloaded or the app closed.
-- **Menu.** The button under the room's name opens the settings (voices,
-  rain, text size, Watsonut's idle remarks, quicker walking), the way back to
-  the main menu, and a red button that resets the case.
+- **Settings.** The Settings button opens the settings (voices, haptics,
+  text size, Watsonut's idle remarks, quicker walking), the way back to the
+  main menu, and a red button that starts a new case in the same file.
+  Haptics are the sounds of the house: rain, thunder, the basement lamps,
+  and the animals. Each case file can also be reset from the title screen.
 - When you are sure, return to the **Entrance Hall**, press
   **I solved the case**, and accuse one or two residents.
 

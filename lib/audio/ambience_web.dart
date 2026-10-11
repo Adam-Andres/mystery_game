@@ -6,13 +6,19 @@ import 'ambience.dart';
 
 Ambience createPlatformAmbience() => _WebAmbience();
 
-/// One recording of rain, looped, and passed through a filter that muffles
-/// it more the further indoors and underground Churlock goes.
+/// The sounds of the house itself, through the Web Audio API: a loop of
+/// rain passed through a filter that muffles it more the further indoors
+/// Churlock goes, thunder through the same filter, and in the basement the
+/// hum and sputter of the lamps instead.
 class _WebAmbience implements Ambience {
   web.AudioContext? _context;
   web.BiquadFilterNode? _filter;
-  web.GainNode? _gain;
+  web.GainNode? _master;
+  web.GainNode? _rain;
+  web.GainNode? _hum;
   web.AudioBuffer? _thunder;
+  web.AudioBuffer? _buzz;
+  web.HTMLAudioElement? _keepAwake;
   bool _starting = false;
   bool _muted = false;
   Weather _weather = Weather.outside;
@@ -31,12 +37,33 @@ class _WebAmbience implements Ambience {
 
   @override
   void wake() {
+    _holdAudioSession();
     final context = _context;
     if (context == null) {
       _start();
     } else if (context.state != 'running') {
       context.resume();
     }
+  }
+
+  /// On an iPhone, sound made this way counts as background noise, which
+  /// the silent switch turns off, unless the page is also playing something
+  /// through an ordinary audio element. The voices are that something, until
+  /// they are muted. So a silent clip is kept looping, and these sounds stay
+  /// audible whatever the voices are doing.
+  void _holdAudioSession() {
+    if (_keepAwake != null) return;
+    final audio = web.HTMLAudioElement()
+      ..src = 'assets/assets/sfx/silence.wav'
+      ..loop = true;
+    _keepAwake = audio;
+    audio.play().toDart.then(
+      (_) {},
+      onError: (Object _) {
+        // Not allowed yet: try again at the next touch.
+        _keepAwake = null;
+      },
+    );
   }
 
   Future<web.AudioBuffer> _load(web.AudioContext context, String name) async {
@@ -47,21 +74,44 @@ class _WebAmbience implements Ambience {
     return context.decodeAudioData(bytes).toDart;
   }
 
-  /// Thunder goes through the same filter and volume as the rain, so it is
-  /// a crash out of doors and a far-off grumble in the cellar.
-  @override
-  void thunder() {
+  web.GainNode _loop(
+    web.AudioContext context,
+    web.AudioBuffer buffer,
+    web.AudioNode into,
+  ) {
+    final gain = context.createGain()..gain.value = 0;
+    final source = context.createBufferSource()
+      ..buffer = buffer
+      ..loop = true;
+    source.connect(gain);
+    gain.connect(into);
+    source.start();
+    return gain;
+  }
+
+  void _once(web.AudioBuffer? buffer, web.AudioNode? into, double volume) {
     final context = _context;
-    final filter = _filter;
-    final buffer = _thunder;
-    if (context == null || filter == null || buffer == null) return;
+    if (context == null || buffer == null || into == null) return;
     if (context.state != 'running') return;
     final source = context.createBufferSource()..buffer = buffer;
-    final boost = context.createGain()..gain.value = 2.4;
-    source.connect(boost);
-    boost.connect(filter);
+    final gain = context.createGain()..gain.value = volume;
+    source.connect(gain);
+    gain.connect(into);
     source.start();
   }
+
+  /// Thunder goes through the same filter and volume as the rain, so it is
+  /// a crash out of doors and a grumble behind a wall.
+  @override
+  void thunder() => _once(_thunder, _filter, 2.4);
+
+  @override
+  void flicker() => _once(_buzz, _master, .5);
+
+  final _creatures = <String, web.AudioBuffer>{};
+
+  @override
+  void creature(String sound) => _once(_creatures[sound], _master, .55);
 
   Future<void> _start() async {
     if (_starting) return;
@@ -69,23 +119,31 @@ class _WebAmbience implements Ambience {
     try {
       final context = web.AudioContext();
       context.resume();
-      final buffer = await _load(context, 'rain.wav');
-      final source = context.createBufferSource()
-        ..buffer = buffer
-        ..loop = true;
+      final master = context.createGain()..gain.value = 0;
+      master.connect(context.destination);
       final filter = context.createBiquadFilter()..type = 'lowpass';
-      final gain = context.createGain()..gain.value = 0;
-      source.connect(filter);
-      filter.connect(gain);
-      gain.connect(context.destination);
-      source.start();
+      final rain = context.createGain()..gain.value = 0;
+      filter.connect(rain);
+      rain.connect(master);
+      final shower = context.createBufferSource()
+        ..buffer = await _load(context, 'rain.wav')
+        ..loop = true;
+      shower.connect(filter);
+      shower.start();
       _context = context;
+      _master = master;
       _filter = filter;
-      _gain = gain;
+      _rain = rain;
+      _apply();
+      _hum = _loop(context, await _load(context, 'hum.wav'), master);
       _apply();
       _thunder = await _load(context, 'thunder.wav');
+      _buzz = await _load(context, 'buzz.wav');
+      for (final sound in const ['bark', 'meow']) {
+        _creatures[sound] = await _load(context, '$sound.wav');
+      }
     } catch (_) {
-      // No rain, then. The game is none the worse for it.
+      // No sound, then. The game is none the worse for it.
       _starting = false;
     }
   }
@@ -94,11 +152,11 @@ class _WebAmbience implements Ambience {
   /// through a door does not cut the sound.
   void _apply() {
     final context = _context;
-    final filter = _filter;
-    final gain = _gain;
-    if (context == null || filter == null || gain == null) return;
+    if (context == null) return;
     final now = context.currentTime;
-    filter.frequency.setTargetAtTime(_weather.cutoff, now, .35);
-    gain.gain.setTargetAtTime(_muted ? 0 : _weather.volume, now, .35);
+    _master?.gain.setTargetAtTime(_muted ? 0 : 1, now, .1);
+    _filter?.frequency.setTargetAtTime(_weather.cutoff, now, .35);
+    _rain?.gain.setTargetAtTime(_weather.volume, now, .35);
+    _hum?.gain.setTargetAtTime(_weather.hum, now, .35);
   }
 }

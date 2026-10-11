@@ -10,11 +10,19 @@ const kInk = Color(0xFF24140C);
 const kRed = Color(0xFFB3261E);
 
 const kBody = TextStyle(color: kCream, fontSize: 15, height: 1.35);
-const kHeading = TextStyle(color: kGold, fontSize: 19, fontWeight: FontWeight.bold);
+const kHeading = TextStyle(
+  color: kGold,
+  fontSize: 19,
+  fontWeight: FontWeight.bold,
+);
 
 /// The dark, gold-edged box used for every panel and dialogue.
 class Plaque extends StatelessWidget {
-  const Plaque({super.key, required this.child, this.padding = const EdgeInsets.all(14)});
+  const Plaque({
+    super.key,
+    required this.child,
+    this.padding = const EdgeInsets.all(14),
+  });
 
   final Widget child;
   final EdgeInsets padding;
@@ -59,7 +67,11 @@ class GoldButton extends StatelessWidget {
       textStyle: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
     );
     if (icon == null) {
-      return FilledButton(onPressed: onPressed, style: style, child: Text(label));
+      return FilledButton(
+        onPressed: onPressed,
+        style: style,
+        child: Text(label),
+      );
     }
     return FilledButton.icon(
       onPressed: onPressed,
@@ -107,7 +119,10 @@ class MuteButton extends StatelessWidget {
           backgroundColor: kInk.withValues(alpha: .9),
           side: const BorderSide(color: kGold, width: 2),
         ),
-        icon: Icon(voice.muted ? Icons.volume_off : Icons.volume_up, color: kGold),
+        icon: Icon(
+          voice.muted ? Icons.volume_off : Icons.volume_up,
+          color: kGold,
+        ),
       ),
     );
   }
@@ -116,9 +131,20 @@ class MuteButton extends StatelessWidget {
 /// Abandons the game in progress. It asks to be pressed twice, so that the
 /// whole investigation is not thrown away by a slip of the finger.
 class ResetButton extends StatefulWidget {
-  const ResetButton({super.key, required this.onReset});
+  const ResetButton({
+    super.key,
+    required this.onReset,
+    this.buttonKey = const ValueKey('reset'),
+    this.label = 'Reset this case',
+    this.enabled = true,
+  });
 
   final VoidCallback onReset;
+  final Key buttonKey;
+  final String label;
+
+  /// False where there is nothing to reset.
+  final bool enabled;
 
   @override
   State<ResetButton> createState() => _ResetButtonState();
@@ -137,6 +163,7 @@ class _ResetButtonState extends State<ResetButton> {
   void _press() {
     if (_armed) {
       _disarm?.cancel();
+      setState(() => _armed = false);
       widget.onReset();
       return;
     }
@@ -149,11 +176,11 @@ class _ResetButtonState extends State<ResetButton> {
   @override
   Widget build(BuildContext context) {
     return GoldButton(
-      key: const ValueKey('reset'),
-      label: _armed ? 'Really? It cannot be undone' : 'Reset this case',
+      key: widget.buttonKey,
+      label: _armed ? 'Really? It cannot be undone' : widget.label,
       icon: Icons.delete_forever,
       color: kRed,
-      onPressed: _press,
+      onPressed: widget.enabled ? _press : null,
     );
   }
 }

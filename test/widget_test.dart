@@ -301,9 +301,18 @@ void main() {
     // The tenth notch, and no other.
     expect(clicks, [9]);
     expect(effects.played, hasLength(12));
-    // The box says so too, for as long as the dial rests on the number.
-    expect(find.text('click'), findsNothing);
+    // With the voices on there is only the sound: no box says so.
     for (var n = 0; n < 98; n++) {
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+    }
+    await tester.pump();
+    expect(find.text('click'), findsNothing);
+    expect(_key('dial-status'), findsNothing);
+    // With them off, a box says it for as long as the dial rests there.
+    voice.toggleMute();
+    await tester.tap(_key('dial-reset'));
+    await tester.pump();
+    for (var n = 0; n < 10; n++) {
       await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
     }
     await tester.pump();
@@ -313,6 +322,7 @@ void main() {
     await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
     await tester.pump();
     expect(find.text('click'), findsNothing);
+    voice.toggleMute();
 
     // Dragging round the dial turns it too.
     await tester.tap(_key('dial-reset'));
@@ -513,7 +523,7 @@ void main() {
       await tester.tap(_key('setting-voices'));
       await tester.pump();
       expect(voice.muted, isTrue);
-      await tester.tap(_key('setting-rain'));
+      await tester.tap(_key('setting-haptics'));
       await tester.tap(_key('text-size-3'));
       await tester.pump();
       expect(settings.textScale, greaterThan(1.3));
@@ -527,7 +537,7 @@ void main() {
 
       final again = Settings(store);
       expect(again.voices, isTrue);
-      expect(again.rain, isFalse);
+      expect(again.haptics, isFalse);
       expect(again.textSize, 3);
 
       // Big text still fits the dialogue box.
@@ -536,7 +546,68 @@ void main() {
       expect(tester.takeException(), isNull);
     });
 
-    testWidgets('the voices and the rain are switched off separately', (
+    testWidgets('the settings can be reached while Watsonut is talking', (
+      tester,
+    ) async {
+      final settings = Settings();
+      final g = GameState(random: Random(3), twistChance: 0);
+      await tester.pumpWidget(
+        MysteryApp(
+          state: g,
+          voice: Voice(SilentPlayer()),
+          settings: settings,
+        ),
+      );
+      g.newGame(caseIndex: 0);
+      g.beginInvestigation();
+      await tester.pump();
+      await tester.pump();
+      expect(find.text(watsonut.greeting), findsOneWidget);
+      // Everything else is still held.
+      await tester.tap(_key('notebook'), warnIfMissed: false);
+      await tester.pump();
+      expect(g.panel, Panel.none);
+      await tester.tap(_key('menu-early'));
+      await tester.pump();
+      expect(g.panel, Panel.menu);
+      await tester.tap(_key('setting-voices'));
+      await tester.pump();
+      expect(settings.voices, isFalse);
+      await tester.tap(_key('close-panel'));
+      await tester.pump();
+      expect(g.panel, Panel.none);
+      await tester.pump(const Duration(seconds: 14));
+    });
+
+    testWidgets('a case file can be reset from the title screen', (
+      tester,
+    ) async {
+      final store = MemoryStore();
+      final g = GameState(random: Random(3), twistChance: 0, store: store);
+      g.slot = 1;
+      g.newGame(skipIntro: true);
+      g.toTitle();
+      await tester.pumpWidget(
+        MysteryApp(state: g, voice: Voice(SilentPlayer())),
+      );
+      expect(find.text('Continue'), findsOneWidget);
+      // There is nothing to reset in an empty file.
+      await tester.tap(_key('erase-0'), warnIfMissed: false);
+      await tester.pump();
+      expect(find.textContaining('Really?'), findsNothing);
+      // It asks twice, like the one in the game.
+      await tester.tap(_key('erase-1'));
+      await tester.pump();
+      expect(store.slots, isNotEmpty);
+      expect(find.textContaining('Really?'), findsOneWidget);
+      await tester.tap(_key('erase-1'));
+      await tester.pump();
+      expect(store.slots, isEmpty);
+      expect(find.text('New case'), findsNWidgets(3));
+      expect(g.phase, Phase.title);
+    });
+
+    testWidgets('the voices and the haptics are switched off separately', (
       tester,
     ) async {
       final rain = SilentAmbience();
@@ -551,10 +622,10 @@ void main() {
         ),
       );
       expect(rain.muted, isFalse);
-      settings.update((s) => s.rain = false);
+      settings.update((s) => s.haptics = false);
       expect(rain.muted, isTrue);
       expect(voice.muted, isFalse);
-      settings.update((s) => s.rain = true);
+      settings.update((s) => s.haptics = true);
       settings.update((s) => s.voices = false);
       expect(voice.muted, isTrue);
       expect(rain.muted, isFalse);
@@ -592,6 +663,51 @@ void main() {
       await tester.pump(const Duration(seconds: 6));
       await tester.pump();
       expect(arrival.rumbles, 1);
+    });
+
+    testWidgets('the lamps sputter below, and the animals speak up', (
+      tester,
+    ) async {
+      final house = SilentAmbience();
+      final g = GameState(random: Random(3), twistChance: 0);
+      // Watsonut is kept quiet, so that only the people spoken to here talk.
+      final settings = Settings()..update((s) => s.remarks = false);
+      await tester.pumpWidget(
+        MysteryApp(
+          state: g,
+          voice: Voice(SilentPlayer()),
+          settings: settings,
+          ambience: house,
+        ),
+      );
+      g.newGame(caseIndex: 0, skipIntro: true);
+      await tester.pump();
+      // Purrfait, in the hall, now and then.
+      await tester.pump(const Duration(minutes: 4));
+      expect(house.creatures, isNotEmpty);
+      expect(house.creatures.toSet(), {'meow'});
+      expect(house.flickers, 0);
+      // Never while somebody is talking, however long they go on.
+      house.creatures.clear();
+      g.talkTo(personById('sprinkles'));
+      await tester.pump(const Duration(minutes: 4));
+      expect(house.creatures, isEmpty);
+      g.closeDialogue();
+      await tester.pump(const Duration(minutes: 4));
+      expect(house.creatures, isNotEmpty);
+      // Pupcake, in the yard.
+      house.creatures.clear();
+      g.enter(roomById('backyard'));
+      await tester.pump(const Duration(minutes: 4));
+      expect(house.creatures.toSet(), {'bark'});
+      // Neither of them anywhere else; but down below, the lamps.
+      house.creatures.clear();
+      g.enter(roomById('cellar'));
+      expect(house.weather!.volume, 0);
+      expect(house.weather!.hum, greaterThan(0));
+      await tester.pump(const Duration(minutes: 2));
+      expect(house.creatures, isEmpty);
+      expect(house.flickers, greaterThan(0));
     });
 
     testWidgets('the rain sounds different from room to room', (tester) async {

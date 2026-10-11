@@ -2,9 +2,10 @@ import 'package:flutter/widgets.dart';
 
 import 'ambience_stub.dart' if (dart.library.js_interop) 'ambience_web.dart';
 
-/// How the rain sounds from where Churlock is standing.
+/// What can be heard of the house and the storm from where Churlock is
+/// standing.
 enum Weather {
-  /// Out of doors, with nothing between him and it.
+  /// Out of doors, with nothing between him and the rain.
   outside(cutoff: 9000, volume: .5),
 
   /// On the ground floor: rain against windows, a wall away.
@@ -13,26 +14,38 @@ enum Weather {
   /// Under the attic roof, where it drums close overhead.
   attic(cutoff: 2800, volume: .45),
 
-  /// In the basement, where it is only a murmur through the stone.
-  basement(cutoff: 380, volume: .22),
+  /// In the basement, where no rain reaches: only the hum of the lamps.
+  basement(cutoff: 380, volume: 0, hum: .16),
 
   /// When the rain has stopped.
   none(cutoff: 380, volume: 0);
 
-  const Weather({required this.cutoff, required this.volume});
+  const Weather({required this.cutoff, required this.volume, this.hum = 0});
 
-  /// Everything above this pitch, in hertz, is muffled away.
+  /// Everything in the rain above this pitch, in hertz, is muffled away.
   final double cutoff;
+
+  /// How loud the rain is.
   final double volume;
+
+  /// How loud the electric lamps hum.
+  final double hum;
 }
 
-/// A loop of rain that plays under every scene.
+/// The sounds of the house itself, which play under every scene: the rain,
+/// the thunder, and the basement lamps.
 abstract class Ambience {
   /// Changes how the rain sounds, smoothly.
   void set(Weather weather);
 
   /// A roll of thunder, heard through the same walls as the rain.
   void thunder();
+
+  /// The sputter of a basement lamp as it flickers.
+  void flicker();
+
+  /// One of the animals speaks: `bark` or `meow`.
+  void creature(String sound);
 
   /// Called whenever the player touches the page, since a browser will not
   /// start any sound until they have.
@@ -52,6 +65,16 @@ class SilentAmbience implements Ambience {
 
   @override
   void thunder() => rumbles++;
+
+  int flickers = 0;
+
+  @override
+  void flicker() => flickers++;
+
+  final creatures = <String>[];
+
+  @override
+  void creature(String sound) => creatures.add(sound);
 
   @override
   void wake() {}

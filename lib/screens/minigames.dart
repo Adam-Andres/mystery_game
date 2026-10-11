@@ -22,23 +22,31 @@ class PuzzlePanel extends StatelessWidget {
     final e = g.puzzle!;
     final (title, hint, Widget game) = switch (g.task) {
       Task.rubbing => (
-          'Pencil rubbing',
-          'The top sheet is gone, but the pencil pressed through. Drag to '
-              'shade the page and raise what was written.',
-          RubbingGame(key: ValueKey(e.id), lines: e.pieces, onDone: g.completeTask),
+        'Pencil rubbing',
+        'The top sheet is gone, but the pencil pressed through. Drag to '
+            'shade the page and raise what was written.',
+        RubbingGame(
+          key: ValueKey(e.id),
+          lines: e.pieces,
+          onDone: g.completeTask,
         ),
+      ),
       Task.torn => (
-          'Torn to pieces',
-          'Somebody tore this up. Click two strips to swap them until it '
-              'reads in order.',
-          TornGame(key: ValueKey(e.id), lines: e.pieces, onDone: g.completeTask),
-        ),
+        'Torn to pieces',
+        'Somebody tore this up. Click two strips to swap them until it '
+            'reads in order.',
+        TornGame(key: ValueKey(e.id), lines: e.pieces, onDone: g.completeTask),
+      ),
       _ => (
-          'Dusting for prints',
-          'Drag the brush over the surface to bring up the prints, then '
-              'match each one against the police chart.',
-          PrintsGame(key: ValueKey(e.id), owners: g.mystery.printsOn, onDone: g.completeTask),
+        'Dusting for prints',
+        'Drag the brush over the surface to bring up the prints, then '
+            'match each one against the police chart.',
+        PrintsGame(
+          key: ValueKey(e.id),
+          owners: g.mystery.printsOn,
+          onDone: g.completeTask,
         ),
+      ),
     };
     return Plaque(
       child: Column(
@@ -57,7 +65,9 @@ class PuzzlePanel extends StatelessWidget {
           Text(hint, style: kBody.copyWith(fontSize: 13)),
           const SizedBox(height: 8),
           // Scaled down if need be, so a long letter still fits the frame.
-          Expanded(child: FittedBox(fit: BoxFit.scaleDown, child: game)),
+          Expanded(
+            child: FittedBox(fit: BoxFit.scaleDown, child: game),
+          ),
         ],
       ),
     );
@@ -115,7 +125,12 @@ class _RubbingGameState extends State<RubbingGame> {
             onPanUpdate: (d) => _shade(d.localPosition),
             child: CustomPaint(
               size: _size,
-              painter: _RubbingPainter(widget.lines, _strokes, _strokes.length, _writing),
+              painter: _RubbingPainter(
+                widget.lines,
+                _strokes,
+                _strokes.length,
+                _writing,
+              ),
             ),
           ),
         ),
@@ -142,18 +157,25 @@ class _RubbingPainter extends CustomPainter {
   @override
   void paint(Canvas c, Size size) {
     final page = Offset.zero & size;
-    c.drawRRect(RRect.fromRectAndRadius(page, const Radius.circular(6)), fill(_paperColor));
+    c.drawRRect(
+      RRect.fromRectAndRadius(page, const Radius.circular(6)),
+      fill(_paperColor),
+    );
     // The ragged stub where the top sheet was torn away.
     for (var x = 0.0; x < size.width; x += 14) {
       c.drawCircle(Offset(x + 7, 0), 7, fill(const Color(0xFFE4D9BC)));
     }
     TextPainter(
-      text: const TextSpan(
-        text: 'S',
-        style: TextStyle(color: Color(0xFFB0BEC5), fontSize: 34, fontStyle: FontStyle.italic),
-      ),
-      textDirection: TextDirection.ltr,
-    )
+        text: const TextSpan(
+          text: 'S',
+          style: TextStyle(
+            color: Color(0xFFB0BEC5),
+            fontSize: 34,
+            fontStyle: FontStyle.italic,
+          ),
+        ),
+        textDirection: TextDirection.ltr,
+      )
       ..layout()
       ..paint(c, Offset(size.width - 44, 14));
 
@@ -205,7 +227,9 @@ class _TornGameState extends State<TornGame> {
   int? _picked;
 
   /// A fixed shuffle, the same each time the letter is looked at.
-  static List<int> _scramble(int n) => [for (var i = 0; i < n; i++) (i * 2 + 2) % n];
+  static List<int> _scramble(int n) => [
+    for (var i = 0; i < n; i++) (i * 2 + 2) % n,
+  ];
 
   bool get _done {
     for (var i = 0; i < _order.length; i++) {
@@ -243,7 +267,10 @@ class _TornGameState extends State<TornGame> {
               child: Container(
                 width: 520,
                 margin: EdgeInsets.symmetric(vertical: _done ? 0 : 3),
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 7),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 7,
+                ),
                 decoration: BoxDecoration(
                   color: _paperColor,
                   border: Border.all(
@@ -253,7 +280,11 @@ class _TornGameState extends State<TornGame> {
                 ),
                 child: Text(
                   widget.lines[_order[slot]],
-                  style: const TextStyle(color: kInk, fontSize: 17, fontStyle: FontStyle.italic),
+                  style: const TextStyle(
+                    color: kInk,
+                    fontSize: 17,
+                    fontStyle: FontStyle.italic,
+                  ),
                 ),
               ),
             ),
@@ -336,7 +367,9 @@ class _PrintsGameState extends State<PrintsGame> {
               child: Stack(
                 children: [
                   Positioned.fill(
-                    child: CustomPaint(painter: _PowderPainter(_powder, _powder.length)),
+                    child: CustomPaint(
+                      painter: _PowderPainter(_powder, _powder.length),
+                    ),
                   ),
                   for (var i = 0; i < _shown.length; i++)
                     Positioned(
@@ -390,7 +423,10 @@ class _PrintsGameState extends State<PrintsGame> {
                 angle: (_index - 1) * .35,
                 child: CustomPaint(
                   size: const Size(120, 156),
-                  painter: PrintPainter(widget.owners[_index], color: Colors.white),
+                  painter: PrintPainter(
+                    widget.owners[_index],
+                    color: Colors.white,
+                  ),
                 ),
               ),
             ),
@@ -424,11 +460,18 @@ class _PrintsGameState extends State<PrintsGame> {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      CustomPaint(size: const Size(74, 96), painter: PrintPainter(p.id)),
+                      CustomPaint(
+                        size: const Size(74, 96),
+                        painter: PrintPainter(p.id),
+                      ),
                       const SizedBox(height: 6),
                       Text(
                         p.name,
-                        style: const TextStyle(color: kInk, fontSize: 11, fontWeight: FontWeight.bold),
+                        style: const TextStyle(
+                          color: kInk,
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                        ),
                         textAlign: TextAlign.center,
                       ),
                     ],
@@ -451,7 +494,10 @@ class _PowderPainter extends CustomPainter {
   @override
   void paint(Canvas c, Size size) {
     final slab = Offset.zero & size;
-    c.drawRRect(RRect.fromRectAndRadius(slab, const Radius.circular(10)), fill(const Color(0xFF2A3136)));
+    c.drawRRect(
+      RRect.fromRectAndRadius(slab, const Radius.circular(10)),
+      fill(const Color(0xFF2A3136)),
+    );
     c.save();
     c.clipRRect(RRect.fromRectAndRadius(slab, const Radius.circular(10)));
     for (final p in powder) {
@@ -482,12 +528,26 @@ class PrintPainter extends CustomPainter {
       case 'penny':
         // Whorl: rings around a centre.
         for (var k = 1; k <= 9; k++) {
-          c.drawOval(Rect.fromCenter(center: centre, width: k * w * .12, height: k * h * .12), ridge);
+          c.drawOval(
+            Rect.fromCenter(
+              center: centre,
+              width: k * w * .12,
+              height: k * h * .12,
+            ),
+            ridge,
+          );
         }
       case 'graham':
         // Square whorl, as befits a cracker.
         for (var k = 1; k <= 9; k++) {
-          c.drawRect(Rect.fromCenter(center: centre, width: k * w * .12, height: k * h * .12), ridge);
+          c.drawRect(
+            Rect.fromCenter(
+              center: centre,
+              width: k * w * .12,
+              height: k * h * .12,
+            ),
+            ridge,
+          );
         }
       case 'cannoli':
         // A single spiral.
@@ -511,7 +571,10 @@ class PrintPainter extends CustomPainter {
           final loop = Path()
             ..moveTo(centre.dx - d, h)
             ..lineTo(centre.dx - d, h * .46)
-            ..arcToPoint(Offset(centre.dx + d, h * .46), radius: Radius.circular(d))
+            ..arcToPoint(
+              Offset(centre.dx + d, h * .46),
+              radius: Radius.circular(d),
+            )
             ..lineTo(centre.dx + d, h);
           c.drawPath(loop, ridge);
         }
@@ -520,7 +583,8 @@ class PrintPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(PrintPainter old) => old.person != person || old.color != color;
+  bool shouldRepaint(PrintPainter old) =>
+      old.person != person || old.color != color;
 }
 
 /// The combination dial on the study desk. Nothing in the house says what
@@ -730,8 +794,8 @@ class _DialLockState extends State<DialLock> {
                   const Text(
                     'A brass dial, and no note of the numbers anywhere. '
                     'Drag round it, or use the arrow keys, and listen: each '
-                    'tumbler clicks at its number, and the box below says so. '
-                    'Turn back the other way to set it.',
+                    'tumbler clicks at its number. Turn back the other way '
+                    'to set it.',
                     style: kBody,
                   ),
                   const SizedBox(height: 12),
@@ -752,23 +816,25 @@ class _DialLockState extends State<DialLock> {
                     ),
                   ),
                   const SizedBox(height: 8),
-                  // What the lock is heard to do: it says so here as well,
-                  // for as long as the dial rests on the right number.
-                  Container(
-                    key: const ValueKey('dial-status'),
-                    width: 150,
-                    height: 38,
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      color: _onTheNumber ? kGold : kInk,
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: kGold, width: 2),
+                  // With the voices off the click cannot be heard, so a box
+                  // says it instead, for as long as the dial rests on the
+                  // right number. With them on, there is only the sound.
+                  if (VoiceScope.maybeOf(context)?.muted ?? false)
+                    Container(
+                      key: const ValueKey('dial-status'),
+                      width: 150,
+                      height: 38,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: _onTheNumber ? kGold : kInk,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: kGold, width: 2),
+                      ),
+                      child: Text(
+                        _onTheNumber ? 'click' : '',
+                        style: kHeading.copyWith(color: kInk, letterSpacing: 2),
+                      ),
                     ),
-                    child: Text(
-                      _onTheNumber ? 'click' : '',
-                      style: kHeading.copyWith(color: kInk, letterSpacing: 2),
-                    ),
-                  ),
                   const SizedBox(height: 6),
                   Text(
                     _message.isEmpty ? ' ' : _message,
@@ -798,7 +864,14 @@ class _DialPainter extends CustomPainter {
       final long = n % 10 == 0;
       c.drawLine(
         centre + d * (radius - 8),
-        centre + d * (radius - (long ? 20 : n % 5 == 0 ? 15 : 12)),
+        centre +
+            d *
+                (radius -
+                    (long
+                        ? 20
+                        : n % 5 == 0
+                        ? 15
+                        : 12)),
         stroke(kInk, long ? 2.5 : 1),
       );
       if (!long) continue;
@@ -814,7 +887,10 @@ class _DialPainter extends CustomPainter {
         textDirection: TextDirection.ltr,
       )..layout();
       c.save();
-      c.translate(centre.dx + d.dx * (radius - 33), centre.dy + d.dy * (radius - 33));
+      c.translate(
+        centre.dx + d.dx * (radius - 33),
+        centre.dy + d.dy * (radius - 33),
+      );
       c.rotate(a + pi / 2);
       text.paint(c, Offset(-text.width / 2, -text.height / 2));
       c.restore();
@@ -901,8 +977,7 @@ class _LockPickGameState extends State<LockPickGame> {
                           child: AnimatedContainer(
                             duration: const Duration(milliseconds: 140),
                             width: 30,
-                            height:
-                                widget.order.indexOf(pin) < _set ? 118 : 64,
+                            height: widget.order.indexOf(pin) < _set ? 118 : 64,
                             decoration: BoxDecoration(
                               color: widget.order.indexOf(pin) < _set
                                   ? const Color(0xFFD4A537)

@@ -67,6 +67,11 @@ class Voice extends ChangeNotifier {
   final _clock = Stopwatch();
   Duration _length = Duration.zero;
 
+  /// True while anybody at all is saying something.
+  bool get speaking =>
+      _speaker != null &&
+      (_playing || (_guessing && _clock.elapsed < _length));
+
   /// True while the character whose voice is [id] is saying something,
   /// whether or not the sound is muted.
   bool isSpeaking(String id) =>

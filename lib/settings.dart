@@ -12,7 +12,8 @@ class Settings extends ChangeNotifier {
     try {
       final json = jsonDecode(saved) as Map<String, dynamic>;
       voices = json['voices'] as bool? ?? voices;
-      rain = json['rain'] as bool? ?? rain;
+      // It used to be only the rain, and was called so.
+      haptics = (json['haptics'] ?? json['rain']) as bool? ?? haptics;
       remarks = json['remarks'] as bool? ?? remarks;
       quickWalk = json['quickWalk'] as bool? ?? quickWalk;
       final size = json['textSize'] as int? ?? textSize;
@@ -31,8 +32,9 @@ class Settings extends ChangeNotifier {
   /// Whether the characters speak aloud.
   bool voices = true;
 
-  /// Whether the rain can be heard.
-  bool rain = true;
+  /// Whether the house can be heard: the rain, the thunder, and the hum
+  /// and sputter of the basement lamps.
+  bool haptics = true;
 
   /// Whether Watsonut pipes up when Churlock stands idle.
   bool remarks = true;
@@ -51,7 +53,7 @@ class Settings extends ChangeNotifier {
     _store?.writeSettings(
       jsonEncode({
         'voices': voices,
-        'rain': rain,
+        'haptics': haptics,
         'remarks': remarks,
         'quickWalk': quickWalk,
         'textSize': textSize,

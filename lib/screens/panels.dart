@@ -1079,10 +1079,10 @@ class MenuPanel extends StatelessWidget {
                   (s, v) => s.voices = v,
                 ),
                 toggle(
-                  'rain',
-                  'Sound of the rain',
-                  settings.rain,
-                  (s, v) => s.rain = v,
+                  'haptics',
+                  'Haptics: the rain, thunder and lamps',
+                  settings.haptics,
+                  (s, v) => s.haptics = v,
                 ),
                 toggle(
                   'remarks',
