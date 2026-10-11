@@ -210,6 +210,15 @@ void main() {
     });
   });
 
+  test('Watsonut explains fast travel to suit the device', () {
+    expect(arrivalGreeting(touch: false), contains('press M'));
+    expect(arrivalGreeting(touch: true), isNot(contains('press M')));
+    for (final touch in [false, true]) {
+      expect(arrivalGreeting(touch: touch), startsWith(watsonut.greeting));
+      expect(arrivalGreeting(touch: touch), contains('little map'));
+    }
+  });
+
   test('every spoken line has a voice clip', () {
     final lines = allVoiceLines();
     expect(lines.length, greaterThan(150));
@@ -240,7 +249,7 @@ void main() {
     await tester.pump(const Duration(seconds: 2));
     expect(g.panel, Panel.none);
     // But not for ever.
-    await tester.pump(const Duration(seconds: 30));
+    await tester.pump(const Duration(seconds: 45));
     await tester.pump(const Duration(seconds: 3));
     await tester.tap(_key('notebook'));
     await tester.pump();
@@ -564,7 +573,7 @@ void main() {
       g.beginInvestigation();
       await tester.pump();
       await tester.pump();
-      expect(find.text(watsonut.greeting), findsOneWidget);
+      expect(find.text(arrivalGreeting(touch: true)), findsOneWidget);
       // Everything else is still held.
       await tester.tap(_key('notebook'), warnIfMissed: false);
       await tester.pump();
@@ -795,6 +804,17 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 500));
     expect(g.panel, Panel.map);
+    // Penny, in the kitchen, has not been spoken to yet.
+    expect(_key('talk-kitchen'), findsOneWidget);
+    expect(_key('talk-entrance'), findsNothing);
+    // M shuts the map, and opens it again.
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyM);
+    await tester.pump();
+    expect(g.panel, Panel.none);
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyM);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+    expect(g.panel, Panel.map);
     // The kitchen has been seen and has things left in it; the study has
     // not been seen at all.
     expect(_key('unexplored-kitchen'), findsOneWidget);
@@ -815,6 +835,18 @@ void main() {
     await tester.pump();
     expect(_key('loading'), findsNothing);
     expect(g.panel, Panel.none);
+
+    // The speech bubble goes once everything she has to say is heard.
+    expect(g.someoneToHear(roomById('kitchen')), isTrue);
+    final penny = personById('penny');
+    for (var before = -1; before != g.asked.length;) {
+      before = g.asked.length;
+      for (final topic in g.topicsFor('penny')) {
+        g.ask(penny, topic);
+      }
+    }
+    g.closeDialogue();
+    expect(g.someoneToHear(roomById('kitchen')), isFalse);
 
     // The question mark goes when there is nothing left to find there.
     final kitchen = roomById('kitchen');
@@ -1152,14 +1184,14 @@ void main() {
     expect(g.roomId, 'entrance');
     // Nothing can be clicked until Watsonut has said his piece.
     await tester.pump();
-    expect(find.text(watsonut.greeting), findsOneWidget);
+    expect(find.text(arrivalGreeting(touch: true)), findsOneWidget);
     await tester.tap(_key('notebook'), warnIfMissed: false);
     await tester.tap(_key('go-down'), warnIfMissed: false);
     await tester.pump(const Duration(seconds: 1));
     expect(g.panel, Panel.none);
     expect(g.roomId, 'entrance');
-    expect(find.text(watsonut.greeting), findsOneWidget);
-    await tester.pump(const Duration(seconds: 12));
+    expect(find.text(arrivalGreeting(touch: true)), findsOneWidget);
+    await tester.pump(const Duration(seconds: 24));
     await tester.tap(_key('go-down'));
     await tester.pump();
     // Mid-walk the room has not changed yet, and clicks are ignored.
@@ -1601,13 +1633,13 @@ void main() {
       g.beginInvestigation();
       await tester.pump();
       await tester.pump();
-      expect(find.text(watsonut.greeting), findsOneWidget);
-      await tester.pump(const Duration(seconds: 12));
+      expect(find.text(arrivalGreeting(touch: true)), findsOneWidget);
+      await tester.pump(const Duration(seconds: 24));
       expect(_key('watsonut-remark'), findsNothing);
       // Prodding him afterwards gets a remark, not the explanation again.
       await tester.tap(_key('watsonut'));
       await tester.pump();
-      expect(find.text(watsonut.greeting), findsNothing);
+      expect(find.text(arrivalGreeting(touch: true)), findsNothing);
       expect(find.text(idleRemarks.first), findsOneWidget);
       expect(g.dialogue, isNull);
     });

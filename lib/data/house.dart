@@ -82,6 +82,20 @@ const watsonut = Person(
       "ask me. I shan't volunteer. You know how you get.",
 );
 
+/// What Watsonut says as they come into the house: how to ask him for his
+/// opinion, and how to get about quickly, which depends on whether the
+/// player has a keyboard or only a finger.
+String arrivalGreeting({required bool touch}) =>
+    '${watsonut.greeting} ${touch ? _travelByTouch : _travelByKey}';
+
+const _travelByKey =
+    "And should you want to be somewhere else in a hurry, press M, or click "
+    "the little map in the corner, and choose any room we have already seen.";
+
+const _travelByTouch =
+    "And should you want to be somewhere else in a hurry, tap the little map "
+    "in the corner, and choose any room we have already seen.";
+
 /// What Watsonut says when Churlock has stood about doing nothing.
 const idleRemarks = [
   "Shall we get on, Churlock? The trail isn't getting any warmer.",

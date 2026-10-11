@@ -108,6 +108,9 @@ List<VoiceLine> allVoiceLines() {
   for (final p in [watsonut, ...residents, ...police]) {
     add(p.id, p.greeting);
   }
+  for (final touch in [false, true]) {
+    add(watsonut.id, arrivalGreeting(touch: touch));
+  }
   for (final remark in idleRemarks) {
     add(watsonut.id, remark);
   }

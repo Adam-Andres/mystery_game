@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -241,7 +242,12 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
 
   Future<void> _greet() async {
     if (!mounted) return;
-    final text = watsonut.greeting;
+    // A phone has no M key to press.
+    final text = arrivalGreeting(
+      touch:
+          defaultTargetPlatform == TargetPlatform.android ||
+          defaultTargetPlatform == TargetPlatform.iOS,
+    );
     setState(() => _remark = text);
     final clock = Stopwatch()..start();
     await widget.voice.say((voice: watsonut.id, text: text), owner: this);
@@ -443,6 +449,15 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
         g.cancelTask();
       } else if (g.panel != Panel.none) {
         g.closePanel();
+      }
+      return KeyEventResult.handled;
+    }
+    // M for map: it opens, and shuts again.
+    if (key == LogicalKeyboardKey.keyM) {
+      if (g.panel == Panel.map) {
+        g.closePanel();
+      } else if (!g.busy && !_moving) {
+        g.openPanel(Panel.map);
       }
       return KeyEventResult.handled;
     }

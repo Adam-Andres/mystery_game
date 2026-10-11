@@ -1212,8 +1212,9 @@ class MapPanel extends StatelessWidget {
               ],
             ),
             const Text(
-              'Click any room you have already been in. A question mark '
-              'means there is still something there to find.',
+              'Click any room you have already been in. A question mark means '
+              'there is something left to find there, and a speech bubble '
+              'that somebody has something new to say.',
               style: TextStyle(color: kCream, fontSize: 13),
             ),
             const SizedBox(height: 8),
@@ -1282,6 +1283,18 @@ class MapPanel extends StatelessWidget {
                     ),
                   ),
                 ),
+                // Somebody here has something new to say.
+                if (visited && g.someoneToHear(room))
+                  Positioned(
+                    left: 6,
+                    top: 5,
+                    child: Icon(
+                      Icons.chat_bubble,
+                      key: ValueKey('talk-${room.id}'),
+                      color: here ? kInk : kGold,
+                      size: 18,
+                    ),
+                  ),
                 if (visited && g.unexplored(room))
                   Positioned(
                     right: 6,

@@ -171,6 +171,12 @@ class GameState extends ChangeNotifier {
       allItems.any((i) => i.room == room.id && !taken.contains(i.id)) ||
       nooks.any((n) => n.room == room.id && !isOpen(n));
 
+  /// Whether somebody standing in [room] has something to say that Churlock
+  /// has not yet heard: shown on the map as a speech bubble.
+  bool someoneToHear(Room room) => (placements[room.id] ?? const []).any(
+    (place) => topicsFor(place.$1).any((t) => !hasAsked(place.$1, t)),
+  );
+
   /// Tools lying in the current room that have not been picked up yet.
   Iterable<Item> get itemsHere =>
       allItems.where((i) => i.room == roomId && !taken.contains(i.id));
