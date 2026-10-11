@@ -85,8 +85,8 @@ const holeCase = MysteryCase(
     ],
     [
       Evidence(
-        'wwnote', 'Note Signed J. W.', 'study', 1,
-        "Pressed inside a medical dictionary on the shelf: “Éclaire. You "
+        'wwnote', 'Note Signed J. W.', 'mbedroom', 2,
+        "Slipped under her pillow, much folded and unfolded: “Éclaire. You "
         "promised you would never tell him. Thirty years ago is thirty "
         "years ago. Meet me in the cellar at eleven and name your price. "
         "J. W.”",

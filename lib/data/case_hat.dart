@@ -67,11 +67,11 @@ const hatCase = MysteryCase(
     ],
     [
       Evidence(
-        'pinchest', 'Hatpin', 'landing', 0,
-        "Slid between two folded sheets: a nine-inch steel hatpin with a "
+        'pinchest', 'Hatpin', 'bedroom', 0,
+        "Pushed to the back of her own dresser: a nine-inch steel hatpin with a "
         "pearl head. It is sticky with custard for its whole length. It "
         "wants dusting for fingerprints.",
-        inside: 'chest',
+        inside: 'dresser',
       ),
       Evidence(
         'pincrate', 'Hatpin', 'storage', 0,
@@ -83,12 +83,12 @@ const hatCase = MysteryCase(
     ],
     [
       Evidence(
-        'cheques', 'Returned Cheques', 'cellar', 0,
-        "Locked in the strongbox: three cheques to Madame Leine's Hat "
+        'cheques', 'Returned Cheques', 'mbedroom', 0,
+        "Locked in her bedside cabinet: three cheques to Madame Leine's Hat "
         "Boutique, returned by the bank and stamped SIGNATURE IRREGULAR. "
         "Pinned to them, in Mrs. Senclair's hand: “I never signed these. "
         "She has been practising my name.”",
-        icon: Icons.payments, color: paper, inside: 'strongbox',
+        icon: Icons.payments, color: paper, inside: 'cabinet',
       ),
       Evidence(
         'bankletter', "Bank Manager's Letter", 'entrance', 3,

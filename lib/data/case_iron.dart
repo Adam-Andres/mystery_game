@@ -79,8 +79,8 @@ const ironCase = MysteryCase(
         icon: Icons.menu_book, color: Color(0xFFD7CCC8), inside: 'strongbox',
       ),
       Evidence(
-        'passbook', 'Bank Passbook', 'dining', 2,
-        "Tucked behind the brandy decanter: a bank passbook in the name of "
+        'passbook', 'Bank Passbook', 'groom', 2,
+        "Under the mattress of his bed: a bank passbook in the name of "
         "G. Cracker. A deposit every Friday for thirty years, each for the "
         "same small sum. The total is 31,000 sugar cubes. A butler's wage "
         "would not come to half of it.",

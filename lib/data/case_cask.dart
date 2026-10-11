@@ -100,11 +100,11 @@ const caskCase = MysteryCase(
         icon: Icons.sensor_door, color: _iron,
       ),
       Evidence(
-        'sootsocks', 'Sooty Socks', 'boiler', 0,
-        "Rolled up at the bottom of Barry's bag: a pair of thick socks, "
+        'sootsocks', 'Sooty Socks', 'shed', 0,
+        "Rolled up behind the tools in Barry's shed: a pair of thick socks, "
         "black to the ankle with coal dust. One toe has a stiff yellow "
         "crust on it. Custard.",
-        icon: Icons.dry_cleaning, color: _iron, inside: 'kitbag',
+        icon: Icons.dry_cleaning, color: _iron, inside: 'toolrack',
       ),
     ],
     [

@@ -93,8 +93,8 @@ const cakeCase = MysteryCase(
     [
       recipe,
       Evidence(
-        'retire', 'Letter to an Agency', 'study', 0,
-        "On Mrs. Senclair's desk, ready to post: “Please send a modern "
+        'retire', 'Letter to an Agency', 'mbedroom', 2,
+        "On Mrs. Senclair's pillow, ready to post: “Please send a modern "
         "housekeeper at once. The present one, P. Cotta, is to be retired "
         "without notice or pension. She makes the same puddings she made "
         "thirty years ago.”",

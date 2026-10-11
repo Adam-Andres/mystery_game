@@ -72,12 +72,12 @@ const brewCase = MysteryCase(
     ],
     [
       Evidence(
-        'newwill', 'Unsigned New Will', 'cellar', 0,
-        "Locked in the strongbox, a draft to be signed today: “I revoke all "
+        'newwill', 'Unsigned New Will', 'mbedroom', 0,
+        "Locked in her bedside cabinet, a draft to be signed today: “I revoke all "
         "bequests to my niece Tira Misu. My butler, G. Cracker, is dismissed "
         "without pension. Both know why. Everything goes to the Donut County "
         "Home for Day-Old Pastries.”",
-        icon: Icons.description, color: Colors.white, inside: 'strongbox',
+        icon: Icons.description, color: Colors.white, inside: 'cabinet',
       ),
       Evidence(
         'solicitor', "Solicitor's Letter", 'entrance', 3,
@@ -119,11 +119,11 @@ const brewCase = MysteryCase(
         icon: Icons.back_hand, color: Color(0xFFBCAAA4), inside: 'dirt',
       ),
       Evidence(
-        'tickets', 'Packed Suitcase', 'storage', 0,
-        "A suitcase at the bottom of a crate, initialled G.C. Inside: a spare "
+        'tickets', 'Packed Suitcase', 'groom', 0,
+        "A suitcase at the bottom of his wardrobe, initialled G.C. Inside: a spare "
         "collar and two one-way train tickets to Biscotti Bay for tonight — "
         "“Mr. G. Cracker” and “Miss T. Misu”.",
-        icon: Icons.luggage, color: Color(0xFFBCAAA4), inside: 'crates',
+        icon: Icons.luggage, color: Color(0xFFBCAAA4), inside: 'gwardrobe',
       ),
       Evidence(
         'note', 'Half-Burnt Note', 'boiler', 1,

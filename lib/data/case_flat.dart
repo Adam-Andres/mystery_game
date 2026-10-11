@@ -82,15 +82,15 @@ const flatCase = MysteryCase(
     ],
     [
       Evidence(
-        'ledger', 'Debt Ledger', 'cellar', 0,
-        "Mrs. Senclair's private ledger, locked in the strongbox. “Col. "
+        'ledger', 'Debt Ledger', 'mbedroom', 0,
+        "Mrs. Senclair's private ledger, locked in her bedside cabinet. “Col. "
         "Cannoli owes 50,000 sugar cubes. FINAL notice given. He pays by "
         "tomorrow or he leaves this house.”",
-        icon: Icons.menu_book, color: Color(0xFFD7CCC8), inside: 'strongbox',
+        icon: Icons.menu_book, color: Color(0xFFD7CCC8), inside: 'cabinet',
       ),
       Evidence(
-        'notice', 'Final Notice', 'parlor', 1,
-        "Crushed down the side of the armchair, a note in Mrs. Senclair's "
+        'notice', 'Final Notice', 'croom', 2,
+        "Screwed up behind the Colonel's trunk, a note in Mrs. Senclair's "
         "hand: “Colonel — 50,000 sugar cubes by tomorrow, or you pack your "
         "trunk. I mean it this time. É.S.”",
         icon: Icons.mail, color: paper,

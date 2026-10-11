@@ -83,20 +83,20 @@ const caneCase = MysteryCase(
     ],
     [
       Evidence(
-        'deed', 'Deposit Receipt', 'boiler', 0,
-        "Folded small under Barry's sandwiches: “Received from P. Cotta and "
+        'deed', 'Deposit Receipt', 'shed', 3,
+        "Folded small under a compost sack in Barry's shed: “Received from P. Cotta and "
         "B. Tart, jointly, a deposit on the Old Mill tea garden and "
         "nursery. The balance of 2,000 cubes falls due at the month end, or "
         "the deposit is forfeit.”",
-        icon: Icons.request_quote, color: paper, inside: 'kitbag',
+        icon: Icons.request_quote, color: paper,
       ),
       Evidence(
-        'signboard', 'Painted Design', 'kitchen', 0,
-        "Rolled up behind the cooking sherry, a design for a signboard, "
+        'signboard', 'Painted Design', 'proom', 0,
+        "Rolled up at the bottom of Penny's sewing basket, a design for a signboard, "
         "painted with some care: “COTTA & TART. Teas, Tarts and Bedding "
         "Plants.” On the back, in Penny's hand: “Wants 2,000 by month end. "
         "We have 300.”",
-        icon: Icons.brush, color: Color(0xFFF8BBD0), inside: 'cupboard',
+        icon: Icons.brush, color: Color(0xFFF8BBD0), inside: 'sewing',
       ),
     ],
   ],
