@@ -71001,13 +71001,20 @@ if(g)h=this.c.gps()
 s=t.p
 h=A.d7(A.c([B.MC,B.ji,B.Le,new A.cv(f,h,k,B.A,B.jp)],s),B.E,B.z,B.G,0)
 f=A.c([],s)
-for(r=[i.$4("voices","Voices",j.b,new A.YI()),i.$4("music","Title music",j.d,new A.YJ()),i.$4("haptics","Haptics: rain, thunder, lamps",j.c,new A.YK()),i.$4("remarks","Watsonut's idle remarks",j.e,new A.YL()),i.$4("quick","Hurry between rooms",j.f,new A.YM())],q=0;q<5;++q)f.push(new A.bZ(296,k,r[q],k))
+r=A.c([i.$4("voices","Voices",j.b,new A.YI())],s)
+if(!g)r.push(i.$4("music","Title music",j.d,new A.YJ()))
+r.push(i.$4("haptics","Haptics: rain, thunder, lamps",j.c,new A.YK()))
+r.push(i.$4("remarks","Watsonut's idle remarks",j.e,new A.YL()))
+r.push(i.$4("quick","Hurry between rooms",j.f,new A.YM()))
+q=r.length
+p=0
+for(;p<r.length;r.length===q||(0,A.v)(r),++p)f.push(new A.bZ(296,k,r[p],k))
 f=A.qH(B.dQ,f,B.dR,0,20)
 r=A.c([B.a5E],s)
-for(p=t.O,o=0;o<4;++o){n=A.bf(B.Qe[o],k,k,k,k,k,k)
+for(q=t.O,o=0;o<4;++o){n=A.bf(B.Qe[o],k,k,k,k,k,k)
 m=j.r===o
 l=m?B.ae:B.a7
-r.push(new A.CJ(n,new A.l(!0,l,k,k,k,k,k,k,k,k,k,k,k,k,k,k,k,k,k,k,k,k,k,k,k,k),new A.YN(j,o),m,B.A,new A.ak("text-size-"+o,p)))}h=A.c([h,B.i9,B.aaW,f,A.qH(B.dQ,r,B.D_,4,6)],s)
+r.push(new A.CJ(n,new A.l(!0,l,k,k,k,k,k,k,k,k,k,k,k,k,k,k,k,k,k,k,k,k,k,k,k,k),new A.YN(j,o),m,B.A,new A.ak("text-size-"+o,q)))}h=A.c([h,B.i9,B.aaW,f,A.qH(B.dQ,r,B.D_,4,6)],s)
 if(g){g=this.c
 B.b.J(h,A.c([B.i9,A.qH(B.CZ,A.c([new A.cv("Main menu",g.gafe(),B.M1,B.A,B.afu),new A.pT(g.gaeN(),B.afJ,"Reset this case",!0,k)],s),B.dR,8,12),B.eC,B.aaT],s))}return A.j7(A.ei(new A.f3(A.a3o(A.bR(h,B.bD,B.z,B.at)),B.dc,k),k,660),k,k)}}
 A.YO.prototype={
