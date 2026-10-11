@@ -150,8 +150,7 @@ const cakeCase = MysteryCase(
   prints: Evidence.given(
     'prints', 'Prints on the Fruitcake', 'churlock',
     "Only one dessert's prints came up on the fruitcake: Penny Cotta's. "
-    "They are sharp and greasy. But then she baked it, twelve years ago, "
-    "and it has sat in her pantry ever since. There are no others at all.",
+    "They are sharp and greasy. There are no others at all.",
     icon: Icons.fingerprint, color: Color(0xFFB2EBF2),
   ),
   deskCode: '1879',
@@ -188,8 +187,8 @@ const cakeCase = MysteryCase(
         "yard. Whose room is it? I should dust it.",
     'notepad': "A shopping note. But notice what it says about the larder, "
         "Churlock.",
-    'prints': "Sharp, you say? After twelve years in a tin? Ask Officer "
-        "Glaze how long a print stays sharp.",
+    'prints': "Sharp, you say? Ask Officer Glaze how long a print stays "
+        "sharp.",
   },
   accuseHints: [
     "Start with the clock, Churlock. When did she die? And then: who can "

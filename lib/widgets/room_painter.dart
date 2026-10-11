@@ -375,7 +375,10 @@ class RoomPainter extends CustomPainter {
   void _dining() {
     _window();
     // Chandelier.
-    c.drawLine(const Offset(480, 0), const Offset(480, 70), stroke(_brass, 4));
+    // Hung from a rose in the ceiling, on a rod that reaches the hoop.
+    _rect(456, 0, 48, 10, _brass, 4);
+    c.drawLine(const Offset(480, 0), const Offset(480, 110), stroke(_brass, 5));
+    c.drawLine(const Offset(420, 75), const Offset(540, 75), stroke(_brass, 4));
     c.drawArc(const Rect.fromLTWH(420, 40, 120, 70), 0, pi, false, stroke(_brass, 5));
     for (final x in [420.0, 480.0, 540.0]) {
       _rect(x - 4, 60, 8, 20, Colors.white);

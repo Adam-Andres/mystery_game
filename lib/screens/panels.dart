@@ -1171,3 +1171,136 @@ class MenuPanel extends StatelessWidget {
     );
   }
 }
+
+/// The map of the house, grown from the little one in the corner. Any room
+/// already visited can be clicked to go straight there. A question mark
+/// means there is still something in that room to find.
+class MapPanel extends StatelessWidget {
+  const MapPanel(this.g, {super.key, required this.onTravel});
+
+  final GameState g;
+  final void Function(Room room) onTravel;
+
+  @override
+  Widget build(BuildContext context) {
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: .12, end: 1),
+      duration: const Duration(milliseconds: 380),
+      curve: Curves.easeOutCubic,
+      // It swells out of the corner where the small map sits.
+      builder: (context, scale, child) => Transform.scale(
+        scale: scale,
+        alignment: Alignment.topRight,
+        child: child,
+      ),
+      child: Plaque(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.map, color: kGold),
+                const SizedBox(width: 8),
+                const Expanded(
+                  child: Text('Where to, Detective?', style: kHeading),
+                ),
+                GoldButton(
+                  key: const ValueKey('close-panel'),
+                  label: 'Stay here',
+                  onPressed: g.closePanel,
+                ),
+              ],
+            ),
+            const Text(
+              'Click any room you have already been in. A question mark '
+              'means there is still something there to find.',
+              style: TextStyle(color: kCream, fontSize: 13),
+            ),
+            const SizedBox(height: 8),
+            for (var level = 2; level >= 0; level--)
+              Expanded(
+                child: Row(
+                  children: [
+                    for (var col = -1; col < 4; col++)
+                      Expanded(child: _cell(level, col)),
+                  ],
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _cell(int level, int col) {
+    Room? room;
+    for (final r in rooms) {
+      if (r.level == level && r.col == col) room = r;
+    }
+    if (room == null) return const SizedBox.shrink();
+    final here = room.id == g.roomId;
+    final visited = g.visited.contains(room.id);
+    final target = room;
+    return Padding(
+      padding: const EdgeInsets.all(4),
+      child: MouseRegion(
+        cursor: visited && !here
+            ? SystemMouseCursors.click
+            : SystemMouseCursors.basic,
+        child: GestureDetector(
+          key: ValueKey('map-${room.id}'),
+          onTap: visited && !here ? () => onTravel(target) : null,
+          child: Container(
+            decoration: BoxDecoration(
+              color: here
+                  ? kGold
+                  : visited
+                  ? kCream.withValues(alpha: .22)
+                  : Colors.white10,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color: visited ? kGold : Colors.white24,
+                width: here ? 3 : 1.5,
+              ),
+            ),
+            child: Stack(
+              children: [
+                Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(4),
+                    child: Text(
+                      // A room not yet seen keeps its name to itself.
+                      visited ? room.name : '',
+                      textAlign: TextAlign.center,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: here ? kInk : kCream,
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+                if (visited && g.unexplored(room))
+                  Positioned(
+                    right: 6,
+                    top: 2,
+                    child: Text(
+                      '?',
+                      key: ValueKey('unexplored-${room.id}'),
+                      style: TextStyle(
+                        color: here ? kRed : kGold,
+                        fontSize: 22,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}

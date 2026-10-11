@@ -52,6 +52,9 @@ def speakable(text):
     text = text.replace("—", ", ").replace("–", " to ").replace("...", ". ")
     text = text.replace("É.S.", "E. S.").replace("Col.", "Colonel")
     text = text.replace("'08", "oh-eight")
+    text = text.replace("Sgt.", "Sergeant").replace(" & ", " and ")
+    text = text.replace("every 2 min.", "every two minutes.")
+    text = text.replace("Thurs ", "Thursday ").replace("strawbs", "strawberries")
     # Shouted words are read letter by letter unless lower-cased.
     return re.sub(
         r"\b[A-ZÉ]{2,}\b",

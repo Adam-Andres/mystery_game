@@ -94,6 +94,9 @@ class _TitleScreenState extends State<TitleScreen> {
                         const SizedBox(height: 18),
                         // Three investigations can be kept on the go at once.
                         Row(
+                          // Level with one another along the top, whatever hangs
+                          // beneath each.
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             for (var slot = 0; slot < saveSlots; slot++) ...[
                               if (slot > 0) const SizedBox(width: 10),

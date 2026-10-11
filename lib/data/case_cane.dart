@@ -110,9 +110,8 @@ const caneCase = MysteryCase(
   prints: Evidence.given(
     'prints', 'Prints on the Sugarloaf', 'churlock',
     "Two sets of prints came up under the powder. Penny Cotta's are small "
-    "and neat around the base, where a cook holds a loaf to nip it. The "
-    "other is one large hand wrapped right round the narrow end, as you "
-    "would grip a club. It is Barry Tart's.",
+    "and neat, around the base. The other is one large hand wrapped right "
+    "round the narrow end. It is Barry Tart's.",
     icon: Icons.fingerprint, color: Color(0xFFB2EBF2),
   ),
   deskCode: '1884',
@@ -146,9 +145,7 @@ const caneCase = MysteryCase(
         "neither of them could find by the month end.",
     'latchbook': "Read it from top to bottom, old chap, as it was written. "
         "In the order it was written.",
-    'prints': "One of those is how you hold sugar. The other is how you "
-        "hold a cudgel. Ask him how his hand came to be on it, and then ask "
-        "the butler who really carries in the groceries.",
+    'prints': printsHint,
   },
   accuseHints: [
     "Every one of the five has an alibi this time, Churlock, and I believe "

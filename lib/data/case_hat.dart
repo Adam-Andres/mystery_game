@@ -134,8 +134,7 @@ const hatCase = MysteryCase(
   prints: Evidence.given(
     'prints', 'Prints on the Hatpin', 'churlock',
     "One set of prints came up under the powder, and only one: Tira Misu's, "
-    "on the pearl head. It is her hatpin, so that by itself is no more than "
-    "one would expect. But nobody else has ever held it.",
+    "on the pearl head. Nobody else's are on it anywhere.",
     icon: Icons.fingerprint, color: Color(0xFFB2EBF2),
   ),
   deskCode: '1876',
@@ -173,8 +172,7 @@ const hatCase = MysteryCase(
         "handle was last polished. The butler will know to the minute.",
     'auntnote': "Consider when it must have been written, Churlock, from "
         "what it says. Then consider when she died.",
-    'prints': "Hers alone. It proves little, as she'll be quick to tell "
-        "you. It is the clock we must break, not the pin.",
+    'prints': printsHint,
   },
   accuseHints: [
     "Everyone has an alibi for five past eleven, Churlock. Suspiciously "

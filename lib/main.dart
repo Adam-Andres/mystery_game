@@ -183,9 +183,19 @@ class _MysteryAppState extends State<MysteryApp> {
                       child: ClipRect(
                         child: ListenableBuilder(
                           listenable: g,
-                          builder: (context, _) => KeyedSubtree(
-                            key: ValueKey(g.phase),
-                            child: _screen(),
+                          builder: (context, _) => AnimatedSwitcher(
+                            // The title fades to black, and the opening
+                            // scene comes up out of it. Everything else
+                            // cuts.
+                            duration: g.phase == Phase.intro
+                                ? const Duration(milliseconds: 2600)
+                                : Duration.zero,
+                            switchInCurve: const Interval(.55, 1),
+                            switchOutCurve: const Interval(.55, 1),
+                            child: KeyedSubtree(
+                              key: ValueKey(g.phase),
+                              child: _screen(),
+                            ),
                           ),
                         ),
                       ),

@@ -192,8 +192,8 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
 
   void _scheduleCreature([Duration? wait]) {
     _nextCreature = Timer(
-      // Never more than a quarter of a minute apart.
-      wait ?? Duration(milliseconds: 5000 + _random.nextInt(10000)),
+      // Every ten to fifteen seconds, and then only half the time.
+      wait ?? Duration(milliseconds: 10000 + _random.nextInt(5001)),
       () {
         if (!mounted) return;
         // They do not talk over anybody: the wait is held until whoever is
@@ -210,7 +210,9 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
           'backyard' => 'bark',
           _ => null,
         };
-        if (sound != null) AmbienceScope.maybeOf(context)?.creature(sound);
+        if (sound != null && _random.nextBool()) {
+          AmbienceScope.maybeOf(context)?.creature(sound);
+        }
         _scheduleCreature();
       },
     );
@@ -324,6 +326,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     _nextCreature?.cancel();
     _rumble?.cancel();
     _lightning.dispose();
+    _journey.dispose();
     _flicker.dispose();
     _walk.dispose();
     _approach.dispose();
@@ -331,7 +334,56 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     super.dispose();
   }
 
-  bool get _moving => _dir != null || _approach.isAnimating;
+  bool get _moving => _dir != null || _approach.isAnimating || _bound != null;
+
+  // Going straight to a room chosen on the map, by way of a loading screen.
+  late final AnimationController _journey =
+      AnimationController(
+          vsync: this,
+          duration: const Duration(milliseconds: 2600),
+        )
+        ..addListener(() {
+          final bound = _bound;
+          if (bound != null && !_arrived && _journey.value >= .5) {
+            _arrived = true;
+            _spot = _home;
+            g.enter(bound);
+          }
+        })
+        ..addStatusListener((status) {
+          if (status == AnimationStatus.completed) {
+            setState(() => _bound = null);
+          }
+        });
+  Room? _bound;
+  bool _arrived = false;
+
+  /// One of the pair crossing the loading screen from left to right, [lag]
+  /// of the way behind the other.
+  Widget _traveller(Dessert who, double width, double lag) {
+    final at = ((_journey.value - lag) / .86).clamp(0.0, 1.0);
+    // Watsonut takes more steps to cover the same ground.
+    final step = at * 2 * pi * (lag > 0 ? 13 : 10);
+    return Positioned(
+      left: -160 + (sceneW + 320) * at - width / 2,
+      top: 320 - width * 1.3 - sin(step).abs() * 8,
+      child: Transform.rotate(
+        angle: sin(step) * .08,
+        alignment: Alignment.bottomCenter,
+        child: DessertFigure(who, width: width),
+      ),
+    );
+  }
+
+  void _travelTo(Room room) {
+    if (_moving) return;
+    g.closePanel();
+    setState(() {
+      _bound = room;
+      _arrived = false;
+    });
+    _journey.forward(from: 0);
+  }
 
   void _go(Dir d) {
     if (_moving) return;
@@ -631,6 +683,54 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                         },
                       ),
                     ),
+                  // The loading screen between here and wherever the map sends
+                  // them.
+                  if (_bound != null)
+                    Positioned.fill(
+                      child: FadeTransition(
+                        opacity: _journey.drive(
+                          TweenSequence([
+                            TweenSequenceItem(
+                              tween: Tween(begin: 0.0, end: 1.0),
+                              weight: 22,
+                            ),
+                            TweenSequenceItem(
+                              tween: ConstantTween(1.0),
+                              weight: 56,
+                            ),
+                            TweenSequenceItem(
+                              tween: Tween(begin: 1.0, end: 0.0),
+                              weight: 22,
+                            ),
+                          ]),
+                        ),
+                        child: ColoredBox(
+                          key: const ValueKey('loading'),
+                          color: Colors.black,
+                          // The two of them walk across on their way there,
+                          // Watsonut a pace or two behind as ever.
+                          child: AnimatedBuilder(
+                            animation: _journey,
+                            builder: (context, _) => Stack(
+                              children: [
+                                _traveller(Dessert.donutChocolate, 96, .08),
+                                _traveller(Dessert.churro, 116, 0),
+                                Positioned(
+                                  left: 0,
+                                  right: 0,
+                                  top: 360,
+                                  child: Text(
+                                    'On the way to the ${_bound?.name ?? ''}…',
+                                    textAlign: TextAlign.center,
+                                    style: kHeading,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
                   // The fade between rooms, darkest at the moment of the switch.
                   if (_dir != null)
                     Positioned.fill(
@@ -677,6 +777,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                           Panel.accuse => AccusePanel(g),
                           Panel.nook => NookPanel(g),
                           Panel.menu => MenuPanel(g),
+                          Panel.map => MapPanel(g, onTravel: _travelTo),
                           _ => PuzzlePanel(g),
                         },
                       ),
@@ -1083,18 +1184,25 @@ class _Hud extends StatelessWidget {
         ),
         const SizedBox(width: 10),
         _unless(
-          Plaque(
-            padding: const EdgeInsets.all(7),
-            child: Column(
-              children: [
-                for (var level = 2; level >= 0; level--)
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      for (var col = -1; col < 4; col++) _cell(level, col),
-                    ],
-                  ),
-              ],
+          MouseRegion(
+            cursor: SystemMouseCursors.click,
+            child: GestureDetector(
+              key: settingsOnly ? null : const ValueKey('map'),
+              onTap: () => g.openPanel(Panel.map),
+              child: Plaque(
+                padding: const EdgeInsets.all(7),
+                child: Column(
+                  children: [
+                    for (var level = 2; level >= 0; level--)
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          for (var col = -1; col < 4; col++) _cell(level, col),
+                        ],
+                      ),
+                  ],
+                ),
+              ),
             ),
           ),
         ),
@@ -1198,6 +1306,10 @@ class _EvidenceSpotState extends State<_EvidenceSpot>
                   builder: (context, child) => DecoratedBox(
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
+                      // A dark disc and a bright rim, so that the icon
+                      // stands out whatever is behind it.
+                      color: kInk.withValues(alpha: .78),
+                      border: Border.all(color: e.color, width: 2),
                       boxShadow: [
                         BoxShadow(
                           color: e.color.withValues(
@@ -1212,7 +1324,7 @@ class _EvidenceSpotState extends State<_EvidenceSpot>
                   child: Icon(
                     widget.dust ? Icons.fingerprint : e.icon,
                     color: e.color,
-                    size: 30,
+                    size: 28,
                     shadows: const [Shadow(color: Colors.black, blurRadius: 4)],
                   ),
                 ),

@@ -13,7 +13,7 @@ import 'save.dart';
 /// The intro and outro are the narrated scenes outside the mansion.
 enum Phase { title, intro, playing, outro, ended }
 
-enum Panel { none, notebook, accuse, nook, puzzle, menu }
+enum Panel { none, notebook, accuse, nook, puzzle, menu, map }
 
 /// The hands-on task currently on screen.
 enum Task { none, rubbing, torn, prints }
@@ -162,6 +162,15 @@ class GameState extends ChangeNotifier {
 
   Iterable<Nook> get nooksHere => nooks.where((n) => n.room == roomId);
 
+  /// Whether there is still something in [room] that has not been found,
+  /// picked up, or opened: shown on the map as a question mark.
+  bool unexplored(Room room) =>
+      evidence.any(
+        (e) => e.room == room.id && e.from == null && !found.contains(e.id),
+      ) ||
+      allItems.any((i) => i.room == room.id && !taken.contains(i.id)) ||
+      nooks.any((n) => n.room == room.id && !isOpen(n));
+
   /// Tools lying in the current room that have not been picked up yet.
   Iterable<Item> get itemsHere =>
       allItems.where((i) => i.room == roomId && !taken.contains(i.id));
@@ -297,6 +306,8 @@ class GameState extends ChangeNotifier {
   /// Opens [slot] from the title screen: the investigation saved there, or
   /// a new one if there is none.
   void open(int slot) {
+    // Not twice, if the card is pressed again as the screen fades.
+    if (phase != Phase.title) return;
     this.slot = slot;
     if (!restore()) newGame();
   }

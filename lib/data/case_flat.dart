@@ -146,9 +146,8 @@ const flatCase = MysteryCase(
   prints: Evidence.given(
     'prints', 'Prints on the Rolling Pin', 'churlock',
     "Three sets of prints came up under the powder. Penny Cotta's are all "
-    "over both handles: it is her rolling pin. Graham Cracker's are on the "
-    "very tip of one handle. And Colonel Cannoli's are on the marble barrel "
-    "itself, where the weight is.",
+    "over both handles. Graham Cracker's are on the very tip of one handle. "
+    "And Colonel Cannoli's are on the marble barrel itself.",
     icon: Icons.fingerprint, color: Color(0xFFB2EBF2),
   ),
   deskCode: '1887',
@@ -185,9 +184,7 @@ const flatCase = MysteryCase(
         "tells us where two of them meant to be.",
     'planner': "No more extensions, whatever he says. Her own hand, this "
         "very week. Has anyone shown you something that says otherwise?",
-    'prints': "A print tells you who touched it, not when. And where it "
-        "sits tells you how the thing was held. Two of those three have a "
-        "reason to have touched it. Ask all three.",
+    'prints': printsHint,
   },
   accuseHints: [
     "Before you name anyone, Churlock: do we know the very minute she died? "
@@ -221,6 +218,13 @@ const flatCase = MysteryCase(
     ],
     'glaze': glazeTopics,
     'penny': [
+      Topic(
+        'myprints', 'Your fingerprints are on the rolling pin.',
+        "On the handles, I should hope. I roll with that pin every day of my "
+        "life, Detective. By the handles. Nobody rolls pastry holding the "
+        "barrel.",
+        needs: ['prints'],
+      ),
       pennyWhere,
       Topic(
         'about', aboutQ,

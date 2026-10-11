@@ -715,25 +715,25 @@ void main() {
       );
       g.newGame(caseIndex: 0, skipIntro: true);
       await tester.pump();
-      // Purrfait, in the hall, never more than fifteen seconds apart.
-      await tester.pump(const Duration(seconds: 16));
+      // Purrfait, in the hall: never sooner than ten seconds, and about
+      // half the time out of a chance every ten to fifteen.
+      await tester.pump(const Duration(seconds: 9));
+      expect(house.creatures, isEmpty);
+      await tester.pump(const Duration(minutes: 5));
       expect(house.creatures, isNotEmpty);
-      await tester.pump(const Duration(seconds: 15));
-      expect(house.creatures.length, greaterThanOrEqualTo(2));
-      expect(house.creatures.toSet(), {'meow'});
-      expect(house.flickers, 0);
+      expect(house.creatures.length, lessThan(30));
       // Never while somebody is talking, however long they go on.
       house.creatures.clear();
       g.talkTo(personById('sprinkles'));
-      await tester.pump(const Duration(minutes: 4));
+      await tester.pump(const Duration(minutes: 5));
       expect(house.creatures, isEmpty);
       g.closeDialogue();
-      await tester.pump(const Duration(minutes: 4));
+      await tester.pump(const Duration(minutes: 5));
       expect(house.creatures, isNotEmpty);
       // Pupcake, in the yard.
       house.creatures.clear();
       g.enter(roomById('backyard'));
-      await tester.pump(const Duration(minutes: 4));
+      await tester.pump(const Duration(minutes: 5));
       expect(house.creatures.toSet(), {'bark'});
       // Neither of them anywhere else; but down below, the lamps.
       house.creatures.clear();
@@ -780,6 +780,49 @@ void main() {
       expect(rain.weather, Weather.none);
       await tester.pump();
     });
+  });
+
+  testWidgets('the map in the corner goes straight to a room already seen', (
+    tester,
+  ) async {
+    final g = GameState(random: Random(2));
+    await tester.pumpWidget(MysteryApp(state: g, voice: Voice(SilentPlayer())));
+    g.newGame(caseIndex: 0, skipIntro: true);
+    g.enter(roomById('kitchen'));
+    g.enter(roomById('entrance'));
+    await tester.pump();
+    await tester.tap(_key('map'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+    expect(g.panel, Panel.map);
+    // The kitchen has been seen and has things left in it; the study has
+    // not been seen at all.
+    expect(_key('unexplored-kitchen'), findsOneWidget);
+    expect(find.text('Kitchen'), findsOneWidget);
+    expect(find.text("Mrs. Senclair's Study"), findsNothing);
+    await tester.tap(_key('map-study'));
+    await tester.pump();
+    expect(g.panel, Panel.map);
+    // Off to the kitchen, by way of a loading screen.
+    await tester.tap(_key('map-kitchen'));
+    await tester.pump();
+    expect(_key('loading'), findsOneWidget);
+    expect(find.textContaining('On the way to the Kitchen'), findsOneWidget);
+    expect(g.roomId, 'entrance');
+    await tester.pump(const Duration(milliseconds: 1400));
+    expect(g.roomId, 'kitchen');
+    await tester.pump(const Duration(milliseconds: 1400));
+    await tester.pump();
+    expect(_key('loading'), findsNothing);
+    expect(g.panel, Panel.none);
+
+    // The question mark goes when there is nothing left to find there.
+    final kitchen = roomById('kitchen');
+    expect(g.unexplored(kitchen), isTrue);
+    g.found.addAll(g.evidence.where((e) => e.room == 'kitchen').map((e) => e.id));
+    g.unlocked.addAll(nooks.where((n) => n.room == 'kitchen').map((n) => n.id));
+    g.taken.addAll(items.where((i) => i.room == 'kitchen').map((i) => i.id));
+    expect(g.unexplored(kitchen), isFalse);
   });
 
   testWidgets('they go out to the yard and back by the door', (tester) async {
@@ -1311,9 +1354,9 @@ void main() {
     await turn(false, 3);
     expect(find.textContaining('Dial reads  0'), findsOneWidget);
     expect(find.text('RIGHT'), findsOneWidget);
-    // Turning back at the wrong number drops the tumblers.
+    // Turning back well past the number drops the tumblers.
     final [first, second, third] = g.combination;
-    await turn(true, first + 1);
+    await turn(true, first + 3);
     await turn(false, 1);
     expect(find.textContaining('did not catch'), findsOneWidget);
     expect(find.textContaining('Dial reads  0'), findsOneWidget);
@@ -1322,7 +1365,8 @@ void main() {
     await tester.tap(_key('dial-reset'));
     await tester.pump();
     expect(find.textContaining('Dial reads  0'), findsOneWidget);
-    await turn(true, first);
+    // A notch or two past the click is forgiven, and set as the number.
+    await turn(true, first + 2);
     await turn(false, (first - second) % 100);
     expect(find.text('LEFT'), findsOneWidget);
     expect(find.textContaining('Set so far  $first  '), findsOneWidget);

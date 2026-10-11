@@ -33,6 +33,13 @@ const souffleHint =
     "If that log is honest, Penny never left her oven. I should ask to see "
     "the log itself.";
 
+/// What he makes of the prints on a weapon. He leaves it to Churlock to
+/// work out which of them have any business being there.
+const printsHint =
+    "A print tells you who touched a thing, and where they held it. Not "
+    "when, and not why. Put it to each of them in turn, old chap, and then "
+    "see whether the rest of the house agrees.";
+
 const bootsHint =
     "Locked out until midnight, by the look of it. Who latches the doors in "
     "this house, and when?";

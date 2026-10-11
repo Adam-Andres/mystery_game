@@ -607,6 +607,9 @@ class DialLock extends StatefulWidget {
 
 class _DialLockState extends State<DialLock> {
   static const _notches = 100;
+
+  /// How many notches past its number the dial may run and still set it.
+  static const _slack = 2;
   static const _size = 230.0;
 
   /// Notches turned since the dial was last at rest on zero; right is up.
@@ -662,11 +665,16 @@ class _DialLockState extends State<DialLock> {
     if (right != _rightward) {
       // Turning back sets the number the dial had reached.
       if (_moved == 0) return;
-      if (_last || _reading != widget.combination[_set.length]) {
+      // A notch or two past the click is forgiven: a dial is a fiddly
+      // thing, and a finger more so.
+      final want = widget.combination[_set.length];
+      final past = (right ? want - _reading : _reading - want) % _notches;
+      if (_last || past > _slack) {
         _reset('That did not catch. The tumblers drop back.');
         return;
       }
-      _set.add(_reading);
+      _steps += right ? past : -past;
+      _set.add(want);
       _moved = 0;
     }
     final voice = VoiceScope.maybeOf(context);

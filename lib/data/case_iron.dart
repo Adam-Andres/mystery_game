@@ -26,7 +26,7 @@ const ironCase = MysteryCase(
       "twenty-four.",
   core: [
     Evidence(
-      'ironrack', 'Iron Trivet', 'kitchen', 4,
+      'ironrack', 'Iron Trivet', 'kitchen', 2,
       "The trivet beside the stove where the flat irons are kept warm. "
       "Three places, graded by size. The small iron and the middle iron are "
       "here. The place of the big one, the fourteen-pound goose iron, is an "
@@ -98,7 +98,7 @@ const ironCase = MysteryCase(
         inside: 'cupboard',
       ),
       Evidence(
-        'cushion', "The Colonel's Armchair", 'parlor', 4,
+        'cushion', "The Colonel's Armchair", 'parlor', 5,
         "The wing of the Colonel's armchair has a patch of ricotta on it "
         "the size of a saucer, at the height of a sleeping head, and his "
         "spare monocle has slipped down between the cushions.",
@@ -132,9 +132,8 @@ const ironCase = MysteryCase(
   prints: Evidence.given(
     'prints', 'Prints on the Iron', 'churlock',
     "Two sets of prints came up under the powder. Penny Cotta's are old "
-    "and faint, all along the wooden handle: she irons the sheets. Over "
-    "them, on the hot sole plate itself, is one sharp thumb where somebody "
-    "wiped it in a hurry. It is Graham Cracker's.",
+    "and faint, all along the wooden handle. Over them, on the sole plate "
+    "itself, is one sharp thumb. It is Graham Cracker's.",
     icon: Icons.fingerprint, color: Color(0xFFB2EBF2),
   ),
   deskCode: '1869',
@@ -175,8 +174,7 @@ const ironCase = MysteryCase(
         "wherever irons are kept hot. Who had the irons last night?",
     'scoresheet': "Play it through in your head, Churlock, move by move. "
         "Every move ought to be possible.",
-    'prints': "Hers are old and where a laundress's belong. His is fresh, "
-        "and on the part nobody touches unless they are wiping it.",
+    'prints': printsHint,
   },
   accuseHints: [
     "Two of them say they sat at a chessboard together all night, "
@@ -209,6 +207,13 @@ const ironCase = MysteryCase(
     ],
     'glaze': glazeTopics,
     'penny': [
+      Topic(
+        'myprints', 'Your fingerprints are on the iron.',
+        "Along the handle, that'll be. I iron the sheets with the goose every "
+        "Monday, and I hold it where it's meant to be held. Nobody puts a "
+        "finger on the sole. It's the hot end.",
+        needs: ['prints'],
+      ),
       pennyWhere,
       Topic(
         'about', aboutQ,

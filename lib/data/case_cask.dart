@@ -43,7 +43,7 @@ const caskCase = MysteryCase(
       icon: Icons.phone_in_talk, color: Color(0xFFB2EBF2),
     ),
     Evidence(
-      'gramophone', 'Gramophone', 'landing', 4,
+      'gramophone', 'Gramophone', 'landing', 5,
       "The parlor gramophone, carried up to the landing and set down beside "
       "the telephone table with its horn turned toward the instrument. The "
       "needle rests at the very end of a record: “MY CAMPAIGNS, by Col. "
@@ -151,9 +151,9 @@ const caskCase = MysteryCase(
   prints: Evidence.given(
     'prints', 'Prints on the Cask', 'churlock',
     "Three sets of prints came up under the powder. Graham Cracker's are on "
-    "the tap and the bung, where a cellarman's would be. The other two are "
-    "each a whole hand, flat and pushing, one on either end hoop: Barry "
-    "Tart's at one end, Colonel Cannoli's at the other.",
+    "the tap and the bung. The other two are each a whole hand, pressed "
+    "flat, one on either end hoop: Barry Tart's at one end, Colonel "
+    "Cannoli's at the other.",
     icon: Icons.fingerprint, color: Color(0xFFB2EBF2),
   ),
   deskCode: '1894',
@@ -196,9 +196,7 @@ const caskCase = MysteryCase(
         "was at the other?",
     'frostlog': "Read it with last night's weather in mind, Churlock. All "
         "of it. And compare it with what the Colonel says he saw.",
-    'prints': "Graham's are where a butler's belong. The other two are "
-        "where you put your hands to shove. Ask each of them how his came "
-        "to be there, and then ask Graham whether it is true.",
+    'prints': printsHint,
   },
   accuseHints: [
     "Everybody in this house seems to have an alibi, Churlock, and two of "

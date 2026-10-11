@@ -165,8 +165,8 @@ const brewCase = MysteryCase(
   prints: Evidence.given(
     'prints', 'Prints on the Urn', 'churlock',
     "Three sets of prints came up under the powder. On the lid, Penny "
-    "Cotta's: she fills it every morning. On the left handle, Tira Misu's. "
-    "On the right handle, Graham Cracker's.",
+    "Cotta's. On the left handle, Tira Misu's. On the right handle, Graham "
+    "Cracker's.",
     icon: Icons.fingerprint, color: Color(0xFFB2EBF2),
   ),
   deskCode: '1892',
@@ -203,9 +203,7 @@ const brewCase = MysteryCase(
     'notepad': "Now why would a butler tear off that one sheet? Ask him. "
         "Then see whether his answer fits the hour.",
     'tally': "I never trust a total I have not added up myself.",
-    'prints': "Three sets. One of them belongs there. Ask the other two "
-        "what business they had with it, and then ask the housekeeper "
-        "whether it is true.",
+    'prints': printsHint,
   },
   accuseHints: [
     "First, how was it done? Look hard at that urn, and at whatever tracks "
@@ -244,6 +242,13 @@ const brewCase = MysteryCase(
     ],
     'glaze': glazeTopics,
     'penny': [
+      Topic(
+        'myprints', 'Your fingerprints are on the urn.',
+        "On the lid, and nowhere else. I fill it at six every morning where "
+        "it stands, and I put the lid back on. I have never lifted that urn "
+        "in my life. I'd rupture something.",
+        needs: ['prints'],
+      ),
       pennyWhere,
       Topic(
         'about', aboutQ,

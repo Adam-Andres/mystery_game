@@ -110,7 +110,7 @@ const holeCase = MysteryCase(
         icon: Icons.bed, color: Color(0xFFBCAAA4),
       ),
       Evidence(
-        'sixthplace', 'Supper Table', 'dining', 3,
+        'sixthplace', 'Supper Table', 'dining', 2,
         "Last night's supper has not been cleared. There are six places "
         "laid, not five. Graham's card at the sixth reads only: “J. W. No "
         "walnuts.”",
@@ -128,9 +128,9 @@ const holeCase = MysteryCase(
   prints: Evidence.given(
     'prints', 'Prints on the Syringe', 'churlock',
     "Two sets of prints came up under the powder. One is Penny Cotta's, on "
-    "the barrel: it is her syringe. The other is a whole hand around the "
-    "plunger, sharp and fresh. I have held it against all five cards on "
-    "the police chart, twice. It matches none of them.",
+    "the barrel. The other is a whole hand around the plunger, sharp and "
+    "fresh. I have held it against all five cards on the police chart, "
+    "twice. It matches none of them.",
     icon: Icons.fingerprint, color: Color(0xFFB2EBF2),
   ),
   deskCode: '1871',
