@@ -58,6 +58,14 @@ Room? neighbor(Room r, Dir d) {
   }
 }
 
+/// The door in [room] that leads off in direction [d], where the way out is
+/// a door in the scene and not simply the edge of it.
+Rect? doorOf(String room, Dir d) => switch ((room, d)) {
+  ('kitchen', Dir.left) => const Rect.fromLTWH(4, 120, 62, 230),
+  ('backyard', Dir.right) => const Rect.fromLTWH(826, 176, 96, 244),
+  _ => null,
+};
+
 const churlock = Person(
   id: 'churlock',
   name: 'Detective Churlock',

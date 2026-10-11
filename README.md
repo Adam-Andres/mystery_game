@@ -35,6 +35,12 @@ them alone, or two of them together.
   what he makes of it, and on the accusation screen he will give up to four
   hints, one at a time. The first hint of a game asks you to confirm.
 - **Check the notebook** for everything found and said so far.
+- **Three case files.** The title screen has three save files. A game saves
+  itself as you play, on the device, and is still there after the page is
+  reloaded or the app closed.
+- **Menu.** The button under the room's name opens the settings (voices,
+  rain, text size, Watsonut's idle remarks, quicker walking), the way back to
+  the main menu, and a red button that resets the case.
 - When you are sure, return to the **Entrance Hall**, press
   **I solved the case**, and accuse one or two residents.
 

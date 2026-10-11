@@ -15,6 +15,9 @@ import 'package:mystery/data/house.dart';
 import 'package:mystery/data/models.dart';
 import 'package:mystery/game_state.dart';
 import 'package:mystery/main.dart';
+import 'package:mystery/audio/ambience.dart';
+import 'package:mystery/settings.dart';
+import 'package:mystery/save.dart';
 import 'package:mystery/screens/minigames.dart';
 import 'package:mystery/widgets/dessert_figure.dart';
 
@@ -337,6 +340,251 @@ void main() {
           .group(1)!,
     );
     expect(reading, inInclusiveRange(15, 25));
+  });
+
+  group('saving', () {
+    test('a game in progress survives being closed and reopened', () {
+      final store = MemoryStore();
+      final g = GameState(random: Random(3), twistChance: 0, store: store);
+      expect(g.restore(), isFalse);
+      g.newGame(skipIntro: true);
+      g.enter(roomById('boiler'));
+      g.take(itemById('shovel'));
+      g.closeDialogue();
+      final clue = g.evidenceHere.first;
+      g.inspect(clue);
+      g.closeDialogue();
+      final topic = g.topicsFor('barry').first;
+      g.ask(personById('barry'), topic);
+      g.closeDialogue();
+      g.tryCode(nookById('desk'), g.combination.join('-'));
+      g.hintsUsed = 2;
+      g.closeDialogue();
+      expect(store.saved, isNotNull);
+
+      // A fresh program, with a different run of luck, opens the same save.
+      final again = GameState(random: Random(99), store: store);
+      expect(again.restore(), isTrue);
+      expect(again.phase, Phase.playing);
+      expect(again.mystery.id, g.mystery.id);
+      expect(again.roomId, 'boiler');
+      expect([for (final e in again.evidence) e.id], [
+        for (final e in g.evidence) e.id,
+      ]);
+      expect(again.found, g.found);
+      expect(again.visited, g.visited);
+      expect(again.items, ['shovel']);
+      expect(again.asked, g.asked);
+      expect(again.unlocked, {'desk'});
+      expect(again.combination, g.combination);
+      expect(again.pinOrder, g.pinOrder);
+      expect(again.hintsUsed, 2);
+      expect(again.itemsHere, isEmpty);
+    });
+
+    test('nothing is kept once the case is over, or thrown in', () {
+      final store = MemoryStore();
+      final g = GameState(random: Random(3), twistChance: 0, store: store)
+        ..newGame(skipIntro: true);
+      final first = g.mystery.id;
+      expect(store.saved, isNotNull);
+      g.reset();
+      expect(g.phase, Phase.title);
+      expect(store.saved, isNull);
+      g.newGame(skipIntro: true);
+      expect(g.mystery.id, isNot(first));
+      g
+        ..toggleAccused('penny')
+        ..makeArrest();
+      expect(store.saved, isNull);
+    });
+
+    test('a save that no longer makes sense is thrown away', () {
+      final store = MemoryStore()..saved = '{"version":1,"case":"nonsense"}';
+      final g = GameState(store: store);
+      expect(g.restore(), isFalse);
+      expect(g.phase, Phase.title);
+      expect(store.saved, isNull);
+    });
+
+    testWidgets('the rare mystery is saved as itself', (tester) async {
+      final store = MemoryStore();
+      final g = GameState(store: store)..newGame(twist: true, skipIntro: true);
+      g.found.add('tornsheet');
+      g.attachSheet();
+      final again = GameState(store: store);
+      expect(again.restore(), isTrue);
+      expect(again.mystery.id, twistCase.id);
+      expect(again.sheetAttached, isTrue);
+    });
+
+    testWidgets('the menu resets a case, but only when asked twice', (
+      tester,
+    ) async {
+      final store = MemoryStore();
+      final g = GameState(random: Random(3), twistChance: 0, store: store);
+      await tester.pumpWidget(
+        MysteryApp(state: g, voice: Voice(SilentPlayer())),
+      );
+      g.newGame(skipIntro: true);
+      await tester.pump();
+      await tester.tap(_key('menu'));
+      await tester.pump();
+      expect(g.panel, Panel.menu);
+      await tester.tap(_key('reset'));
+      await tester.pump();
+      expect(g.phase, Phase.playing);
+      expect(find.textContaining('Really?'), findsOneWidget);
+      // Left alone, it goes back to being a button that does nothing rash.
+      await tester.pump(const Duration(seconds: 5));
+      expect(find.textContaining('Really?'), findsNothing);
+      await tester.tap(_key('reset'));
+      await tester.pump();
+      await tester.tap(_key('reset'));
+      await tester.pump();
+      expect(g.phase, Phase.title);
+      expect(store.saved, isNull);
+      expect(find.text('New case'), findsNWidgets(3));
+    });
+
+    testWidgets('three case files are kept apart on the title screen', (
+      tester,
+    ) async {
+      final store = MemoryStore();
+      final g = GameState(random: Random(3), twistChance: 0, store: store);
+      await tester.pumpWidget(
+        MysteryApp(state: g, voice: Voice(SilentPlayer())),
+      );
+      expect(find.text('New case'), findsNWidgets(3));
+
+      // A new case in the second file.
+      await tester.tap(_key('slot-1'));
+      await tester.pump();
+      expect(g.phase, Phase.intro);
+      g.beginInvestigation();
+      await tester.pump();
+      await tester.pump(const Duration(seconds: 14));
+      final second = g.mystery.id;
+      g.enter(roomById('kitchen'));
+      await tester.pump();
+      expect(store.slots.keys, [1]);
+
+      // The main menu leaves it in its file.
+      await tester.tap(_key('menu'));
+      await tester.pump();
+      await tester.tap(_key('to-title'));
+      await tester.pump();
+      expect(g.phase, Phase.title);
+      expect(find.text('Continue'), findsOneWidget);
+      expect(find.textContaining('Kitchen'), findsOneWidget);
+
+      // Another in the third, and then back to the second where it was.
+      await tester.tap(_key('slot-2'));
+      await tester.pump();
+      g.beginInvestigation();
+      await tester.pump();
+      await tester.pump(const Duration(seconds: 14));
+      expect(g.mystery.id, isNot(second));
+      g.toTitle();
+      await tester.pump();
+      expect(find.text('Continue'), findsNWidgets(2));
+      await tester.tap(_key('slot-1'));
+      await tester.pump();
+      expect(g.phase, Phase.playing);
+      expect(g.mystery.id, second);
+      expect(g.roomId, 'kitchen');
+    });
+
+    testWidgets('settings are changed in the menu and remembered', (
+      tester,
+    ) async {
+      final store = MemoryStore();
+      final settings = Settings(store);
+      final voice = Voice(SilentPlayer());
+      final g = GameState(random: Random(3), twistChance: 0, store: store);
+      await tester.pumpWidget(
+        MysteryApp(state: g, voice: voice, settings: settings),
+      );
+      g.newGame(skipIntro: true);
+      await tester.pump();
+      await tester.tap(_key('menu'));
+      await tester.pump();
+      await tester.tap(_key('setting-voices'));
+      await tester.pump();
+      expect(voice.muted, isTrue);
+      await tester.tap(_key('setting-rain'));
+      await tester.tap(_key('text-size-3'));
+      await tester.pump();
+      expect(settings.textScale, greaterThan(1.3));
+      // The loudspeaker button on screen is the same switch.
+      g.closePanel();
+      await tester.pump();
+      await tester.tap(_key('mute'));
+      await tester.pump();
+      expect(settings.voices, isTrue);
+
+      final again = Settings(store);
+      expect(again.voices, isTrue);
+      expect(again.rain, isFalse);
+      expect(again.textSize, 3);
+
+      // Big text still fits the dialogue box.
+      g.talkTo(personById('penny'));
+      await tester.pump();
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('the rain sounds different from room to room', (tester) async {
+      final rain = SilentAmbience();
+      final g = GameState(random: Random(3), twistChance: 0);
+      await tester.pumpWidget(
+        MysteryApp(state: g, voice: Voice(SilentPlayer()), ambience: rain),
+      );
+      expect(rain.weather, Weather.outside);
+      g.newGame(caseIndex: 0, skipIntro: true);
+      expect(rain.weather, Weather.indoors);
+      g.enter(roomById('cellar'));
+      expect(rain.weather, Weather.basement);
+      g.enter(roomById('study'));
+      expect(rain.weather, Weather.attic);
+      g.enter(roomById('backyard'));
+      expect(rain.weather, Weather.outside);
+      // It stops for a case well solved, and not otherwise.
+      g
+        ..toggleAccused('cannoli')
+        ..makeArrest();
+      expect(rain.weather, Weather.none);
+      await tester.pump();
+    });
+  });
+
+  testWidgets('they go out to the yard and back by the door', (tester) async {
+    final g = GameState(random: Random(2));
+    await tester.pumpWidget(MysteryApp(state: g, voice: Voice(SilentPlayer())));
+    g.newGame(caseIndex: 0, skipIntro: true);
+    g.enter(roomById('kitchen'));
+    await tester.pump();
+    // The arrow sits on the door, in both rooms.
+    final kitchenDoor = doorOf('kitchen', Dir.left)!;
+    final scale = tester.getSize(find.byType(MaterialApp)).width / sceneW;
+    Offset inScene(Finder f) => tester.getCenter(f) / scale;
+    expect(kitchenDoor.inflate(8).contains(inScene(_key('go-left'))), isTrue);
+    await tester.tap(_key('go-left'));
+    await tester.pump();
+    // Partway there the door is opening, and Churlock is making for it.
+    await tester.pump(const Duration(milliseconds: 1300));
+    expect(find.byWidgetPredicate((w) => w is CustomPaint && '${w.painter}'.contains('_DoorPainter')), findsOneWidget);
+    await tester.pump(const Duration(milliseconds: 2300));
+    await tester.pump();
+    expect(g.roomId, 'backyard');
+    final yardDoor = doorOf('backyard', Dir.right)!;
+    expect(yardDoor.inflate(8).contains(inScene(_key('go-right'))), isTrue);
+    await tester.tap(_key('go-right'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 1800));
+    await tester.pump(const Duration(milliseconds: 1800));
+    await tester.pump();
+    expect(g.roomId, 'kitchen');
   });
 
   group('the rare mystery', () {

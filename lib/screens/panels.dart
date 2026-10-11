@@ -4,6 +4,7 @@ import '../data/cases.dart';
 import '../data/house.dart';
 import '../data/models.dart';
 import '../game_state.dart';
+import '../settings.dart';
 import '../widgets/dessert_figure.dart';
 import '../widgets/ui.dart';
 import 'minigames.dart';
@@ -52,7 +53,13 @@ class DialoguePanel extends StatelessWidget {
                 const SizedBox(height: 6),
                 Expanded(
                   child: SingleChildScrollView(
-                    child: Text(d.text, style: kBody),
+                    child: Text(
+                      d.text,
+                      style: kBody,
+                      textScaler: TextScaler.linear(
+                        SettingsScope.of(context).textScale,
+                      ),
+                    ),
                   ),
                 ),
                 if (d.note != null)
@@ -996,6 +1003,144 @@ class HintPrompt extends StatelessWidget {
                 ],
               ),
             ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// The menu: settings, the way back to the title screen, and a reset.
+class MenuPanel extends StatelessWidget {
+  const MenuPanel(this.g, {super.key});
+
+  final GameState g;
+
+  @override
+  Widget build(BuildContext context) {
+    final settings = SettingsScope.of(context);
+    Widget toggle(
+      String key,
+      String label,
+      bool on,
+      void Function(Settings, bool) set,
+    ) {
+      return SizedBox(
+        height: 36,
+        child: Row(
+          children: [
+            Expanded(child: Text(label, style: kBody)),
+            Switch(
+              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              key: ValueKey('setting-$key'),
+              value: on,
+              activeThumbColor: kGold,
+              onChanged: (v) => settings.update((s) => set(s, v)),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return Center(
+      child: SizedBox(
+        width: 520,
+        child: Plaque(
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(
+                  children: [
+                    const Icon(Icons.menu, color: kGold),
+                    const SizedBox(width: 8),
+                    const Expanded(child: Text('Menu', style: kHeading)),
+                    GoldButton(
+                      key: const ValueKey('close-panel'),
+                      label: 'Back to the case',
+                      onPressed: g.closePanel,
+                    ),
+                  ],
+                ),
+                const Divider(color: kGold),
+                const Text(
+                  'SETTINGS',
+                  style: TextStyle(
+                    color: kGold,
+                    fontSize: 12,
+                    letterSpacing: 2,
+                  ),
+                ),
+                toggle(
+                  'voices',
+                  'Voices',
+                  settings.voices,
+                  (s, v) => s.voices = v,
+                ),
+                toggle(
+                  'rain',
+                  'Sound of the rain',
+                  settings.rain,
+                  (s, v) => s.rain = v,
+                ),
+                toggle(
+                  'remarks',
+                  'Watsonut speaks up when I stand idle',
+                  settings.remarks,
+                  (s, v) => s.remarks = v,
+                ),
+                toggle(
+                  'quick',
+                  'Hurry from room to room',
+                  settings.quickWalk,
+                  (s, v) => s.quickWalk = v,
+                ),
+                Wrap(
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  spacing: 6,
+                  runSpacing: 4,
+                  children: [
+                    const SizedBox(
+                      width: 110,
+                      child: Text('Text size', style: kBody),
+                    ),
+                    for (var i = 0; i < Settings.textSizes.length; i++)
+                      ChoiceChip(
+                        key: ValueKey('text-size-$i'),
+                        label: Text(Settings.textSizeNames[i]),
+                        selected: settings.textSize == i,
+                        selectedColor: kGold,
+                        labelStyle: TextStyle(
+                          color: settings.textSize == i ? kInk : kCream,
+                        ),
+                        onSelected: (_) =>
+                            settings.update((s) => s.textSize = i),
+                      ),
+                  ],
+                ),
+                const Divider(color: kGold),
+                Wrap(
+                  alignment: WrapAlignment.spaceBetween,
+                  spacing: 12,
+                  runSpacing: 8,
+                  children: [
+                    GoldButton(
+                      key: const ValueKey('to-title'),
+                      label: 'Main menu',
+                      icon: Icons.home,
+                      onPressed: g.toTitle,
+                    ),
+                    ResetButton(onReset: g.reset),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                const Text(
+                  'The main menu keeps this case in its file. Reset throws it away.',
+                  style: TextStyle(color: Colors.white54, fontSize: 12),
+                ),
+              ],
+            ),
           ),
         ),
       ),

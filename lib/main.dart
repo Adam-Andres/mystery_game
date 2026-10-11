@@ -1,24 +1,48 @@
 import 'package:flutter/material.dart';
 
 import 'audio/lines.dart';
+import 'audio/ambience.dart';
 import 'audio/voice.dart';
 import 'data/house.dart';
+import 'data/models.dart';
 import 'game_state.dart';
+import 'save.dart';
+import 'settings.dart';
 import 'screens/cutscene.dart';
 import 'screens/ending_screen.dart';
 import 'screens/game_screen.dart';
 import 'screens/title_screen.dart';
 
-void main() => runApp(const MysteryApp());
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  final store = await DeviceStore.open();
+  runApp(
+    MysteryApp(
+      state: GameState(store: store),
+      settings: Settings(store),
+    ),
+  );
+}
 
 class MysteryApp extends StatefulWidget {
-  const MysteryApp({super.key, this.state, this.voice});
+  const MysteryApp({
+    super.key,
+    this.state,
+    this.voice,
+    this.settings,
+    this.ambience,
+  });
 
   /// Lets tests supply a game with a known case.
   final GameState? state;
 
   /// Lets tests run without sound.
   final Voice? voice;
+
+  final Settings? settings;
+
+  /// The rain. Tests have none unless they bring their own.
+  final Ambience? ambience;
 
   @override
   State<MysteryApp> createState() => _MysteryAppState();
@@ -27,17 +51,57 @@ class MysteryApp extends StatefulWidget {
 class _MysteryAppState extends State<MysteryApp> {
   late final GameState g = widget.state ?? GameState();
   late final Voice voice = widget.voice ?? Voice();
+  late final Settings settings = widget.settings ?? Settings();
+  late final Ambience ambience =
+      widget.ambience ??
+      (widget.voice == null ? createAmbience() : SilentAmbience());
   Dialogue? _spoken;
 
   @override
   void initState() {
     super.initState();
     g.addListener(_speakDialogue);
+    g.addListener(_setWeather);
+    settings.addListener(_applySettings);
+    // The loudspeaker button on screen and the setting are one and the same.
+    voice.addListener(_noteMute);
+    _applySettings();
+    _setWeather();
+  }
+
+  void _noteMute() {
+    if (settings.voices == voice.muted) {
+      settings.update((s) => s.voices = !voice.muted);
+    }
+  }
+
+  /// The settings that are about sound take effect at once.
+  void _applySettings() {
+    if (voice.muted == settings.voices) voice.toggleMute();
+    ambience.setMuted(!settings.rain);
+  }
+
+  /// The rain is loud outside, drums on the attic roof, and is all but
+  /// gone in the basement. It stops for a case well solved.
+  void _setWeather() {
+    ambience.set(switch (g.phase) {
+      Phase.playing => switch (g.room) {
+        Room(id: 'backyard') => Weather.outside,
+        Room(level: 0) => Weather.basement,
+        Room(level: 2) => Weather.attic,
+        _ => Weather.indoors,
+      },
+      Phase.outro || Phase.ended => g.won ? Weather.none : Weather.outside,
+      _ => Weather.outside,
+    });
   }
 
   @override
   void dispose() {
     g.removeListener(_speakDialogue);
+    g.removeListener(_setWeather);
+    settings.removeListener(_applySettings);
+    voice.removeListener(_noteMute);
     voice.stop();
     super.dispose();
   }
@@ -57,7 +121,7 @@ class _MysteryAppState extends State<MysteryApp> {
   Widget _screen() {
     switch (g.phase) {
       case Phase.title:
-        return TitleScreen(onStart: g.newGame);
+        return TitleScreen(g);
       case Phase.intro:
         return Cutscene(
           kind: CutsceneKind.arrival,
@@ -96,18 +160,27 @@ class _MysteryAppState extends State<MysteryApp> {
       home: Scaffold(
         backgroundColor: Colors.black,
         // The whole game is laid out on a fixed 960x540 stage and scaled to fit.
-        body: VoiceScope(
-          voice: voice,
-          child: SizedBox.expand(
-            child: FittedBox(
-              child: SizedBox(
-                width: sceneW,
-                height: sceneH,
-                child: ClipRect(
-                  child: ListenableBuilder(
-                    listenable: g,
-                    builder: (context, _) =>
-                        KeyedSubtree(key: ValueKey(g.phase), child: _screen()),
+        body: SettingsScope(
+          settings: settings,
+          child: Listener(
+            // A browser plays nothing until the page has been touched.
+            onPointerDown: (_) => ambience.wake(),
+            child: VoiceScope(
+              voice: voice,
+              child: SizedBox.expand(
+                child: FittedBox(
+                  child: SizedBox(
+                    width: sceneW,
+                    height: sceneH,
+                    child: ClipRect(
+                      child: ListenableBuilder(
+                        listenable: g,
+                        builder: (context, _) => KeyedSubtree(
+                          key: ValueKey(g.phase),
+                          child: _screen(),
+                        ),
+                      ),
+                    ),
                   ),
                 ),
               ),

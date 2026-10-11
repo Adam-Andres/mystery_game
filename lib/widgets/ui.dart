@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../audio/voice.dart';
@@ -107,6 +109,51 @@ class MuteButton extends StatelessWidget {
         ),
         icon: Icon(voice.muted ? Icons.volume_off : Icons.volume_up, color: kGold),
       ),
+    );
+  }
+}
+
+/// Abandons the game in progress. It asks to be pressed twice, so that the
+/// whole investigation is not thrown away by a slip of the finger.
+class ResetButton extends StatefulWidget {
+  const ResetButton({super.key, required this.onReset});
+
+  final VoidCallback onReset;
+
+  @override
+  State<ResetButton> createState() => _ResetButtonState();
+}
+
+class _ResetButtonState extends State<ResetButton> {
+  bool _armed = false;
+  Timer? _disarm;
+
+  @override
+  void dispose() {
+    _disarm?.cancel();
+    super.dispose();
+  }
+
+  void _press() {
+    if (_armed) {
+      _disarm?.cancel();
+      widget.onReset();
+      return;
+    }
+    setState(() => _armed = true);
+    _disarm = Timer(const Duration(seconds: 4), () {
+      if (mounted) setState(() => _armed = false);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GoldButton(
+      key: const ValueKey('reset'),
+      label: _armed ? 'Really? It cannot be undone' : 'Reset this case',
+      icon: Icons.delete_forever,
+      color: kRed,
+      onPressed: _press,
     );
   }
 }

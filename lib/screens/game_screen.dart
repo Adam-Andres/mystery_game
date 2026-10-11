@@ -9,6 +9,7 @@ import '../audio/voice.dart';
 import '../data/house.dart';
 import '../data/models.dart';
 import '../game_state.dart';
+import '../settings.dart';
 import '../widgets/dessert_figure.dart';
 import '../widgets/exterior_painter.dart' show RainPainter;
 import '../widgets/room_painter.dart';
@@ -31,16 +32,26 @@ const _feet = Offset(55, 143);
 /// The way out of [room] in direction [d], as the points his feet pass
 /// over: off the side of the room, to the foot of the stairs and up them, or
 /// onto the hatch in the floor and down through it.
-List<Offset> _wayOut(String room, Dir d) => switch (d) {
-  Dir.left => const [Offset(-75, _standY)],
-  Dir.right => const [Offset(sceneW + 75, _standY)],
-  // The cellar steps climb to the left, the hall's to the right.
-  Dir.up =>
-    room == 'cellar'
-        ? const [Offset(315, 392), Offset(-60, -38)]
-        : const [Offset(625, 392), Offset(sceneW + 40, -38)],
-  Dir.down => const [Offset(480, _standY + 10), Offset(480, sceneH + 33)],
-};
+List<Offset> _wayOut(String room, Dir d) {
+  // Where there is a door, they walk up to it and through it.
+  final door = doorOf(room, d);
+  if (door != null) {
+    return [
+      Offset(door.center.dx, door.bottom + 16),
+      Offset(door.center.dx, door.bottom + 4),
+    ];
+  }
+  return switch (d) {
+    Dir.left => const [Offset(-75, _standY)],
+    Dir.right => const [Offset(sceneW + 75, _standY)],
+    // The cellar steps climb to the left, the hall's to the right.
+    Dir.up =>
+      room == 'cellar'
+          ? const [Offset(315, 392), Offset(-60, -38)]
+          : const [Offset(625, 392), Offset(sceneW + 40, -38)],
+    Dir.down => const [Offset(480, _standY + 10), Offset(480, sceneH + 33)],
+  };
+}
 
 /// The point a fraction [t] of the way along [path], and whether the walker
 /// is heading left there.
@@ -210,6 +221,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     if (!mounted) return;
     _idleTimer = Timer(_idleAfter, _onIdle);
     if (g.busy || _moving || _greeting) return;
+    if (!SettingsScope.of(context).remarks) return;
     _say(idleRemarks[_remarks++ % idleRemarks.length]);
   }
 
@@ -254,6 +266,10 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
       // He leaves from wherever he happens to be standing.
       _from = _spot;
     });
+    // Those in a hurry cross in half the time.
+    _walk.duration = Duration(
+      milliseconds: SettingsScope.of(context).quickWalk ? 1700 : 3500,
+    );
     _walk.forward(from: 0);
   }
 
@@ -349,6 +365,27 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                             ),
                           ),
                         ),
+                      // A door that opens as they walk through it.
+                      Positioned.fill(
+                        child: IgnorePointer(
+                          child: AnimatedBuilder(
+                            animation: _walk,
+                            builder: (context, _) {
+                              final (door, open) = _doorway();
+                              if (door == null || open <= 0) {
+                                return const SizedBox.shrink();
+                              }
+                              return CustomPaint(
+                                painter: _DoorPainter(
+                                  door,
+                                  open,
+                                  outside: room.id == 'backyard',
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                      ),
                       if (room.id == 'backyard')
                         Positioned.fill(
                           child: IgnorePointer(
@@ -469,6 +506,21 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                   child: Center(child: _Inventory(g)),
                 ),
               Positioned(left: 14, top: 12, child: _RoomLabel(room)),
+              // Under the room's name, clear of the arrows.
+              Positioned(
+                left: 14,
+                top: 84,
+                child: IconButton(
+                  key: const ValueKey('menu'),
+                  tooltip: 'Menu',
+                  onPressed: () => g.openPanel(Panel.menu),
+                  style: IconButton.styleFrom(
+                    backgroundColor: kInk.withValues(alpha: .9),
+                    side: const BorderSide(color: kGold, width: 2),
+                  ),
+                  icon: const Icon(Icons.menu, color: kGold),
+                ),
+              ),
               Positioned(right: 14, top: 12, child: _Hud(g, widget.voice)),
               if (room.id == 'entrance')
                 Positioned(
@@ -530,6 +582,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                       Panel.notebook => NotebookPanel(g),
                       Panel.accuse => AccusePanel(g),
                       Panel.nook => NookPanel(g),
+                      Panel.menu => MenuPanel(g),
                       _ => PuzzlePanel(g),
                     },
                   ),
@@ -556,6 +609,22 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
         ),
       ),
     );
+  }
+
+  /// The door being walked through just now, if any, and how far it has
+  /// swung open: wide as they reach it, and shut again behind them.
+  (Rect?, double) _doorway() {
+    final d = _dir;
+    if (d == null) return (null, 0);
+    final t = _walk.value;
+    final leaving = t < .5;
+    final door = doorOf(g.roomId, leaving ? d : _opposite(d));
+    if (door == null) return (null, 0);
+    final part = leaving ? t * 2 : t * 2 - 1;
+    final open = leaving
+        ? ((part - .3) / .3).clamp(0.0, 1.0)
+        : 1 - ((part - .3) / .35).clamp(0.0, 1.0);
+    return (door, Curves.easeOut.transform(open));
   }
 
   /// Where Pupcake's paws are: in his doorway until he has been bribed.
@@ -784,12 +853,20 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
   }
 
   Widget _arrow(Dir d, Room next) {
-    final (icon, alignment) = switch (d) {
+    final (icon, edge) = switch (d) {
       Dir.left => (Icons.arrow_back, const Alignment(-.98, -.25)),
       Dir.right => (Icons.arrow_forward, const Alignment(.98, -.25)),
       Dir.up => (Icons.arrow_upward, const Alignment(0, -.96)),
       Dir.down => (Icons.arrow_downward, const Alignment(0, .96)),
     };
+    // Where the way out is a door, the arrow sits on the door.
+    final door = doorOf(g.roomId, d);
+    final alignment = door == null
+        ? edge
+        : Alignment(
+            (door.center.dx - 30) / ((sceneW - 60) / 2) - 1,
+            (door.top + 26) / ((sceneH - 75) / 2) - 1,
+          );
     return Align(
       alignment: alignment,
       child: MouseRegion(
@@ -1085,4 +1162,42 @@ class _Inventory extends StatelessWidget {
       ),
     );
   }
+}
+
+/// A door standing [open] by some amount, with what lies beyond showing
+/// in the gap: lamplight seen from [outside], and the storm from within.
+class _DoorPainter extends CustomPainter {
+  _DoorPainter(this.door, this.open, {required this.outside});
+
+  final Rect door;
+  final double open;
+  final bool outside;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final frame = RRect.fromRectAndRadius(door, const Radius.circular(4));
+    canvas.drawRRect(
+      frame,
+      Paint()
+        ..color = outside ? const Color(0xFFFFC56B) : const Color(0xFF2A2633),
+    );
+    // The leaf swings back on its hinges, narrowing as it goes.
+    final leaf = door.width * (1 - .8 * open);
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        Rect.fromLTWH(door.left, door.top, leaf, door.height),
+        const Radius.circular(4),
+      ),
+      Paint()
+        ..color = outside ? const Color(0xFF5A1414) : const Color(0xFF3A2414),
+    );
+    canvas.drawCircle(
+      Offset(door.left + leaf - 7, door.center.dy),
+      4,
+      Paint()..color = const Color(0xFFD4A537),
+    );
+  }
+
+  @override
+  bool shouldRepaint(_DoorPainter old) => old.open != open || old.door != door;
 }

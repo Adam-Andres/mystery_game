@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:math';
 
 import 'package:flutter/foundation.dart';
@@ -7,11 +8,12 @@ import 'data/hints.dart';
 import 'data/house.dart';
 import 'data/house.dart' as house;
 import 'data/models.dart';
+import 'save.dart';
 
 /// The intro and outro are the narrated scenes outside the mansion.
 enum Phase { title, intro, playing, outro, ended }
 
-enum Panel { none, notebook, accuse, nook, puzzle }
+enum Panel { none, notebook, accuse, nook, puzzle, menu }
 
 /// The hands-on task currently on screen.
 enum Task { none, rubbing, torn, prints }
@@ -57,8 +59,11 @@ const twistOdds = 1 / 20;
 const shakyVoice = 'watsonut-shaky';
 
 class GameState extends ChangeNotifier {
-  GameState({Random? random, this.twistChance = twistOdds})
+  GameState({Random? random, this.twistChance = twistOdds, this.store})
     : _rng = random ?? Random();
+
+  /// Where the game in progress is kept, so that it survives a reload.
+  final SaveStore? store;
 
   /// The chance that a game chosen at random is the rare one.
   final double twistChance;
@@ -228,7 +233,150 @@ class GameState extends ChangeNotifier {
     puzzle = null;
     task = Task.none;
     dialogue = null;
+    store?.clear(slot);
     phase = skipIntro ? Phase.playing : Phase.intro;
+    notifyListeners();
+  }
+
+  /// Everything needed to pick the investigation up where it was left.
+  Map<String, Object?> toJson() => {
+    'version': _saveVersion,
+    'case': mystery.id,
+    'caseIndex': _caseIndex,
+    'evidence': [for (final e in evidence) e.id],
+    'room': roomId,
+    'found': found.toList(),
+    'visited': visited.toList(),
+    'unlocked': unlocked.toList(),
+    'items': items,
+    'taken': taken.toList(),
+    'asked': asked.toList(),
+    'hintsUsed': hintsUsed,
+    'accuseHintsGiven': accuseHintsGiven,
+    'combination': combination,
+    'pinOrder': pinOrder,
+    'cornerLifted': cornerLifted,
+    'sheetAttached': sheetAttached,
+  };
+
+  static const _saveVersion = 1;
+
+  /// Which of the save slots this investigation is kept in.
+  int slot = 0;
+
+  /// Whenever anything changes during an investigation, it is saved.
+  @override
+  void notifyListeners() {
+    if (phase == Phase.playing) store?.write(slot, jsonEncode(toJson()));
+    super.notifyListeners();
+  }
+
+  /// What is in [slot], for the title screen: how many clues have been
+  /// found out of how many, and where Churlock was standing. Null if empty.
+  ({int found, int total, String room})? summaryOf(int slot) {
+    final saved = store?.read(slot);
+    if (saved == null) return null;
+    try {
+      final json = jsonDecode(saved) as Map<String, dynamic>;
+      return (
+        found: (json['found'] as List).length,
+        total: (json['evidence'] as List).length,
+        room: roomById(json['room'] as String).name,
+      );
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// Opens [slot] from the title screen: the investigation saved there, or
+  /// a new one if there is none.
+  void open(int slot) {
+    this.slot = slot;
+    if (!restore()) newGame();
+  }
+
+  /// Picks up the saved investigation, if there is one, and says whether
+  /// there was. A save that no longer makes sense is thrown away.
+  bool restore() {
+    final saved = store?.read(slot);
+    if (saved == null) return false;
+    try {
+      final json = jsonDecode(saved) as Map<String, dynamic>;
+      if (json['version'] != _saveVersion) throw const FormatException();
+      final m = [...allCases, twistCase].firstWhere((c) => c.id == json['case']);
+      final known = {
+        for (final e in [...m.pool, ...m.gifts, m.prints]) e.id: e,
+      };
+      List<String> strings(String key) => (json[key] as List).cast<String>();
+      final drawn = [for (final id in strings('evidence')) known[id]!];
+      final room = roomById(json['room'] as String);
+      mystery = m;
+      _caseIndex = json['caseIndex'] as int?;
+      evidence = drawn;
+      roomId = room.id;
+      found
+        ..clear()
+        ..addAll(strings('found'));
+      visited
+        ..clear()
+        ..addAll(strings('visited'));
+      unlocked
+        ..clear()
+        ..addAll(strings('unlocked'));
+      items
+        ..clear()
+        ..addAll(strings('items'));
+      taken
+        ..clear()
+        ..addAll(strings('taken'));
+      asked
+        ..clear()
+        ..addAll(strings('asked'));
+      hintsUsed = json['hintsUsed'] as int;
+      accuseHintsGiven = json['accuseHintsGiven'] as int;
+      combination = (json['combination'] as List).cast<int>();
+      pinOrder = (json['pinOrder'] as List).cast<int>();
+      cornerLifted = json['cornerLifted'] as bool;
+      sheetAttached = json['sheetAttached'] as bool;
+    } catch (_) {
+      store?.clear(slot);
+      return false;
+    }
+    accused.clear();
+    hintPrompt = false;
+    arriving = false;
+    panel = Panel.none;
+    nook = null;
+    puzzle = null;
+    task = Task.none;
+    dialogue = null;
+    phase = Phase.playing;
+    notifyListeners();
+    return true;
+  }
+
+  void _leave() {
+    panel = Panel.none;
+    nook = null;
+    puzzle = null;
+    task = Task.none;
+    dialogue = null;
+    hintPrompt = false;
+    phase = Phase.title;
+  }
+
+  /// Goes back to the title screen, leaving the investigation saved.
+  void toTitle() {
+    if (phase == Phase.playing) store?.write(slot, jsonEncode(toJson()));
+    _leave();
+    notifyListeners();
+  }
+
+  /// Abandons the investigation for good and goes back to the title screen,
+  /// where the next game will be a different mystery.
+  void reset() {
+    _leave();
+    store?.clear(slot);
     notifyListeners();
   }
 
@@ -513,6 +661,8 @@ class GameState extends ChangeNotifier {
     if (!canAccuse) return;
     panel = Panel.none;
     dialogue = null;
+    // The case is over, one way or the other.
+    store?.clear(slot);
     phase = Phase.outro;
     notifyListeners();
   }
