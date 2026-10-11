@@ -20,17 +20,22 @@ const _atticFloor = Color(0xFF5E432C);
 
 const rooms = <Room>[
   // Attic
+  Room(id: 'groom', name: "Servants' Quarters", level: 2, col: -1, wall: Color(0xFF6E7B6A), floor: _atticFloor),
   Room(id: 'storage', name: 'Storage Nook', level: 2, col: 0, wall: _atticWall, floor: _atticFloor),
   Room(id: 'bedroom', name: "Tira's Bedroom", level: 2, col: 1, wall: Color(0xFF9A6F7A), floor: _atticFloor),
   Room(id: 'landing', name: 'Attic Landing', level: 2, col: 2, wall: _atticWall, floor: _atticFloor),
   Room(id: 'study', name: "Mrs. Senclair's Study", level: 2, col: 3, wall: Color(0xFF5E6B4A), floor: _atticFloor),
-  // Ground floor, with the yard behind the kitchen
+  Room(id: 'mbedroom', name: "Mrs. Senclair's Bedroom", level: 2, col: 4, wall: Color(0xFF6A4A5E), floor: _atticFloor),
+  // Ground floor, with the yard behind the kitchen and the shed beyond it
+  Room(id: 'shed', name: 'Potting Shed', level: 1, col: -2, wall: Color(0xFF6B5136), floor: Color(0xFF4A3724)),
   Room(id: 'backyard', name: 'Backyard', level: 1, col: -1, wall: Color(0xFF2A2633), floor: Color(0xFF2E3B2A)),
   Room(id: 'kitchen', name: 'Kitchen', level: 1, col: 0, wall: Color(0xFFD9C9A0), floor: Color(0xFF9A8468)),
   Room(id: 'dining', name: 'Dining Room', level: 1, col: 1, wall: Color(0xFF3E5C76), floor: Color(0xFF7B5536)),
   Room(id: 'entrance', name: 'Entrance Hall', level: 1, col: 2, wall: Color(0xFF2F6F73), floor: Color(0xFF8A5A3A)),
   Room(id: 'parlor', name: 'Parlor', level: 1, col: 3, wall: Color(0xFF7A3B46), floor: Color(0xFF6E4A2F)),
+  Room(id: 'croom', name: "The Colonel's Room", level: 1, col: 4, wall: Color(0xFF55624A), floor: Color(0xFF6E4A2F)),
   // Basement
+  Room(id: 'proom', name: "Penny's Room", level: 0, col: 0, wall: _stone, floor: _stoneFloor),
   Room(id: 'pantry', name: 'Pantry', level: 0, col: 1, wall: _stone, floor: _stoneFloor),
   Room(id: 'cellar', name: 'Cellar', level: 0, col: 2, wall: _stone, floor: _stoneFloor),
   Room(id: 'boiler', name: 'Boiler Room', level: 0, col: 3, wall: _stone, floor: _stoneFloor),
@@ -183,13 +188,18 @@ const placements = <String, List<(String, double)>>{
 const slots = <String, List<Offset>>{
   'entrance': [Offset(440, 426), Offset(170, 150), Offset(326, 215), Offset(480, 300), Offset(600, 430), Offset(372, 498)],
   'parlor': [Offset(455, 340), Offset(250, 395), Offset(480, 255), Offset(865, 200), Offset(165, 165), Offset(250, 320)],
-  'dining': [Offset(430, 312), Offset(175, 210), Offset(560, 312), Offset(830, 165), Offset(340, 440), Offset(480, 150)],
+  'dining': [Offset(430, 312), Offset(175, 210), Offset(560, 312), Offset(830, 165), Offset(340, 440), Offset(585, 96)],
   'kitchen': [Offset(380, 150), Offset(560, 222), Offset(155, 285), Offset(830, 150), Offset(320, 300)],
   'pantry': [Offset(330, 300), Offset(640, 300), Offset(160, 200), Offset(480, 350), Offset(560, 450)],
   'backyard': [Offset(150, 300), Offset(275, 404), Offset(790, 395), Offset(872, 330), Offset(585, 470)],
+  'mbedroom': [Offset(280, 286), Offset(730, 282), Offset(500, 250), Offset(165, 300), Offset(560, 440)],
+  'groom': [Offset(250, 215), Offset(560, 392), Offset(450, 300), Offset(160, 440), Offset(640, 300)],
+  'croom': [Offset(450, 408), Offset(460, 150), Offset(640, 300), Offset(250, 440), Offset(880, 430)],
+  'proom': [Offset(300, 160), Offset(560, 300), Offset(160, 420), Offset(760, 220), Offset(620, 440)],
+  'shed': [Offset(300, 430), Offset(520, 282), Offset(165, 300), Offset(840, 420), Offset(440, 440)],
   'cellar': [Offset(395, 452), Offset(200, 480), Offset(565, 425), Offset(430, 290), Offset(805, 230)],
   'boiler': [Offset(240, 455), Offset(382, 240), Offset(610, 440), Offset(880, 270), Offset(545, 290)],
-  'landing': [Offset(640, 296), Offset(290, 200), Offset(835, 360), Offset(480, 140), Offset(220, 440), Offset(560, 392)],
+  'landing': [Offset(640, 296), Offset(290, 200), Offset(835, 360), Offset(480, 222), Offset(220, 440), Offset(560, 392)],
   'study': [Offset(470, 300), Offset(275, 200), Offset(880, 300), Offset(765, 165), Offset(160, 260), Offset(560, 360)],
   'bedroom': [Offset(268, 312), Offset(430, 400), Offset(855, 215), Offset(850, 290), Offset(185, 170)],
   'storage': [Offset(485, 395), Offset(180, 300), Offset(650, 290), Offset(800, 250), Offset(615, 410)],
@@ -429,6 +439,150 @@ const nooks = <Nook>[
       ),
     ],
   ),
+  Nook(
+    id: 'cabinet',
+    name: 'Bedside Cabinet',
+    room: 'mbedroom',
+    pos: Offset(280, 372),
+    icon: Icons.lock,
+    blurb: 'A little walnut cabinet beside her bed, with a brass lock no '
+        'bigger than a thumbnail.',
+    needs: 'brasskey',
+    barred: 'Locked, and too fine a lock to force without splintering it. '
+        'There will be a key to this somewhere in the house.',
+    action: 'Use the brass key',
+    junk: [
+      Junk(
+        'Smelling salts',
+        "Smelling salts, three bottles, all empty. Running this household "
+            "took it out of her.",
+        icon: Icons.science,
+      ),
+    ],
+  ),
+  Nook(
+    id: 'swardrobe',
+    name: "Mrs. Senclair's Wardrobe",
+    room: 'mbedroom',
+    pos: Offset(880, 235),
+    icon: Icons.checkroom,
+    blurb: 'A tall wardrobe that smells of lavender and vanilla.',
+    junk: [
+      Junk(
+        'Black dresses',
+        "Thirty black dresses, all exactly alike. She had found what "
+            "suited her and saw no reason to look further.",
+        icon: Icons.dry_cleaning,
+      ),
+    ],
+  ),
+  Nook(
+    id: 'gwardrobe',
+    name: "Graham's Wardrobe",
+    room: 'groom',
+    pos: Offset(790, 235),
+    icon: Icons.checkroom,
+    blurb: 'The butler\'s plain deal wardrobe, kept as neat as an operating '
+        'theatre.',
+    junk: [
+      Junk(
+        'Tailcoats',
+        "Seven identical tailcoats, each on a numbered hanger. Number four "
+            "is at the laundry. There is a note pinned to the rail to say "
+            "so.",
+        icon: Icons.dry_cleaning,
+      ),
+    ],
+  ),
+  Nook(
+    id: 'washstand',
+    name: 'Washstand',
+    room: 'croom',
+    pos: Offset(170, 300),
+    icon: Icons.wash,
+    blurb: 'A marble-topped washstand with a jug, a basin and a drawer.',
+    junk: [
+      Junk(
+        'Moustache wax',
+        "Moustache wax, in three strengths: Parade, Mess Dinner, and "
+            "Enemy in Sight.",
+        icon: Icons.face,
+      ),
+    ],
+  ),
+  Nook(
+    id: 'wardrobetop',
+    name: 'Top of the Wardrobe',
+    room: 'croom',
+    pos: Offset(790, 118),
+    icon: Icons.height,
+    blurb: 'Something has been pushed to the back on top of the wardrobe, '
+        'out of sight from the floor.',
+    needs: 'stepstool',
+    barred: 'I am a churro of moderate height, and that is seven feet up. '
+        'I want something to stand on.',
+    action: 'Climb up on the stool',
+    junk: [
+      Junk(
+        'Dust',
+        "Dust, a quarter of an inch deep, with one clean square in it "
+            "where the box sat.",
+        icon: Icons.grain,
+      ),
+    ],
+  ),
+  Nook(
+    id: 'sewing',
+    name: 'Sewing Basket',
+    room: 'proom',
+    pos: Offset(720, 400),
+    icon: Icons.shopping_basket,
+    blurb: 'A wicker basket of wools, needles and other people\'s buttons.',
+    junk: [
+      Junk(
+        'Knitting',
+        "Half a scarf, in the Colonel's regimental colours. She is "
+            "fonder of the old fraud than she lets on.",
+        icon: Icons.gesture,
+      ),
+    ],
+  ),
+  Nook(
+    id: 'floorboard',
+    name: 'Loose Floorboard',
+    room: 'proom',
+    pos: Offset(470, 462),
+    icon: Icons.view_day,
+    blurb: 'One board under the rug sits a hair higher than its neighbours.',
+    needs: 'crowbar',
+    barred: 'It is nailed at one end, and I cannot get so much as a '
+        'fingernail under the other. It wants levering up.',
+    action: 'Lever it up',
+    junk: [
+      Junk(
+        'Mouse nest',
+        "A mouse's nest, made of shredded grocery lists. I apologise to "
+        "the occupant and put the board back gently.",
+        icon: Icons.pest_control_rodent,
+      ),
+    ],
+  ),
+  Nook(
+    id: 'toolrack',
+    name: 'Tool Rack',
+    room: 'shed',
+    pos: Offset(760, 215),
+    icon: Icons.handyman,
+    blurb: 'Rakes, hoes and shears, each hung on its own painted outline.',
+    junk: [
+      Junk(
+        'Scythe',
+        "A scythe with “MIND” painted along the blade in red. Barry is a "
+            "careful man with anything sharp.",
+        icon: Icons.content_cut,
+      ),
+    ],
+  ),
 ];
 
 Nook nookById(String id) => nooks.firstWhere((n) => n.id == id);
@@ -465,6 +619,38 @@ const items = <Item>[
     description: "A bone-shaped shortbread from a jar on the pantry shelf, "
         "labelled “PUPCAKE'S. One a day, however he looks at you.” I know a "
         "bribe when I see one.",
+  ),
+  Item(
+    id: 'brasskey',
+    name: 'Brass Key',
+    room: 'groom',
+    pos: Offset(620, 205),
+    icon: Icons.key,
+    color: Color(0xFFFFD54F),
+    description: "A small brass key on the hook board in the servants' quarters, "
+        "under a label in Graham's hand: “Madam's bedside cabinet. Spare.” A "
+        "butler keeps a spare of everything.",
+  ),
+  Item(
+    id: 'stepstool',
+    name: 'Step Stool',
+    room: 'proom',
+    pos: Offset(850, 400),
+    icon: Icons.chair_alt,
+    color: Color(0xFFFFCC80),
+    description: "Penny's three-legged step stool, from beside her bed. She "
+        "uses it for the top shelves. I shall use it for the tops of other "
+        "people's wardrobes.",
+  ),
+  Item(
+    id: 'crowbar',
+    name: 'Crowbar',
+    room: 'shed',
+    pos: Offset(650, 300),
+    icon: Icons.hardware,
+    description: "A crowbar from among Barry's tools, with “NOT A TOY” "
+        "painted down it. Just the thing for a floorboard that does not "
+        "want to come up.",
   ),
 ];
 

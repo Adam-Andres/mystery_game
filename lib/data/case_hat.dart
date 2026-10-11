@@ -10,7 +10,7 @@ const hatCase = MysteryCase(
   title: 'Hat Trick',
   culprits: {'tira'},
   nextVictims: ['cannoli', 'graham', 'penny', 'barry'],
-  herringCount: 10,
+  herringCount: 14,
   solution:
       "Tira Misu had been signing her aunt's name on cheques to her "
       "milliner, and Mrs. Senclair had asked the bank manager and the "
@@ -125,6 +125,7 @@ const hatCase = MysteryCase(
     ],
   ],
   herrings: [
+    ...roomHerrings,
     will, bills, dismissal, spade, jobAd, recipe, threat, berryStain, crumbs,
     cocoa, sauceDrip, betting, savings, diary, iou, slipper, scratches,
     letters, medal,
@@ -307,6 +308,7 @@ const hatCase = MysteryCase(
       cannoliIou,
       cannoliProof,
       cannoliBetting,
+      ...cannoliRoom,
       cannoliMedal,
     ],
     'tira': [

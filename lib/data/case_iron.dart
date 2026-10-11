@@ -9,7 +9,7 @@ const ironCase = MysteryCase(
   title: 'Pressing Matters',
   culprits: {'graham'},
   nextVictims: ['cannoli', 'penny', 'tira', 'barry'],
-  herringCount: 10,
+  herringCount: 14,
   solution:
       "For thirty years Graham Cracker had kept two sets of household "
       "books, and the auditor was coming at nine. At ten he borrowed "
@@ -123,6 +123,7 @@ const ironCase = MysteryCase(
     ],
   ],
   herrings: [
+    ...roomHerrings,
     will, bills, dismissal, spade, jobAd, recipe, threat, berryStain, crumbs,
     cocoa, sauceDrip, betting, savings, diary, iou, sabre, slipper,
     scratches, medal, letters,
@@ -389,6 +390,7 @@ const ironCase = MysteryCase(
       cannoliProof,
       cannoliSabre,
       cannoliBetting,
+      ...cannoliRoom,
       cannoliMedal,
     ],
     'tira': [

@@ -26,6 +26,10 @@ const roomWindows = <String, Rect>{
   'study': Rect.fromLTWH(700, 100, 130, 130),
   'bedroom': Rect.fromLTWH(130, 110, 110, 120),
   'landing': Rect.fromLTWH(422, 82, 116, 116),
+  'mbedroom': Rect.fromLTWH(105, 100, 120, 130),
+  'groom': Rect.fromLTWH(420, 90, 110, 110),
+  'croom': Rect.fromLTWH(600, 95, 90, 120),
+  'shed': Rect.fromLTWH(110, 110, 130, 110),
 };
 
 /// Soda rain streaking past a room's window. [cycle] loops 0..1.
@@ -117,6 +121,16 @@ class RoomPainter extends CustomPainter {
         _storage();
       case 'backyard':
         _backyard();
+      case 'mbedroom':
+        _mbedroom();
+      case 'groom':
+        _groom();
+      case 'croom':
+        _croom();
+      case 'proom':
+        _proom();
+      case 'shed':
+        _shed();
     }
     final bounds = Offset.zero & size;
     c.drawRect(
@@ -813,5 +827,193 @@ class RoomPainter extends CustomPainter {
     );
     _rect(bowl.dx - 36, bowl.dy - 20, 72, 7, const Color(0xFF90CAF9), 3);
     _label('DOG', bowl.translate(0, 1), 14, const Color(0xFF1565C0));
+  }
+
+  // Bedrooms
+
+  /// A bed seen side on: headboard at [x], [w] long, on the floor at [y].
+  void _bed(double x, double y, double w, Color cover, {double head = 110}) {
+    _rect(x, y - head, 16, head + 20, _darkWood, 4);
+    _rect(x + w - 12, y - 50, 12, 70, _darkWood, 4);
+    _rect(x + 14, y - 8, w - 26, 20, _wood);
+    _rect(x + 14, y - 42, w - 26, 38, Colors.white, 8);
+    _rect(x + 22, y - 62, 66, 28, Colors.white, 12);
+    _rect(x + 96, y - 46, w - 108, 46, cover, 8);
+  }
+
+  void _wardrobe(double x, double y, double w, double h, Color col) {
+    _rect(x, y, w, h, col, 4);
+    _rect(x + 6, y + 8, w / 2 - 9, h - 16, Color.lerp(col, Colors.white, .12)!, 3);
+    _rect(x + w / 2 + 3, y + 8, w / 2 - 9, h - 16, Color.lerp(col, Colors.white, .12)!, 3);
+    c.drawCircle(Offset(x + w / 2 - 7, y + h / 2), 4, fill(_brass));
+    c.drawCircle(Offset(x + w / 2 + 7, y + h / 2), 4, fill(_brass));
+    _rect(x - 6, y - 8, w + 12, 10, _darkWood, 3);
+  }
+
+  void _mbedroom() {
+    _window();
+    _picture(330, 80, 120, 90, const Color(0xFF5B3A4A));
+    _eclair(390, 126, 78);
+    // Four-poster bed.
+    const drape = Color(0xFF8E2A4A);
+    for (final x in [350.0, 628.0]) {
+      _rect(x, 150, 14, 290, _darkWood, 4);
+    }
+    _rect(344, 142, 304, 16, _darkWood, 4);
+    for (var x = 356.0; x < 630; x += 34) {
+      c.drawArc(Rect.fromLTWH(x, 150, 34, 30), 0, pi, true, fill(drape));
+    }
+    _bed(352, 420, 290, drape, head: 150);
+    // Bedside cabinet, with a lamp on it.
+    _rect(246, 318, 70, 104, _wood, 4);
+    _rect(254, 344, 54, 60, _lightWood, 3);
+    c.drawCircle(const Offset(300, 374), 4, fill(_brass));
+    _rect(284, 290, 5, 28, _brass);
+    c.drawPath(
+      Path()..addPolygon(const [Offset(268, 294), Offset(305, 294), Offset(297, 266), Offset(276, 266)], true),
+      fill(const Color(0xFFF8BBD0)),
+    );
+    // Dressing table and looking glass.
+    _table(670, 322, 130, 420);
+    _rect(690, 336, 90, 26, _lightWood, 3);
+    c.drawOval(const Rect.fromLTWH(700, 200, 70, 110), fill(_brass));
+    c.drawOval(const Rect.fromLTWH(707, 207, 56, 96), fill(const Color(0xFFB3E5FC)));
+    _wardrobe(830, 110, 104, 240, const Color(0xFF5A3A2A));
+    // Rug.
+    c.drawOval(const Rect.fromLTWH(380, 440, 260, 60), fill(const Color(0xFF7A3B46)));
+  }
+
+  void _groom() {
+    _window();
+    // A narrow iron bedstead, made with hospital corners.
+    final iron = stroke(const Color(0xFF37474F), 6);
+    c.drawLine(const Offset(130, 300), const Offset(130, 430), iron);
+    c.drawLine(const Offset(380, 340), const Offset(380, 430), iron);
+    c.drawLine(const Offset(130, 300), const Offset(180, 300), iron);
+    _rect(130, 392, 250, 14, const Color(0xFF37474F));
+    _rect(132, 362, 248, 34, Colors.white, 4);
+    _rect(140, 344, 60, 24, Colors.white, 8);
+    _rect(206, 362, 174, 34, const Color(0xFF78909C), 4);
+    // The timetable pinned above it.
+    _rect(214, 180, 72, 70, const Color(0xFFFFF3DC), 2);
+    for (var y = 192.0; y < 244; y += 10) {
+      c.drawLine(Offset(222, y), Offset(278, y), stroke(Colors.black38, 1.5));
+    }
+    c.drawCircle(const Offset(250, 184), 3, fill(const Color(0xFFD32F2F)));
+    // Hook board for the household's spare keys.
+    _rect(570, 180, 110, 12, _darkWood, 3);
+    for (var x = 584.0; x < 676; x += 22) {
+      c.drawLine(Offset(x, 190), Offset(x, 202), stroke(_brass, 3));
+      c.drawCircle(Offset(x, 208), 5, stroke(_brass, 2.5));
+    }
+    // Washbowl, chair and wastepaper basket.
+    _rect(440, 300, 40, 50, _wood, 4);
+    _rect(430, 340, 60, 10, _wood, 2);
+    c.drawPath(
+      Path()..addPolygon(const [Offset(538, 372), Offset(582, 372), Offset(574, 420), Offset(546, 420)], true),
+      fill(const Color(0xFFB98443)),
+    );
+    _wardrobe(730, 110, 120, 240, const Color(0xFF6B5A44));
+    // Seven pairs of shoes, toes to the wall.
+    for (var x = 610.0; x < 720; x += 18) {
+      c.drawOval(Rect.fromLTWH(x, 338, 14, 9), fill(Colors.black87));
+    }
+  }
+
+  void _croom() {
+    _window();
+    // Campaign maps, with a great many pins in them.
+    _rect(360, 90, 200, 120, const Color(0xFFE8D9B0), 3);
+    c.drawPath(
+      Path()
+        ..moveTo(380, 180)
+        ..quadraticBezierTo(430, 110, 470, 160)
+        ..quadraticBezierTo(510, 200, 540, 120),
+      stroke(const Color(0xFF8D6E63), 3),
+    );
+    for (final (x, y) in const [(392.0, 150.0), (430.0, 128.0), (468.0, 160.0), (505.0, 176.0), (532.0, 132.0)]) {
+      c.drawCircle(Offset(x, y), 4, fill(const Color(0xFFD32F2F)));
+    }
+    // Washstand with jug and basin.
+    _table(120, 300, 100, 420);
+    _rect(120, 292, 100, 10, const Color(0xFFECEFF1), 3);
+    c.drawOval(const Rect.fromLTWH(140, 274, 60, 20), fill(Colors.white));
+    _rect(196, 250, 18, 42, Colors.white, 6);
+    // Camp bed, tight as a drum.
+    _bed(300, 420, 300, const Color(0xFF3C7A4C), head: 70);
+    _trunk(640, 370, 70, 50, const Color(0xFF4E342E));
+    _wardrobe(730, 130, 120, 220, const Color(0xFF4E3B2A));
+    // Whatever is on top of it cannot be seen from down here.
+    _rect(770, 112, 50, 12, const Color(0xFF3A2414), 2);
+    // Boots, polished, at attention.
+    for (final x in [872.0, 900.0]) {
+      _rect(x, 396, 18, 34, Colors.black87, 5);
+    }
+  }
+
+  void _proom() {
+    _hangingLamp(480, 70);
+    // Certificates, in a row.
+    _rect(210, 196, 190, 8, _wood);
+    for (var x = 216.0; x < 390; x += 46) {
+      _picture(x + 4, 140, 30, 44, const Color(0xFFFFF3DC));
+    }
+    // Bed with a patchwork quilt.
+    _bed(120, 420, 270, const Color(0xFFC2185B));
+    for (var x = 220.0; x < 380; x += 34) {
+      c.drawLine(Offset(x, 374), Offset(x, 420), stroke(Colors.white38, 2));
+    }
+    // Chest of drawers and a rocking chair.
+    _rect(520, 250, 130, 100, _wood, 4);
+    for (final y in [262.0, 294.0, 324.0]) {
+      _rect(530, y, 110, 22, _lightWood, 3);
+      c.drawCircle(Offset(585, y + 11), 3, fill(_brass));
+    }
+    _rect(720, 250, 70, 100, _darkWood, 10);
+    c.drawArc(const Rect.fromLTWH(700, 392, 110, 40), 0, pi, false, stroke(_darkWood, 6));
+    // Sewing basket.
+    c.drawOval(const Rect.fromLTWH(690, 398, 64, 30), fill(const Color(0xFFB98443)));
+    c.drawCircle(const Offset(708, 398), 9, fill(const Color(0xFFEC407A)));
+    c.drawCircle(const Offset(732, 396), 9, fill(const Color(0xFF42A5F5)));
+    // Rag rug, with one board beneath it not quite flat.
+    c.drawOval(const Rect.fromLTWH(380, 440, 200, 50), fill(const Color(0xFF6D4C41)));
+    c.drawOval(const Rect.fromLTWH(400, 448, 160, 34), fill(const Color(0xFF8D6E63)));
+    c.drawLine(const Offset(430, 470), const Offset(520, 466), stroke(_darkWood, 3));
+    // The step stool.
+    _rect(828, 410, 44, 8, _lightWood, 2);
+    for (final x in [832.0, 850.0, 866.0]) {
+      c.drawLine(Offset(x, 418), Offset(x + (x - 850) * .3, 446), stroke(_wood, 4));
+    }
+  }
+
+  void _shed() {
+    // Plank walls, and a window streaming with rain.
+    for (var x = 0.0; x < sceneW; x += 60) {
+      c.drawLine(Offset(x, 0), Offset(x, floorY), stroke(Colors.black26, 3));
+    }
+    _window();
+    // Potting bench, pots and seedlings.
+    _table(380, 300, 320, 420, _lightWood);
+    _rect(370, 292, 340, 12, _wood, 3);
+    for (final (x, tall) in const [(410.0, 30.0), (460.0, 44.0), (600.0, 36.0), (660.0, 26.0)]) {
+      _rect(x, 262, 34, 30, const Color(0xFFBF5B17), 4);
+      c.drawOval(Rect.fromCenter(center: Offset(x + 17, 258 - tall / 2), width: 18, height: tall), fill(const Color(0xFF43A047)));
+    }
+    // The almanac, open.
+    _rect(498, 278, 46, 14, const Color(0xFFFFF3DC), 2);
+    // Tool rack.
+    _rect(700, 150, 190, 10, _darkWood, 3);
+    for (var x = 720.0; x < 880; x += 38) {
+      c.drawLine(Offset(x, 160), Offset(x, 320), stroke(_wood, 5));
+      _rect(x - 12, 316, 24, 16, const Color(0xFF78909C), 3);
+    }
+    // Sacks of compost.
+    c.drawOval(const Rect.fromLTWH(800, 370, 90, 70), fill(const Color(0xFF6D4C41)));
+    c.drawOval(const Rect.fromLTWH(850, 390, 80, 60), fill(const Color(0xFF5D4037)));
+    // The camp bed, rolled up, and a bucket under the drip.
+    _rect(120, 360, 40, 90, const Color(0xFF78909C), 14);
+    c.drawLine(const Offset(300, 0), const Offset(300, 380), stroke(const Color(0x55B3E5FC), 2));
+    _rect(278, 392, 46, 40, const Color(0xFF90A4AE), 5);
+    c.drawOval(const Rect.fromLTWH(278, 386, 46, 12), fill(const Color(0xFFB3E5FC)));
   }
 }

@@ -9,7 +9,7 @@ const flatCase = MysteryCase(
   title: 'The Flat Truth',
   culprits: {'cannoli'},
   nextVictims: ['graham', 'penny', 'barry', 'tira'],
-  herringCount: 10,
+  herringCount: 14,
   solution:
       "Colonel Cannoli owed Mrs. Senclair 50,000 sugar cubes, and she had "
       "learned that his medals were chocolate coins. At 10:45 he left the chess "
@@ -138,6 +138,7 @@ const flatCase = MysteryCase(
     ],
   ],
   herrings: [
+    ...roomHerrings,
     will, bills, cocoa, dismissal, spade, berryStain, jobAd, crumbs, recipe,
     sauceDrip, threat, betting, savings, diary, slipper, scratches, letters,
   ],
@@ -408,6 +409,7 @@ const flatCase = MysteryCase(
         gives: extensionForged,
       ),
       cannoliBetting,
+      ...cannoliRoom,
     ],
     'tira': [
       Topic(

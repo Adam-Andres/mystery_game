@@ -318,7 +318,7 @@ class Room {
   final Color wall;
   final Color floor;
 
-  String get levelName => id == 'backyard'
+  String get levelName => id == 'backyard' || id == 'shed'
       ? 'Outside'
       : const ['Basement', 'Ground Floor', 'Attic'][level];
 }

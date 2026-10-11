@@ -1222,7 +1222,7 @@ class MapPanel extends StatelessWidget {
               Expanded(
                 child: Row(
                   children: [
-                    for (var col = -1; col < 4; col++)
+                    for (var col = -2; col < 5; col++)
                       Expanded(child: _cell(level, col)),
                   ],
                 ),

@@ -139,6 +139,14 @@ class ExteriorPainter extends CustomPainter {
     c.drawPath(Path()..addPolygon(panes, true), frame);
     c.drawLine(const Offset(236, 300), const Offset(236, ground), frame);
     c.drawLine(const Offset(196, 330), const Offset(276, 330), frame);
+    // Barry's potting shed, beyond the greenhouse.
+    final plank = Color.lerp(Colors.black, const Color(0xFF6B5136), dim)!;
+    _rect(118, 344, 64, ground - 344, plank);
+    c.drawPath(
+      Path()..addPolygon(const [Offset(110, 348), Offset(190, 348), Offset(150, 318)], true),
+      fill(Color.lerp(Colors.black, const Color(0xFF4A3724), dim)!),
+    );
+    _rect(140, 362, 20, ground - 362, Color.lerp(Colors.black, const Color(0xFF3A2414), dim)!, 2);
     // Kennel roof.
     c.drawPath(
       Path()..addPolygon(const [Offset(340, 362), Offset(374, 328), Offset(408, 362)], true),
@@ -149,13 +157,13 @@ class ExteriorPainter extends CustomPainter {
     c.drawCircle(const Offset(374, 328), 5, fill(const Color(0xFFD32F2F)));
     // Wafer fence.
     final wafer = fill(Color.lerp(Colors.black, const Color(0xFFB98443), dim)!);
-    for (var x = 186.0; x < 440; x += 18) {
+    for (var x = 96.0; x < 400; x += 18) {
       c.drawRRect(
         RRect.fromRectAndRadius(Rect.fromLTWH(x, fenceTop, 15, ground - fenceTop), const Radius.circular(3)),
         wafer,
       );
     }
-    _rect(182, 366, 260, 5, Color.lerp(Colors.black, const Color(0xFF6B4226), dim)!);
+    _rect(92, 366, 310, 5, Color.lerp(Colors.black, const Color(0xFF6B4226), dim)!);
   }
 
   void _mansion() {
@@ -170,6 +178,25 @@ class ExteriorPainter extends CustomPainter {
         fill(Colors.white.withValues(alpha: .22 * (1 - rise))),
       );
     }
+
+    // The wings: the servants' quarters under the eaves on the left, and on
+    // the right Mrs. Senclair's bedroom over the Colonel's room.
+    const wing = Color(0xFF7A4520);
+    _rect(396, 262, 48, ground - 262, wing);
+    c.drawPath(
+      Path()..addPolygon(const [Offset(388, 266), Offset(444, 266), Offset(444, 226)], true),
+      fill(_darkBread),
+    );
+    _icedEdge(const Offset(388, 266), const Offset(444, 226), 3, 1);
+    _window(406, 284, 26, 34);
+    _rect(838, 250, 70, ground - 250, wing);
+    c.drawPath(
+      Path()..addPolygon(const [Offset(838, 254), Offset(918, 254), Offset(838, 204)], true),
+      fill(_darkBread),
+    );
+    _icedEdge(const Offset(918, 254), const Offset(838, 204), 4, 2);
+    _window(856, 274, 34, 40);
+    _window(856, 340, 34, 40);
 
     // Tower.
     _rect(440, 172, 92, ground - 172, const Color(0xFF8A4F22));

@@ -9,7 +9,7 @@ const cakeCase = MysteryCase(
   title: 'The Twelve-Year Fruitcake',
   culprits: {'penny'},
   nextVictims: ['barry', 'graham', 'tira', 'cannoli'],
-  herringCount: 10,
+  herringCount: 14,
   solution:
       "Thirty years ago Mrs. Senclair built her fortune on Penny Cotta's cream "
       "puff recipe and never paid her a cube; now she meant to retire Penny "
@@ -135,6 +135,7 @@ const cakeCase = MysteryCase(
     ],
   ],
   herrings: [
+    ...roomHerrings,
     will, bills, iou, regiment, dismissal, spade, jobAd, cocoa, crumbs,
     threat, berryStain, sabre, betting, savings, diary, slipper, scratches,
     letters, medal,
@@ -385,6 +386,7 @@ const cakeCase = MysteryCase(
       cannoliIou,
       cannoliProof,
       cannoliBetting,
+      ...cannoliRoom,
       cannoliMedal,
       cannoliRegiment,
       cannoliSabre,

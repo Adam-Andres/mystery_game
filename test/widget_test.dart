@@ -196,6 +196,39 @@ void main() {
       expect(wanted, {for (final i in items) i.id});
     });
 
+    test('everybody who lives in the house has somewhere to sleep', () {
+      for (final id in ['mbedroom', 'groom', 'croom', 'proom', 'shed']) {
+        final room = roomById(id);
+        // Each can be walked to from the rest of the house.
+        expect(
+          Dir.values.any((d) => neighbor(room, d) != null),
+          isTrue,
+          reason: id,
+        );
+        expect(slots[id], isNotEmpty, reason: id);
+        expect(nooks.where((n) => n.room == id), isNotEmpty, reason: id);
+        // And every mystery has things to find there.
+        for (final c in [...allCases, twistCase]) {
+          expect(c.pool.where((e) => e.room == id), isNotEmpty, reason: id);
+        }
+      }
+      // The three new tools each open something in one of them.
+      for (final (tool, place) in [
+        ('brasskey', 'cabinet'),
+        ('stepstool', 'wardrobetop'),
+        ('crowbar', 'floorboard'),
+      ]) {
+        expect(nookById(place).needs, tool);
+        final g = GameState(random: Random(1), twistChance: 0)
+          ..newGame(caseIndex: 0, skipIntro: true);
+        expect(g.isOpen(nookById(place)), isFalse);
+        g.take(itemById(tool));
+        g.forceOpen(nookById(place));
+        expect(g.isOpen(nookById(place)), isTrue);
+        expect(g.items, isEmpty);
+      }
+    });
+
     test('a new game never repeats the previous mystery', () {
       final g = GameState(random: Random(7), twistChance: 0);
       final seen = <String>{};

@@ -9,7 +9,7 @@ const brewCase = MysteryCase(
   title: 'A Bitter Brew',
   culprits: {'tira', 'graham'},
   nextVictims: ['penny', 'cannoli', 'barry'],
-  herringCount: 10,
+  herringCount: 14,
   solution:
       "Mrs. Senclair was about to sign a new will, cutting off her niece Tira "
       "and dismissing Graham without a pension for helping Tira pawn her "
@@ -143,6 +143,7 @@ const brewCase = MysteryCase(
     ],
   ],
   herrings: [
+    ...roomHerrings,
     iou, sabre, dismissal, spade, recipe, berryStain, sauceDrip, threat,
     cocoa, crumbs, jobAd, betting, savings, diary, slipper, scratches,
     letters, medal,
@@ -499,6 +500,7 @@ const brewCase = MysteryCase(
       cannoliIou,
       cannoliProof,
       cannoliBetting,
+      ...cannoliRoom,
       cannoliMedal,
       cannoliSabre,
     ],

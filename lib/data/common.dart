@@ -286,6 +286,19 @@ const cannoliMedal = Topic(
 
 const grahamYard = [
   Topic(
+    'resign', 'You wrote a letter of resignation.',
+    "A month ago, sir, on the day she refused the reference. I tore it up "
+    "the same evening. One does not walk out after thirty years. One "
+    "simply irons a little harder.",
+    needs: ['resign'],
+  ),
+  Topic(
+    'locket', 'She kept your portrait in a locket.',
+    "Did she, sir. ...Did she indeed. I had supposed it thrown away in "
+    "the first year. You will forgive me. I find I must sit down.",
+    needs: ['locket'],
+  ),
+  Topic(
     'slipper', 'Your slipper was in the kennel, with cellar dust on it.',
     "The animal has stolen my left slipper every week since it was a pup, "
     "sir. I wear them when I do the cellar book. I have asked Madam for a "
@@ -303,11 +316,138 @@ const grahamYard = [
 
 const pennyYard = [
   Topic(
+    'pills', 'She did not take her pill last night.',
+    "She hardly ever did. Said they tasted of chalk and she had too much "
+    "to do to have a weak heart. I'd find them in the pot plants.",
+    needs: ['pillbox'],
+  ),
+  Topic(
+    'prizes', 'Second place, eleven years running.',
+    "And first place to my own recipe every time, with her name on the "
+    "card. Yes, it rankles. It has rankled for eleven years. I frame them "
+    "so that I shan't forget to be cross.",
+    needs: ['prizes'],
+  ),
+  Topic(
+    'nestegg', 'There is a tin of savings under your floor.',
+    "You've had my floor up! Four hundred cubes in thirty years, "
+    "Detective. That's not a motive. That's a pension, and a poor one.",
+    needs: ['nestegg'],
+  ),
+  Topic(
     'scratches', 'Something has clawed at the back door.',
     "Pupcake. He wants in every time it rains, and I won't have it. He "
     "sheds sprinkles into everything. He scratched at that door half the "
     "night, the little beast.",
     needs: ['scratches'],
+  ),
+];
+
+// Red herrings in the bedrooms, and Barry's shed.
+
+const roomHerrings = [
+  Evidence(
+    'pillbox', 'Pill Box', 'mbedroom', 0,
+    "On her bedside table, a pill box with a compartment for every night "
+    "of the week. The label reads: “For the heart. One at bedtime.” Last "
+    "night's is still in it.",
+    icon: Icons.medication, color: Color(0xFFB2EBF2),
+  ),
+  Evidence(
+    'blotter', 'Blotting Pad', 'mbedroom', 1,
+    "The blotting pad on her dressing table. Whatever she last wrote was "
+    "pressed hard, and the rubbing raises it: “Remember. Pupcake's "
+    "birthday, Friday. Order a bone.” She was not all hard glaze.",
+    icon: Icons.sticky_note_2, color: paper,
+    puzzle: Puzzle.rubbing,
+    pieces: ['Remember.', "Pupcake's birthday,", 'Friday. Order a bone.'],
+  ),
+  Evidence(
+    'locket', 'Gold Locket', 'mbedroom', 0,
+    "In the bedside cabinet, on a bed of cotton wool: a gold locket. "
+    "Inside is a tiny portrait of a young cracker with a bow tie, very "
+    "upright, and trying not to smile.",
+    icon: Icons.favorite, color: gold, inside: 'cabinet',
+  ),
+  Evidence(
+    'timetable', 'Railway Timetable', 'groom', 0,
+    "Pinned above Graham's bed in the servants' quarters, a railway timetable. The 6:15 to Shortbread "
+    "is underlined in red, and in the margin, in his neat hand: “Sister. "
+    "Sundays. Take ginger nuts.”",
+    icon: Icons.train, color: paper,
+  ),
+  Evidence(
+    'resign', 'Torn-up Letter', 'groom', 1,
+    "In Graham's wastepaper basket, torn in pieces: “Madam, it is with "
+    "regret that after thirty years I must give notice.” It is dated a "
+    "month ago, and it was never sent.",
+    icon: Icons.mail, color: paper,
+    puzzle: Puzzle.torn,
+    pieces: [
+      'Madam,',
+      'it is with regret that',
+      'after thirty years',
+      'I must give notice.',
+      'G. Cracker',
+    ],
+  ),
+  Evidence(
+    'toffee', 'Toffee Apples', 'croom', 0,
+    "Under the Colonel's bed, a paper bag of toffee apples. One has been "
+    "attacked with something much too large for the job, and lost.",
+    icon: Icons.apple, color: Color(0xFFEF9A9A),
+  ),
+  Evidence(
+    'medalbox', 'Cigar Box', 'croom', 0,
+    "On top of the wardrobe, a cigar box lined with cotton wool. Eleven "
+    "medals, real silver, every one engraved alike: “Fort Fondant Catering "
+    "Corps. Best Trifle.”",
+    icon: Icons.military_tech, color: Color(0xFFCFD8DC),
+    inside: 'wardrobetop',
+  ),
+  Evidence(
+    'prizes', 'Prize Certificates', 'proom', 0,
+    "A shelf of framed certificates from the Donut County Fair. “Second "
+    "Place, Puddings: P. Cotta.” Eleven of them, for eleven years running. "
+    "A newspaper cutting is tucked into the last: first place, each year, "
+    "to Mrs. É. Senclair.",
+    icon: Icons.workspace_premium, color: gold,
+  ),
+  Evidence(
+    'nestegg', 'Biscuit Tin', 'proom', 0,
+    "Under the floorboard, a biscuit tin: four hundred sugar cubes in "
+    "small change, and a photograph of a shuttered tea shop with “One day” "
+    "written on the back.",
+    icon: Icons.savings, color: gold, inside: 'floorboard',
+  ),
+  Evidence(
+    'almanac', "Gardener's Almanac", 'shed', 1,
+    "Barry's almanac, open on the bench at this week. Thursday is ringed "
+    "in pencil: “Hard frost. Cover the strawberries.”",
+    icon: Icons.menu_book, color: Color(0xFFC5E1A5),
+  ),
+  Evidence(
+    'leak', 'Dripping Roof', 'shed', 0,
+    "A bucket under a drip in the shed roof, full to the brim with soda "
+    "rain, and Barry's camp bed stripped and rolled against the wall. "
+    "Nobody slept out here last night.",
+    icon: Icons.water_drop, color: Color(0xFFB2EBF2),
+  ),
+];
+
+const cannoliRoom = [
+  Topic(
+    'trifle', 'Eleven silver medals for trifle.',
+    "Put that back at once, sir. ...Oh, very well. Forty years in the "
+    "Catering Corps, and nobody made a trifle like mine. Those are the "
+    "only medals I ever earned, and I keep them where no one will laugh.",
+    needs: ['medalbox'],
+  ),
+  Topic(
+    'toffee', 'What happened to this toffee apple?',
+    "I carved it with my sabre, sir. Or tried to. The sabre won. It "
+    "generally does.",
+    needs: ['toffee'],
   ),
 ];
 
@@ -547,6 +687,13 @@ const barryAbout = Topic(
 );
 
 const barryBasics = [
+  Topic(
+    'shed', 'Your bed in the shed was not slept in.',
+    "Roof's leaked since the spring, guv. I told her and told her. When "
+    "it rains I doss down by the boiler. Nobody's slept in that shed "
+    "since Tuesday but the spiders.",
+    needs: ['leak'],
+  ),
   Topic(
     'lockedout', 'Graham latches the doors at ten.',
     "Too right he does. I hammered on the back door a good while before "

@@ -89,6 +89,8 @@ class _MysteryAppState extends State<MysteryApp> {
     ambience.set(switch (g.phase) {
       Phase.playing => switch (g.room) {
         Room(id: 'backyard') => Weather.outside,
+        // Rain on a tin roof.
+        Room(id: 'shed') => Weather.attic,
         Room(level: 0) => Weather.basement,
         Room(level: 2) => Weather.attic,
         _ => Weather.indoors,

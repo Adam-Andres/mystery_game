@@ -10,7 +10,7 @@ const caneCase = MysteryCase(
   title: 'Raising Cane',
   culprits: {'penny', 'barry'},
   nextVictims: ['graham', 'tira', 'cannoli'],
-  herringCount: 10,
+  herringCount: 14,
   solution:
       "Mrs. Senclair was to sign away Senclair Confections this morning, "
       "recipes and all, and turn out the staff. Penny Cotta, whose recipe "
@@ -101,6 +101,7 @@ const caneCase = MysteryCase(
     ],
   ],
   herrings: [
+    ...roomHerrings,
     will, bills, dismissal, spade, jobAd, recipe, threat, berryStain, crumbs,
     cocoa, sauceDrip, betting, diary, iou, slipper, scratches, letters,
     medal,
@@ -341,6 +342,7 @@ const caneCase = MysteryCase(
       cannoliIou,
       cannoliProof,
       cannoliBetting,
+      ...cannoliRoom,
       cannoliMedal,
     ],
     'tira': [

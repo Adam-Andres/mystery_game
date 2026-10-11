@@ -10,7 +10,7 @@ const caskCase = MysteryCase(
   title: 'The Cask of Amaretto',
   culprits: {'barry', 'cannoli'},
   nextVictims: ['graham', 'penny', 'tira'],
-  herringCount: 10,
+  herringCount: 14,
   solution:
       "For a year Colonel Cannoli and Barry Tart had been carrying Mrs. "
       "Senclair's vintage port out through the yard and selling it, and she "
@@ -142,6 +142,7 @@ const caskCase = MysteryCase(
     ],
   ],
   herrings: [
+    ...roomHerrings,
     will, bills, dismissal, spade, jobAd, recipe, threat, berryStain, crumbs,
     cocoa, sauceDrip, betting, savings, diary, slipper, scratches, letters,
     medal,
@@ -425,6 +426,7 @@ const caskCase = MysteryCase(
         needs: ['ricottacask'],
       ),
       cannoliBetting,
+      ...cannoliRoom,
       cannoliMedal,
     ],
     'tira': [

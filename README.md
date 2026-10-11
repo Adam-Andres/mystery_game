@@ -4,7 +4,7 @@ A point-and-click murder mystery built with Flutter, starring desserts.
 
 Mrs. Senclair, the éclair of Donut County, has been murdered in her own cellar.
 The Donut County Police have called in Detective Churlock, a churro, to search
-her three-floor house and work out which of the five residents did it — one of
+her three-floor house, its bedrooms, yard and potting shed, and work out which of the five residents did it — one of
 them alone, or two of them together.
 
 ## How to play

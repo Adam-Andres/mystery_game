@@ -971,7 +971,8 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     return Positioned(
       left: max(8, head.dx - 30),
       bottom: sceneH - head.dy - 14,
-      width: 250,
+      // Wide enough that his longer speeches do not run up the wall.
+      width: remark.length > 160 ? 360 : 250,
       child: IgnorePointer(
         child: Container(
           key: const ValueKey('watsonut-remark'),
@@ -1212,7 +1213,7 @@ class _Hud extends StatelessWidget {
                       Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          for (var col = -1; col < 4; col++) _cell(level, col),
+                          for (var col = -2; col < 5; col++) _cell(level, col),
                         ],
                       ),
                   ],
@@ -1242,7 +1243,7 @@ class _Hud extends StatelessWidget {
       color = Colors.white12;
     }
     return Container(
-      width: 16,
+      width: 13,
       height: 10,
       margin: const EdgeInsets.all(1.5),
       decoration: BoxDecoration(

@@ -12,7 +12,7 @@ const holeCase = MysteryCase(
   title: 'The Hole Truth',
   culprits: {'watsonut'},
   nextVictims: ['graham', 'penny', 'cannoli', 'tira', 'barry'],
-  herringCount: 10,
+  herringCount: 14,
   solution:
       "Long John Watsonut was born in Donut County, and thirty years ago Mrs. "
       "Senclair paid for the medical degree he never finished. He had been "
@@ -119,6 +119,7 @@ const holeCase = MysteryCase(
     ],
   ],
   herrings: [
+    ...roomHerrings,
     will, bills, dismissal, spade, jobAd, recipe, threat, berryStain, crumbs,
     cocoa, sauceDrip, betting, savings, diary, iou, sabre, slipper,
     scratches, letters, medal,
@@ -346,6 +347,7 @@ const holeCase = MysteryCase(
       cannoliProof,
       cannoliSabre,
       cannoliBetting,
+      ...cannoliRoom,
       cannoliMedal,
     ],
     'tira': [
