@@ -1,5 +1,7 @@
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 
 import 'save.dart';
@@ -17,6 +19,13 @@ class Settings extends ChangeNotifier {
       music = json['music'] as bool? ?? music;
       remarks = json['remarks'] as bool? ?? remarks;
       quickWalk = json['quickWalk'] as bool? ?? quickWalk;
+      final bound = json['keys'];
+      if (bound is Map) {
+        for (final action in keys.keys.toList()) {
+          final id = bound[action];
+          if (id is int) keys[action] = id;
+        }
+      }
       final size = json['textSize'] as int? ?? textSize;
       textSize = size.clamp(0, textSizes.length - 1);
     } catch (_) {
@@ -49,6 +58,45 @@ class Settings extends ChangeNotifier {
   /// Index into [textSizes].
   int textSize = 1;
 
+  /// The actions that have a key, in the order the settings list them.
+  static const actions = {
+    'menu': 'Settings',
+    'notebook': 'Notebook',
+    'map': 'Map',
+  };
+
+  /// Action -> the id of the key that performs it. They can be changed.
+  final keys = <String, int>{
+    'menu': LogicalKeyboardKey.escape.keyId,
+    'notebook': LogicalKeyboardKey.keyN.keyId,
+    'map': LogicalKeyboardKey.keyM.keyId,
+  };
+
+  /// The action [key] is bound to, if any.
+  String? actionFor(LogicalKeyboardKey key) {
+    for (final entry in keys.entries) {
+      if (entry.value == key.keyId) return entry.key;
+    }
+    return null;
+  }
+
+  /// What to call the key for [action] on screen.
+  String keyName(String action) {
+    final key = LogicalKeyboardKey.findKeyByKeyId(keys[action]!);
+    if (key == LogicalKeyboardKey.escape) return 'Esc';
+    if (key == LogicalKeyboardKey.space) return 'Space';
+    final label = key?.keyLabel ?? '?';
+    return label.isEmpty ? '?' : label;
+  }
+
+  /// Gives [action] a new key. A key already doing something else swaps
+  /// with it, so that no two actions ever share one.
+  void bind(String action, LogicalKeyboardKey key) => update((s) {
+    final other = s.actionFor(key);
+    if (other != null && other != action) s.keys[other] = s.keys[action]!;
+    s.keys[action] = key.keyId;
+  });
+
   double get textScale => textSizes[textSize];
 
   /// Changes something by way of [change], and remembers it.
@@ -62,6 +110,7 @@ class Settings extends ChangeNotifier {
         'remarks': remarks,
         'quickWalk': quickWalk,
         'textSize': textSize,
+        'keys': keys,
       }),
     );
     notifyListeners();
@@ -84,3 +133,9 @@ class SettingsScope extends InheritedNotifier<Settings> {
 
   static final _defaults = Settings();
 }
+
+/// Whether the player is likely to have a keyboard: not on a phone or a
+/// tablet. Keyboard shortcuts are shown and offered only where they are.
+bool get hasKeyboard =>
+    defaultTargetPlatform != TargetPlatform.android &&
+    defaultTargetPlatform != TargetPlatform.iOS;

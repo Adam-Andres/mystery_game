@@ -87,15 +87,11 @@ const watsonut = Person(
       "ask me. I shan't volunteer. You know how you get.",
 );
 
-/// What Watsonut says as they come into the house: how to ask him for his
-/// opinion, and how to get about quickly, which depends on whether the
-/// player has a keyboard or only a finger.
+/// What Watsonut says as they come into the house. With a keyboard, the
+/// keys are written beside the buttons they press, and he need say no more
+/// than how to ask his opinion. On a touch screen he also explains the map.
 String arrivalGreeting({required bool touch}) =>
-    '${watsonut.greeting} ${touch ? _travelByTouch : _travelByKey}';
-
-const _travelByKey =
-    "And should you want to be somewhere else in a hurry, press M, or click "
-    "the little map in the corner, and choose any room we have already seen.";
+    touch ? '${watsonut.greeting} $_travelByTouch' : watsonut.greeting;
 
 const _travelByTouch =
     "And should you want to be somewhere else in a hurry, tap the little map "

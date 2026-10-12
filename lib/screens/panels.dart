@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../data/cases.dart';
 import '../data/house.dart';
@@ -1141,6 +1142,23 @@ class MenuPanel extends StatelessWidget {
                       ),
                   ],
                 ),
+                // The keys, which can be changed: only where there are any.
+                if (hasKeyboard) ...[
+                  const SizedBox(height: 6),
+                  Wrap(
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    spacing: 8,
+                    runSpacing: 4,
+                    children: [
+                      const SizedBox(
+                        width: 110,
+                        child: Text('Keys', style: kBody),
+                      ),
+                      for (final action in Settings.actions.keys)
+                        _KeyBinder(settings, action),
+                    ],
+                  ),
+                ],
                 if (onClose == null) ...[
                   const Divider(color: kGold),
                   Wrap(
@@ -1313,6 +1331,75 @@ class MapPanel extends StatelessWidget {
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// A button showing the key for one action. Pressed, it waits for the next
+/// key and makes that the key instead.
+class _KeyBinder extends StatefulWidget {
+  const _KeyBinder(this.settings, this.action);
+
+  final Settings settings;
+  final String action;
+
+  @override
+  State<_KeyBinder> createState() => _KeyBinderState();
+}
+
+class _KeyBinderState extends State<_KeyBinder> {
+  bool _listening = false;
+
+  bool _onKey(KeyEvent event) {
+    if (event is! KeyDownEvent) return true;
+    final key = event.logicalKey;
+    // The arrows are spoken for: they move Churlock about the house.
+    final arrows = {
+      LogicalKeyboardKey.arrowLeft,
+      LogicalKeyboardKey.arrowRight,
+      LogicalKeyboardKey.arrowUp,
+      LogicalKeyboardKey.arrowDown,
+    };
+    if (!arrows.contains(key)) widget.settings.bind(widget.action, key);
+    _stop();
+    return true;
+  }
+
+  void _start() {
+    if (_listening) return;
+    HardwareKeyboard.instance.addHandler(_onKey);
+    setState(() => _listening = true);
+  }
+
+  void _stop() {
+    HardwareKeyboard.instance.removeHandler(_onKey);
+    if (mounted) setState(() => _listening = false);
+  }
+
+  @override
+  void dispose() {
+    HardwareKeyboard.instance.removeHandler(_onKey);
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final name = Settings.actions[widget.action]!;
+    return OutlinedButton(
+      key: ValueKey('bind-${widget.action}'),
+      onPressed: _start,
+      style: OutlinedButton.styleFrom(
+        foregroundColor: _listening ? kInk : kCream,
+        backgroundColor: _listening ? kGold : null,
+        side: const BorderSide(color: kGold),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        minimumSize: Size.zero,
+      ),
+      child: Text(
+        _listening
+            ? '$name: press a key…'
+            : '$name: ${widget.settings.keyName(widget.action)}',
       ),
     );
   }

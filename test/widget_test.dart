@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -243,13 +244,122 @@ void main() {
     });
   });
 
-  test('Watsonut explains fast travel to suit the device', () {
-    expect(arrivalGreeting(touch: false), contains('press M'));
-    expect(arrivalGreeting(touch: true), isNot(contains('press M')));
-    for (final touch in [false, true]) {
-      expect(arrivalGreeting(touch: touch), startsWith(watsonut.greeting));
-      expect(arrivalGreeting(touch: touch), contains('little map'));
-    }
+  test('Watsonut explains the map only where there are no keys to show', () {
+    // With a keyboard the keys are written beside the buttons instead.
+    expect(arrivalGreeting(touch: false), watsonut.greeting);
+    expect(arrivalGreeting(touch: true), startsWith(watsonut.greeting));
+    expect(arrivalGreeting(touch: true), contains('tap the little map'));
+  });
+
+  group('keys', () {
+    testWidgets('are shown beside their buttons, and open and shut them', (
+      tester,
+    ) async {
+      debugDefaultTargetPlatformOverride = TargetPlatform.linux;
+      final g = GameState(random: Random(2), twistChance: 0);
+      await tester.pumpWidget(
+        MysteryApp(state: g, voice: Voice(SilentPlayer())),
+      );
+      g.newGame(caseIndex: 0, skipIntro: true);
+      await tester.pump();
+      expect(find.text('Settings  [Esc]'), findsOneWidget);
+      expect(find.textContaining('[N]'), findsOneWidget);
+      expect(find.text('Map  [M]'), findsOneWidget);
+
+      await tester.sendKeyEvent(LogicalKeyboardKey.keyN);
+      await tester.pump();
+      expect(g.panel, Panel.notebook);
+      await tester.sendKeyEvent(LogicalKeyboardKey.keyN);
+      await tester.pump();
+      expect(g.panel, Panel.none);
+      // Escape opens the settings, and backs out of anything.
+      await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+      await tester.pump();
+      expect(g.panel, Panel.menu);
+      await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+      await tester.pump();
+      expect(g.panel, Panel.none);
+      g.openPanel(Panel.notebook);
+      await tester.pump();
+      await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+      await tester.pump();
+      expect(g.panel, Panel.none);
+      debugDefaultTargetPlatformOverride = null;
+    });
+
+    testWidgets('can be changed in the settings, and are remembered', (
+      tester,
+    ) async {
+      debugDefaultTargetPlatformOverride = TargetPlatform.linux;
+      final store = MemoryStore();
+      final settings = Settings(store);
+      final g = GameState(random: Random(2), twistChance: 0);
+      await tester.pumpWidget(
+        MysteryApp(
+          state: g,
+          voice: Voice(SilentPlayer()),
+          settings: settings,
+        ),
+      );
+      g.newGame(caseIndex: 0, skipIntro: true);
+      await tester.pump();
+      g.openPanel(Panel.menu);
+      await tester.pump();
+      await tester.tap(_key('bind-notebook'));
+      await tester.pump();
+      expect(find.textContaining('press a key'), findsOneWidget);
+      await tester.sendKeyEvent(LogicalKeyboardKey.keyJ);
+      await tester.pump();
+      expect(find.text('Notebook: J'), findsOneWidget);
+      // The panel is still open: the key was taken for the setting.
+      expect(g.panel, Panel.menu);
+      // Taking a key that is in use swaps the two.
+      await tester.tap(_key('bind-map'));
+      await tester.pump();
+      await tester.sendKeyEvent(LogicalKeyboardKey.keyJ);
+      await tester.pump();
+      expect(find.text('Map: J'), findsOneWidget);
+      expect(find.text('Notebook: M'), findsOneWidget);
+      // An arrow key is refused.
+      await tester.tap(_key('bind-map'));
+      await tester.pump();
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowUp);
+      await tester.pump();
+      expect(find.text('Map: J'), findsOneWidget);
+
+      g.closePanel();
+      await tester.pump();
+      expect(find.text('Map  [J]'), findsOneWidget);
+      await tester.sendKeyEvent(LogicalKeyboardKey.keyJ);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 500));
+      expect(g.panel, Panel.map);
+      g.closePanel();
+      await tester.pump();
+      await tester.sendKeyEvent(LogicalKeyboardKey.keyN);
+      await tester.pump();
+      expect(g.panel, Panel.none);
+
+      final again = Settings(store);
+      expect(again.keyName('map'), 'J');
+      expect(again.keyName('notebook'), 'M');
+      expect(again.keyName('menu'), 'Esc');
+      debugDefaultTargetPlatformOverride = null;
+    });
+
+    testWidgets('are not offered on a touch screen', (tester) async {
+      final g = GameState(random: Random(2), twistChance: 0);
+      await tester.pumpWidget(
+        MysteryApp(state: g, voice: Voice(SilentPlayer())),
+      );
+      g.newGame(caseIndex: 0, skipIntro: true);
+      await tester.pump();
+      expect(find.text('Settings'), findsOneWidget);
+      expect(_key('map-hint'), findsNothing);
+      g.openPanel(Panel.menu);
+      await tester.pump();
+      expect(_key('bind-map'), findsNothing);
+    });
   });
 
   test('every spoken line has a voice clip', () {
@@ -497,7 +607,7 @@ void main() {
       g.beginInvestigation();
       await tester.pump();
       expect(store.slots.keys, [0]);
-      await tester.pump(const Duration(seconds: 14));
+      await tester.pump(const Duration(seconds: 24));
     });
 
     testWidgets('three case files are kept apart on the title screen', (
@@ -516,7 +626,7 @@ void main() {
       expect(g.phase, Phase.intro);
       g.beginInvestigation();
       await tester.pump();
-      await tester.pump(const Duration(seconds: 14));
+      await tester.pump(const Duration(seconds: 24));
       final second = g.mystery.id;
       g.enter(roomById('kitchen'));
       await tester.pump();
@@ -536,7 +646,7 @@ void main() {
       await tester.pump();
       g.beginInvestigation();
       await tester.pump();
-      await tester.pump(const Duration(seconds: 14));
+      await tester.pump(const Duration(seconds: 24));
       expect(g.mystery.id, isNot(second));
       g.toTitle();
       await tester.pump();
@@ -620,7 +730,7 @@ void main() {
       await tester.tap(_key('close-panel'));
       await tester.pump();
       expect(g.panel, Panel.none);
-      await tester.pump(const Duration(seconds: 14));
+      await tester.pump(const Duration(seconds: 24));
     });
 
     testWidgets('the settings can be opened from the title screen', (
@@ -1819,7 +1929,7 @@ void main() {
         ..toggleAccused(innocents.last)
         ..makeArrest();
       await tester.pump();
-      await tester.pump(const Duration(seconds: 14));
+      await tester.pump(const Duration(seconds: 24));
       g.showVerdict();
       await tester.pump();
       expect(find.text('THE KILLER STRIKES AGAIN'), findsOneWidget);

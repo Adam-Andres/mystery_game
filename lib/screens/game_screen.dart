@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:math';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -243,11 +242,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
   Future<void> _greet() async {
     if (!mounted) return;
     // A phone has no M key to press.
-    final text = arrivalGreeting(
-      touch:
-          defaultTargetPlatform == TargetPlatform.android ||
-          defaultTargetPlatform == TargetPlatform.iOS,
-    );
+    final text = arrivalGreeting(touch: !hasKeyboard);
     setState(() => _remark = text);
     final clock = Stopwatch()..start();
     await widget.voice.say((voice: watsonut.id, text: text), owner: this);
@@ -437,27 +432,39 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     }
   }
 
+  void _backOut() {
+    if (g.hintPrompt) {
+      g.answerHintPrompt(wanted: false);
+    } else if (g.dialogue != null) {
+      g.closeDialogue();
+    } else if (g.panel == Panel.puzzle) {
+      g.cancelTask();
+    } else if (g.panel != Panel.none) {
+      g.closePanel();
+    }
+  }
+
   KeyEventResult _onKey(FocusNode node, KeyEvent event) {
     if (event is! KeyDownEvent || _greeting) return KeyEventResult.ignored;
     final key = event.logicalKey;
-    if (key == LogicalKeyboardKey.escape) {
-      if (g.hintPrompt) {
-        g.answerHintPrompt(wanted: false);
-      } else if (g.dialogue != null) {
-        g.closeDialogue();
-      } else if (g.panel == Panel.puzzle) {
-        g.cancelTask();
-      } else if (g.panel != Panel.none) {
-        g.closePanel();
-      }
+    // Escape always backs out of whatever is open, whatever else it does.
+    if (key == LogicalKeyboardKey.escape && g.busy) {
+      _backOut();
       return KeyEventResult.handled;
     }
-    // M for map: it opens, and shuts again.
-    if (key == LogicalKeyboardKey.keyM) {
-      if (g.panel == Panel.map) {
+    // The keys for the settings, the notebook and the map each open their
+    // panel, and shut it again. They can be changed in the settings.
+    final panel = switch (SettingsScope.of(context).actionFor(key)) {
+      'menu' => Panel.menu,
+      'notebook' => Panel.notebook,
+      'map' => Panel.map,
+      _ => null,
+    };
+    if (panel != null) {
+      if (g.panel == panel) {
         g.closePanel();
       } else if (!g.busy && !_moving) {
-        g.openPanel(Panel.map);
+        g.openPanel(panel);
       }
       return KeyEventResult.handled;
     }
@@ -1165,6 +1172,11 @@ class _Hud extends StatelessWidget {
   /// which only the Settings button is there to be pressed.
   final bool settingsOnly;
 
+  /// The key that does the same as a button, to go after its label: only
+  /// where there is a keyboard to press it on.
+  static String _hint(BuildContext context, String action) =>
+      hasKeyboard ? '  [${SettingsScope.of(context).keyName(action)}]' : '';
+
   /// Keeps its place, unseen and untouchable, in the settings-only copy.
   Widget _unless(Widget child) => settingsOnly
       ? IgnorePointer(child: Opacity(opacity: 0, child: child))
@@ -1188,13 +1200,15 @@ class _Hud extends StatelessWidget {
               fontWeight: FontWeight.bold,
             ),
           ),
-          child: const Text('Settings'),
+          child: Text('Settings${_hint(context, 'menu')}'),
         ),
         const SizedBox(width: 6),
         _unless(
           GoldButton(
             key: settingsOnly ? null : const ValueKey('notebook'),
-            label: 'Notebook ${g.found.length}/${g.evidence.length}',
+            label:
+                'Notebook ${g.found.length}/${g.evidence.length}'
+                '${_hint(context, 'notebook')}',
             onPressed: () => g.openPanel(Panel.notebook),
           ),
         ),
@@ -1209,6 +1223,16 @@ class _Hud extends StatelessWidget {
                 padding: const EdgeInsets.all(7),
                 child: Column(
                   children: [
+                    if (hasKeyboard)
+                      Text(
+                        'Map${_hint(context, 'map')}',
+                        key: const ValueKey('map-hint'),
+                        style: const TextStyle(
+                          color: kGold,
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     for (var level = 2; level >= 0; level--)
                       Row(
                         mainAxisSize: MainAxisSize.min,
