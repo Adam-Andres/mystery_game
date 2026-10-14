@@ -1108,6 +1108,15 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
           onTap: () => _go(d),
           child: Column(
             mainAxisSize: MainAxisSize.min,
+            // The arrow keeps to its edge of the screen, however long the
+            // name under it, so that it does not drift over other things.
+            // One that belongs to a door stays centred on its door.
+            crossAxisAlignment: switch (d) {
+              _ when door != null => CrossAxisAlignment.center,
+              Dir.left => CrossAxisAlignment.start,
+              Dir.right => CrossAxisAlignment.end,
+              _ => CrossAxisAlignment.center,
+            },
             children: [
               Container(
                 width: 52,

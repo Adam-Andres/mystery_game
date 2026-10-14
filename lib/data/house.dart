@@ -20,6 +20,7 @@ const _atticFloor = Color(0xFF5E432C);
 
 const rooms = <Room>[
   // Attic
+  Room(id: 'proom', name: "Penny's Room", level: 2, col: -2, wall: Color(0xFF8A6B6F), floor: _atticFloor),
   Room(id: 'groom', name: "Servants' Quarters", level: 2, col: -1, wall: Color(0xFF6E7B6A), floor: _atticFloor),
   Room(id: 'storage', name: 'Storage Nook', level: 2, col: 0, wall: _atticWall, floor: _atticFloor),
   Room(id: 'bedroom', name: "Tira's Bedroom", level: 2, col: 1, wall: Color(0xFF9A6F7A), floor: _atticFloor),
@@ -35,7 +36,6 @@ const rooms = <Room>[
   Room(id: 'parlor', name: 'Parlor', level: 1, col: 3, wall: Color(0xFF7A3B46), floor: Color(0xFF6E4A2F)),
   Room(id: 'croom', name: "The Colonel's Room", level: 1, col: 4, wall: Color(0xFF55624A), floor: Color(0xFF6E4A2F)),
   // Basement
-  Room(id: 'proom', name: "Penny's Room", level: 0, col: 0, wall: _stone, floor: _stoneFloor),
   Room(id: 'pantry', name: 'Pantry', level: 0, col: 1, wall: _stone, floor: _stoneFloor),
   Room(id: 'cellar', name: 'Cellar', level: 0, col: 2, wall: _stone, floor: _stoneFloor),
   Room(id: 'boiler', name: 'Boiler Room', level: 0, col: 3, wall: _stone, floor: _stoneFloor),
@@ -233,7 +233,7 @@ const nooks = <Nook>[
     id: 'bookcase',
     name: 'Bookcase',
     room: 'parlor',
-    pos: Offset(865, 200),
+    pos: Offset(865, 290),
     icon: Icons.menu_book,
     blurb: 'Four shelves of books that nobody in this house appears to read.',
     junk: [

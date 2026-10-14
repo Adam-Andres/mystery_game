@@ -688,6 +688,13 @@ const barryAbout = Topic(
 
 const barryBasics = [
   Topic(
+    'dark', 'You crossed the cellar at midnight. Did you see nothing?',
+    "Not a thing, guv, and it turns me over to think of it. There's no "
+    "lamp lit down there after ten. I go along the wall by feel, stairs "
+    "to boiler door, same as every wet night. She must've been lyin' "
+    "round behind them barrels the whole time I slept.",
+  ),
+  Topic(
     'shed', 'Your bed in the shed was not slept in.',
     "Roof's leaked since the spring, guv. I told her and told her. When "
     "it rains I doss down by the boiler. Nobody's slept in that shed "
@@ -732,6 +739,13 @@ const whoWasHome = Topic(
 );
 
 const glazeTopics = [
+  Topic(
+    'unseen', 'Could somebody cross this cellar at night and not see her?',
+    "Easily. No lamp is lit down here after ten, and she lay round behind "
+    "the barrels, well off the line from the stairs to the boiler door. "
+    "The housekeeper only found her because she came down with a candle, "
+    "looking for jam.",
+  ),
   Topic(
     'when', 'When did she die?',
     "She was stone cold when we got here at seven this morning. Call it around "

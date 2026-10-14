@@ -1846,6 +1846,95 @@ void main() {
     expect(player.stops, stopsBefore + 1);
   });
 
+  testWidgets('no arrow sits on top of anything else that can be clicked', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(960, 540);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    final clashes = <String>[];
+    for (final mystery in [...allCases, twistCase]) {
+      final g = GameState(random: Random(1));
+      await tester.pumpWidget(
+        MysteryApp(key: UniqueKey(), state: g, voice: Voice(SilentPlayer())),
+      );
+      g.newGame(
+        caseIndex: mystery == twistCase ? null : allCases.indexOf(mystery),
+        twist: mystery == twistCase,
+        skipIntro: true,
+      );
+      // Every possible clue at once, wherever it might be lying.
+      g.evidence = mystery.pool.toList();
+      for (final room in rooms) {
+        g.enter(room);
+        await tester.pump();
+        // Only the round button itself: the name under it may run on.
+        final arrows = {
+          for (final d in Dir.values)
+            if (_key('go-${d.name}').evaluate().isNotEmpty)
+              d: tester.getRect(
+                find.descendant(
+                  of: _key('go-${d.name}'),
+                  matching: find.byType(Icon),
+                ),
+              ).inflate(11),
+        };
+        final things = {
+          for (final e in g.evidenceHere)
+            e.id: Rect.fromCircle(center: evidencePos(e), radius: 22),
+          for (final n in g.nooksHere)
+            n.id: Rect.fromCircle(center: n.pos, radius: 20),
+          for (final i in g.itemsHere)
+            i.id: Rect.fromCircle(center: i.pos, radius: 22),
+        };
+        // The name under each arrow, and under each piece of furniture,
+        // at about the width it has in the real font.
+        double wide(String text) => text.length * 5.8 + 12;
+        final names = <String, Rect>{
+          for (final arrow in arrows.entries)
+            if (neighbor(room, arrow.key) case final Room next)
+              if (doorOf(room.id, arrow.key) == null)
+                '${arrow.key.name} name': switch (arrow.key) {
+                  Dir.left => Rect.fromLTWH(
+                    arrow.value.left,
+                    arrow.value.bottom,
+                    wide(next.name),
+                    18,
+                  ),
+                  Dir.right => Rect.fromLTWH(
+                    arrow.value.right - wide(next.name),
+                    arrow.value.bottom,
+                    wide(next.name),
+                    18,
+                  ),
+                  _ => Rect.fromCenter(
+                    center: arrow.value.bottomCenter.translate(0, 9),
+                    width: wide(next.name),
+                    height: 18,
+                  ),
+                },
+        };
+        final labelled = {
+          ...things,
+          for (final n in g.nooksHere)
+            '${n.id} name': Rect.fromCenter(
+              center: n.pos.translate(0, 32),
+              width: wide(n.name),
+              height: 16,
+            ),
+        };
+        for (final arrow in {...arrows.map((d, r) => MapEntry(d.name, r)), ...names}.entries) {
+          for (final thing in labelled.entries) {
+            if (arrow.value.overlaps(thing.value)) {
+              clashes.add('${room.id}: ${arrow.key} over ${thing.key}');
+            }
+          }
+        }
+      }
+    }
+    expect(clashes.toSet(), isEmpty);
+  });
+
   testWidgets('every room lays out without errors', (tester) async {
     for (var i = 0; i < allCases.length; i++) {
       final g = GameState(random: Random(i));
