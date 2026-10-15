@@ -92,7 +92,7 @@ class _MysteryAppState extends State<MysteryApp> {
         // Rain on a tin roof.
         final r when world.outbuildings.contains(r.id) => Weather.attic,
         Room(level: 0) => Weather.basement,
-        Room(level: 2) => Weather.attic,
+        final r when r.level == world.atticLevel => Weather.attic,
         _ => Weather.indoors,
       },
       Phase.outro || Phase.ended => g.won ? Weather.none : Weather.outside,

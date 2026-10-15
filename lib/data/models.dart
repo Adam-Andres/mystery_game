@@ -330,7 +330,7 @@ class Room {
 
   String get levelName => world.outdoors.contains(id) || world.outbuildings.contains(id)
       ? 'Outside'
-      : const ['Basement', 'Ground Floor', 'Attic'][level];
+      : world.levelNames[level];
 }
 
 /// One spoken line: who says it, and what they say.
@@ -406,6 +406,9 @@ class World {
     required this.certificate,
     required this.looseCorner,
     this.titleColors = const [Color(0xFF4A2A3A), Color(0xFF140A10)],
+    this.links = const {},
+    this.atticLevel = 2,
+    this.levelNames = const ['Basement', 'Ground Floor', 'Attic'],
   });
 
   final String id;
@@ -467,4 +470,14 @@ class World {
 
   /// The glow behind the title screen.
   final List<Color> titleColors;
+
+  /// Where each room leads, by room and direction, for a place that is not
+  /// laid out like a house with one staircase. Empty for one that is.
+  final Map<(String, Dir), String> links;
+
+  /// The level whose rooms are under the roof, where the rain drums.
+  final int? atticLevel;
+
+  /// What each level is called, from the lowest up.
+  final List<String> levelNames;
 }

@@ -17,7 +17,7 @@ const pullCase = MysteryCase(
       "Lolly Popwell and Taffy Pulman were secretly engaged, and Farmer "
       "Kernel had found out. He meant to dismiss Taffy on Saturday and "
       "swore his daughter would never marry a farmhand while he lived. They "
-      "said they spent the evening together in the press room, Taffy "
+      "said they spent the evening together in the press shed, Taffy "
       "cranking the puller while Lolly watched. But at twenty to eleven "
       "Taffy belted the puller to the windmill shaft, and it cranked "
       "itself, faster than any hand could, all night. Together they "
@@ -71,8 +71,8 @@ const pullCase = MysteryCase(
     ],
     [
       Evidence(
-        'ring', 'Ring Box', 'lollyroom', 0,
-        "At the back of Lolly's vanity drawer, a little velvet box. In it, "
+        'ring', 'Ring Box', 'frontroom', 0,
+        "At the back of Lolly's dressing-table drawer, a little velvet box. In it, "
         "a ring twisted out of pink sugar, and a card: “To L. from T. "
         "When we are free.”",
         icon: Icons.diamond, color: Color(0xFFF48FB1), inside: 'vanity',
@@ -115,6 +115,8 @@ const pullCase = MysteryCase(
   deskCode: '1868',
   hints: {
     ...farmHints,
+    ...farmPhoneHints,
+    ...farmPieHints,
     'rockbarrel': "A handle at either end, old chap. Could one dessert "
         "carry that down a flight of steps? Dust it, and then ask the "
         "foreman who moves the barrels.",
@@ -144,7 +146,7 @@ const pullCase = MysteryCase(
         "Then find where each of the five was at that minute.",
     "Three of them are placed by a pie, a creamery slip and a railway "
         "ticket. The other two are placed only by each other, and a machine.",
-    "Go down to the press room and look hard at the puller, at what is "
+    "Go down to the press shed and look hard at the puller, at what is "
         "joined to it, and at what came out of it.",
     "A barrel with a handle at either end, and a hand on each. And a "
         "tally of pulls that no hand could crank. Name them both.",
@@ -247,7 +249,7 @@ const pullCase = MysteryCase(
     'lolly': [
       Topic(
         'where', whereQ,
-        "In the press room, with Taffy, from twenty to eleven till twenty "
+        "In the press shed, with Taffy, from twenty to eleven till twenty "
         "to twelve. He was teaching me to pull taffy. It's very good for "
         "the arms. The counter on the machine will tell you.",
       ),
@@ -288,7 +290,7 @@ const pullCase = MysteryCase(
     'taffy': [
       Topic(
         'where', whereQ,
-        "In the press room, crankin' the puller, from twenty to eleven till "
+        "In the press shed, crankin' the puller, from twenty to eleven till "
         "twenty to twelve, with Miss Lolly watchin'. Stop crankin' for two "
         "minutes and the batch sets. Counter'll tell you.",
       ),

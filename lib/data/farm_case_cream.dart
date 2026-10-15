@@ -60,7 +60,7 @@ const creamCase = MysteryCase(
     farmTimeOfDeath,
     [
       Evidence(
-        'gatestand', 'Churn Stand', 'cornfield', 2,
+        'gatestand', 'Churn Stand', 'pasture', 2,
         "The churn stand by the farm gate, where the creamery cart turns. "
         "Four empty churns are back on it, and chalked on the post in the "
         "driver's hand: “Kernel. 4 churns. 10:25.”",
@@ -133,6 +133,8 @@ const creamCase = MysteryCase(
   deskCode: '1880',
   hints: {
     ...farmHints,
+    ...farmPhoneHints,
+    ...farmPieHints,
     'puller': "A machine that counts, at a rate written on its own side, "
         "and a batch that came out soft. That places the farmhand, I "
         "should say.",

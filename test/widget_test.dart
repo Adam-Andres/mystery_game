@@ -544,7 +544,7 @@ void main() {
         g.beginInvestigation();
         await tester.pump();
         await tester.pump(const Duration(seconds: 24));
-        expect(g.roomId, 'fhall');
+        expect(g.roomId, 'porch');
         expect(farm.cases, contains(g.mystery));
         expect(store.slots.keys, [3]);
         expect(find.text('Lolly Popwell'), findsNothing);
@@ -582,6 +582,26 @@ void main() {
         expect(c.culprits.length, inInclusiveRange(1, 2));
       }
       expect(farm.cases.map((c) => c.culprits.length).toSet(), {1, 2});
+      // Seven mysteries, and each of the five does it twice.
+      expect(farm.cases, hasLength(7));
+      for (final p in residents) {
+        expect(
+          farm.cases.where((c) => c.culprits.contains(p.id)),
+          hasLength(2),
+          reason: p.id,
+        );
+      }
+      // Most of the farm is out of doors.
+      expect(
+        rooms
+            .where(
+              (r) =>
+                  farm.outdoors.contains(r.id) ||
+                  farm.outbuildings.contains(r.id),
+            )
+            .length,
+        greaterThan(rooms.length ~/ 2),
+      );
     });
 
     testWidgets('is solved the same way as the mansion', (tester) async {

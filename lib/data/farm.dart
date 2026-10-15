@@ -6,36 +6,152 @@ import 'models.dart';
 
 // The Candy Corn Caper: the Kernel family's candy corn farm, in Candy Land.
 
-const _plank = Color(0xFFC9A46A);
 const _plankFloor = Color(0xFF8A6238);
 const _earth = Color(0xFF5E5145);
 const _earthFloor = Color(0xFF433A30);
 const _loft = Color(0xFFB98D5A);
 
 const farmRooms = <Room>[
-  // Upstairs
-  Room(id: 'lollyroom', name: "Lolly's Room", level: 2, col: 0, wall: Color(0xFFE7A9C4), floor: _plankFloor),
-  Room(id: 'marsharoom', name: "Marsha's Room", level: 2, col: 1, wall: Color(0xFFD9CDE8), floor: _plankFloor),
-  Room(id: 'upstairs', name: 'Upstairs Landing', level: 2, col: 2, wall: _loft, floor: _plankFloor),
-  Room(id: 'farmerroom', name: "Farmer Kernel's Room", level: 2, col: 3, wall: Color(0xFF9AB27A), floor: _plankFloor),
-  Room(id: 'profroom', name: "The Professor's Room", level: 2, col: 4, wall: Color(0xFF6E6A8A), floor: _plankFloor),
-  // Ground floor, the field beyond the kitchen and the barn beyond the office
-  Room(id: 'cornfield', name: 'Candy Corn Field', level: 1, col: -1, wall: Color(0xFF2B2A3A), floor: Color(0xFF6B4E2A)),
-  Room(id: 'fkitchen', name: 'Farmhouse Kitchen', level: 1, col: 0, wall: Color(0xFFF0D9A0), floor: _plankFloor),
-  Room(id: 'frontroom', name: 'Front Room', level: 1, col: 1, wall: Color(0xFFB5603A), floor: _plankFloor),
-  Room(id: 'fhall', name: 'Front Hall', level: 1, col: 2, wall: _plank, floor: _plankFloor),
-  Room(id: 'office', name: 'Farm Office', level: 1, col: 3, wall: Color(0xFF6F7F5C), floor: _plankFloor),
-  Room(id: 'barn', name: 'The Barn', level: 1, col: 4, wall: Color(0xFF9E3A2E), floor: Color(0xFF7A5A34)),
-  // Below
-  Room(id: 'bunk', name: "Taffy's Bunkroom", level: 0, col: 1, wall: _earth, floor: _earthFloor),
-  Room(id: 'rootcellar', name: 'Root Cellar', level: 0, col: 2, wall: _earth, floor: _earthFloor),
-  Room(id: 'pressroom', name: 'Syrup Press Room', level: 0, col: 3, wall: _earth, floor: _earthFloor),
+  // Buildings, each entered through a door from the lane below it
+  Room(
+    id: 'greenhouse',
+    name: 'Greenhouse',
+    level: 2,
+    col: -2,
+    wall: Color(0xFF7FA88A),
+    floor: Color(0xFF5E4A36),
+  ),
+  Room(
+    id: 'fkitchen',
+    name: 'Farmhouse Kitchen',
+    level: 2,
+    col: -1,
+    wall: Color(0xFFF0D9A0),
+    floor: _plankFloor,
+  ),
+  Room(
+    id: 'frontroom',
+    name: 'Front Room',
+    level: 2,
+    col: 0,
+    wall: Color(0xFFB5603A),
+    floor: _plankFloor,
+  ),
+  Room(
+    id: 'office',
+    name: 'Farm Office',
+    level: 2,
+    col: 1,
+    wall: Color(0xFF6F7F5C),
+    floor: _plankFloor,
+  ),
+  Room(
+    id: 'barn',
+    name: 'The Barn',
+    level: 2,
+    col: 2,
+    wall: Color(0xFF9E3A2E),
+    floor: Color(0xFF7A5A34),
+  ),
+  Room(
+    id: 'pressroom',
+    name: 'Press Shed',
+    level: 2,
+    col: 3,
+    wall: _loft,
+    floor: Color(0xFF6B4E2A),
+  ),
+  // The farm lane, out of doors
+  Room(
+    id: 'orchard',
+    name: 'Orchard',
+    level: 1,
+    col: -2,
+    wall: Color(0xFF2B2A3A),
+    floor: Color(0xFF4F6A3C),
+  ),
+  Room(
+    id: 'cornfield',
+    name: 'Candy Corn Field',
+    level: 1,
+    col: -1,
+    wall: Color(0xFF2B2A3A),
+    floor: Color(0xFF6B4E2A),
+  ),
+  Room(
+    id: 'porch',
+    name: 'Front Porch',
+    level: 1,
+    col: 0,
+    wall: Color(0xFF2B2A3A),
+    floor: _plankFloor,
+  ),
+  Room(
+    id: 'farmyard',
+    name: 'Farmyard',
+    level: 1,
+    col: 1,
+    wall: Color(0xFF2B2A3A),
+    floor: Color(0xFF7A5E3A),
+  ),
+  Room(
+    id: 'pasture',
+    name: 'Pasture',
+    level: 1,
+    col: 2,
+    wall: Color(0xFF2B2A3A),
+    floor: Color(0xFF4F6A3C),
+  ),
+  // Below the farmyard
+  Room(
+    id: 'rootcellar',
+    name: 'Root Cellar',
+    level: 0,
+    col: 1,
+    wall: _earth,
+    floor: _earthFloor,
+  ),
 ];
 
+/// Where each place leads. The lane runs left and right; the buildings
+/// are up through their doors, and the root cellar down through the storm
+/// doors in the farmyard.
+const farmLinks = <(String, Dir), String>{
+  ('orchard', Dir.right): 'cornfield',
+  ('cornfield', Dir.left): 'orchard',
+  ('cornfield', Dir.right): 'porch',
+  ('porch', Dir.left): 'cornfield',
+  ('porch', Dir.right): 'farmyard',
+  ('farmyard', Dir.left): 'porch',
+  ('farmyard', Dir.right): 'pasture',
+  ('pasture', Dir.left): 'farmyard',
+  ('orchard', Dir.up): 'greenhouse',
+  ('greenhouse', Dir.down): 'orchard',
+  ('porch', Dir.up): 'frontroom',
+  ('frontroom', Dir.down): 'porch',
+  ('frontroom', Dir.left): 'fkitchen',
+  ('fkitchen', Dir.right): 'frontroom',
+  ('frontroom', Dir.right): 'office',
+  ('office', Dir.left): 'frontroom',
+  ('farmyard', Dir.down): 'rootcellar',
+  ('rootcellar', Dir.up): 'farmyard',
+  ('pasture', Dir.up): 'barn',
+  ('barn', Dir.down): 'pasture',
+  ('barn', Dir.right): 'pressroom',
+  ('pressroom', Dir.left): 'barn',
+};
+
+/// The doors drawn in each place, by the way they lead.
 const farmDoors = <(String, Dir), Rect>{
-  ('fkitchen', Dir.left): Rect.fromLTWH(4, 120, 62, 230),
-  ('cornfield', Dir.right): Rect.fromLTWH(826, 176, 96, 244),
-  ('office', Dir.right): Rect.fromLTWH(892, 130, 64, 220),
+  ('orchard', Dir.up): Rect.fromLTWH(740, 190, 90, 180),
+  ('greenhouse', Dir.down): Rect.fromLTWH(20, 130, 100, 220),
+  ('porch', Dir.up): Rect.fromLTWH(420, 110, 120, 240),
+  ('frontroom', Dir.down): Rect.fromLTWH(630, 120, 80, 230),
+  ('farmyard', Dir.down): Rect.fromLTWH(400, 432, 160, 56),
+  ('pasture', Dir.up): Rect.fromLTWH(130, 150, 140, 210),
+  ('barn', Dir.down): Rect.fromLTWH(20, 130, 110, 220),
+  ('barn', Dir.right): Rect.fromLTWH(892, 130, 64, 220),
+  ('pressroom', Dir.left): Rect.fromLTWH(4, 120, 62, 230),
 };
 
 const farmResidents = <Person>[
@@ -44,7 +160,8 @@ const farmResidents = <Person>[
     name: 'Lolly Popwell',
     role: "The farmer's daughter",
     dessert: Dessert.lollipop,
-    greeting: "Oh, a real detective! Daddy would have hated this. He hated "
+    greeting:
+        "Oh, a real detective! Daddy would have hated this. He hated "
         "anything from the city.",
   ),
   Person(
@@ -52,7 +169,8 @@ const farmResidents = <Person>[
     name: 'Taffy Pulman',
     role: 'Farmhand',
     dessert: Dessert.taffy,
-    greeting: "Evenin'. Mornin'. Whatever it is. I've been up since four "
+    greeting:
+        "Evenin'. Mornin'. Whatever it is. I've been up since four "
         "pullin' taffy.",
   ),
   Person(
@@ -60,7 +178,8 @@ const farmResidents = <Person>[
     name: 'Gus Gumdrop',
     role: 'Foreman',
     dessert: Dessert.gumdrop,
-    greeting: "Twenty-two years I've worked this farm, Detective. Ask me "
+    greeting:
+        "Twenty-two years I've worked this farm, Detective. Ask me "
         "what you like.",
   ),
   Person(
@@ -68,7 +187,8 @@ const farmResidents = <Person>[
     name: 'Marsha Mallow',
     role: 'Cook',
     dessert: Dessert.marshmallow,
-    greeting: "Oh! Oh my. Sit down, have a scone. I'm all puffed up and I "
+    greeting:
+        "Oh! Oh my. Sit down, have a scone. I'm all puffed up and I "
         "can't stop baking.",
   ),
   Person(
@@ -76,7 +196,8 @@ const farmResidents = <Person>[
     name: 'Professor Rex Licorice',
     role: 'Agricultural scientist & lodger',
     dessert: Dessert.licorice,
-    greeting: "Professor Licorice, Candy City University. I study the corn. "
+    greeting:
+        "Professor Licorice, Candy City University. I study the corn. "
         "I am told that is suspicious.",
   ),
 ];
@@ -87,7 +208,8 @@ const farmPolice = <Person>[
     name: 'Sheriff Butterscotch',
     role: 'Candy Land Constabulary',
     dessert: Dessert.butterscotch,
-    greeting: "Churlock. They told me you'd come all the way from Donut "
+    greeting:
+        "Churlock. They told me you'd come all the way from Donut "
         "County. Mind the corn on the stairs.",
   ),
   Person(
@@ -95,7 +217,8 @@ const farmPolice = <Person>[
     name: 'Deputy Jellybean',
     role: 'Candy Land Constabulary',
     dessert: Dessert.jellybean,
-    greeting: "Deputy Jellybean, sir! First murder. I've been very careful "
+    greeting:
+        "Deputy Jellybean, sir! First murder. I've been very careful "
         "not to touch anything. Mostly.",
   ),
 ];
@@ -103,8 +226,8 @@ const farmPolice = <Person>[
 /// Who stands where: room id -> (person id, x of their centre).
 const farmPlacements = <String, List<(String, double)>>{
   'fkitchen': [('marsha', 760)],
-  'frontroom': [('lolly', 720)],
-  'office': [('licorice', 700)],
+  'frontroom': [('lolly', 830)],
+  'greenhouse': [('licorice', 640)],
   'barn': [('gus', 720)],
   'pressroom': [('taffy', 740)],
   'rootcellar': [('butterscotch', 690), ('jellybean', 835)],
@@ -112,20 +235,101 @@ const farmPlacements = <String, List<(String, double)>>{
 
 /// Where evidence can sit in each room, in scene coordinates.
 const farmSlots = <String, List<Offset>>{
-  'fhall': [Offset(440, 426), Offset(170, 150), Offset(326, 215), Offset(480, 300), Offset(600, 430), Offset(372, 498)],
-  'frontroom': [Offset(550, 145), Offset(225, 395), Offset(375, 352), Offset(760, 170), Offset(165, 165), Offset(225, 330)],
-  'fkitchen': [Offset(330, 150), Offset(560, 222), Offset(155, 285), Offset(830, 150), Offset(320, 300), Offset(660, 430)],
-  'office': [Offset(470, 300), Offset(275, 200), Offset(640, 300), Offset(765, 165), Offset(250, 330), Offset(400, 440)],
-  'barn': [Offset(350, 300), Offset(760, 260), Offset(540, 440), Offset(260, 240), Offset(880, 240)],
-  'cornfield': [Offset(380, 330), Offset(200, 470), Offset(130, 400), Offset(872, 330), Offset(585, 470)],
-  'rootcellar': [Offset(395, 452), Offset(200, 480), Offset(565, 425), Offset(430, 290), Offset(805, 230), Offset(600, 300)],
-  'bunk': [Offset(330, 300), Offset(640, 300), Offset(160, 200), Offset(480, 350), Offset(560, 450)],
-  'pressroom': [Offset(240, 455), Offset(600, 240), Offset(530, 440), Offset(880, 270), Offset(670, 110)],
-  'upstairs': [Offset(640, 296), Offset(290, 200), Offset(835, 360), Offset(480, 222), Offset(220, 440), Offset(560, 392)],
-  'lollyroom': [Offset(430, 372), Offset(268, 312), Offset(855, 215), Offset(700, 330), Offset(185, 170)],
-  'marsharoom': [Offset(250, 215), Offset(560, 392), Offset(450, 300), Offset(160, 440), Offset(640, 300)],
-  'farmerroom': [Offset(280, 286), Offset(730, 282), Offset(500, 250), Offset(165, 300), Offset(560, 440)],
-  'profroom': [Offset(215, 438), Offset(470, 296), Offset(645, 228), Offset(330, 200), Offset(880, 430)],
+  'porch': [
+    Offset(300, 450),
+    Offset(600, 190),
+    Offset(250, 300),
+    Offset(590, 320),
+    Offset(640, 360),
+    Offset(760, 450),
+  ],
+  'frontroom': [
+    Offset(520, 145),
+    Offset(225, 395),
+    Offset(375, 352),
+    Offset(780, 290),
+    Offset(165, 165),
+    Offset(225, 330),
+    Offset(560, 445),
+    Offset(420, 440),
+  ],
+  'fkitchen': [
+    Offset(330, 150),
+    Offset(560, 222),
+    Offset(155, 285),
+    Offset(830, 150),
+    Offset(320, 300),
+    Offset(660, 430),
+    Offset(640, 300),
+  ],
+  'office': [
+    Offset(470, 300),
+    Offset(275, 200),
+    Offset(640, 300),
+    Offset(765, 165),
+    Offset(250, 330),
+    Offset(400, 440),
+    Offset(820, 420),
+  ],
+  'barn': [
+    Offset(350, 300),
+    Offset(760, 260),
+    Offset(540, 440),
+    Offset(260, 240),
+    Offset(840, 430),
+    Offset(460, 262),
+  ],
+  'pressroom': [
+    Offset(240, 455),
+    Offset(600, 240),
+    Offset(530, 440),
+    Offset(665, 290),
+    Offset(560, 118),
+    Offset(850, 180),
+  ],
+  'greenhouse': [
+    Offset(215, 438),
+    Offset(470, 296),
+    Offset(560, 160),
+    Offset(330, 200),
+    Offset(880, 430),
+  ],
+  'orchard': [
+    Offset(420, 330),
+    Offset(200, 470),
+    Offset(560, 440),
+    Offset(130, 380),
+    Offset(600, 300),
+  ],
+  'cornfield': [
+    Offset(380, 330),
+    Offset(200, 470),
+    Offset(130, 400),
+    Offset(872, 330),
+    Offset(585, 470),
+  ],
+  'farmyard': [
+    Offset(180, 300),
+    Offset(330, 400),
+    Offset(620, 470),
+    Offset(760, 330),
+    Offset(880, 440),
+  ],
+  'pasture': [
+    Offset(400, 330),
+    Offset(600, 460),
+    Offset(860, 400),
+    Offset(700, 300),
+    Offset(330, 470),
+  ],
+  'rootcellar': [
+    Offset(395, 452),
+    Offset(200, 480),
+    Offset(565, 425),
+    Offset(430, 290),
+    Offset(805, 230),
+    Offset(600, 300),
+  ],
 };
 
 /// The deed on the hall pegs gives away the year, which is not the dial's
@@ -149,10 +353,12 @@ const farmNooks = <Nook>[
   Nook(
     id: 'coatpegs',
     name: 'Coat Pegs',
-    room: 'fhall',
-    pos: Offset(326, 215),
+    room: 'porch',
+    pos: Offset(320, 210),
     icon: Icons.checkroom,
-    blurb: 'Oilskins, a sou\'wester, and whatever has been hung behind them.',
+    blurb:
+        'Pegs by the front door, hung with oilskins and whatever has '
+        'been hung behind them.',
     junk: [
       Junk('Framed deed', '', icon: Icons.workspace_premium),
       Junk(
@@ -176,22 +382,6 @@ const farmNooks = <Nook>[
         "Sixty jars of preserves, each with a date and a little drawing of "
             "what is inside. Marsha draws a very good gooseberry.",
         icon: Icons.local_drink,
-      ),
-    ],
-  ),
-  Nook(
-    id: 'sideboard',
-    name: 'Sideboard',
-    room: 'frontroom',
-    pos: Offset(860, 290),
-    icon: Icons.table_bar,
-    blurb: 'A long sideboard covered in county fair trophies.',
-    junk: [
-      Junk(
-        'Trophies',
-        "First prize for candy corn, nineteen years running. One year is "
-            "missing. A small card in its place reads: “Hail.”",
-        icon: Icons.emoji_events,
       ),
     ],
   ),
@@ -233,10 +423,12 @@ const farmNooks = <Nook>[
     room: 'barn',
     pos: Offset(470, 150),
     icon: Icons.height,
-    blurb: 'The loft over the stalls, where Gus sleeps when he works late. '
+    blurb:
+        'The loft over the stalls, where Gus sleeps when he works late. '
         'The ladder has been taken down.',
     needs: 'ladder',
-    barred: 'The loft is twelve feet up and somebody has taken the ladder '
+    barred:
+        'The loft is twelve feet up and somebody has taken the ladder '
         'away. I am a churro, not a squirrel.',
     action: 'Put up the ladder',
     junk: [
@@ -254,10 +446,12 @@ const farmNooks = <Nook>[
     room: 'cornfield',
     pos: Offset(292, 452),
     icon: Icons.landscape,
-    blurb: 'One furrow at the edge of the field has been dug over lately, '
+    blurb:
+        'One furrow at the edge of the field has been dug over lately, '
         'and patted flat again.',
     needs: 'trowel',
-    barred: 'Somebody has dug here and filled it in again. I am not '
+    barred:
+        'Somebody has dug here and filled it in again. I am not '
         'scrabbling in the syrup with my hands. I want a trowel.',
     action: 'Dig',
     junk: [
@@ -275,10 +469,12 @@ const farmNooks = <Nook>[
     room: 'rootcellar',
     pos: Offset(600, 318),
     icon: Icons.dark_mode,
-    blurb: 'A low black gap behind the potato racks, running under the '
-        'front room.',
+    blurb:
+        'A low black gap behind the potato racks, running under the '
+        'farmyard.',
     needs: 'lantern',
-    barred: 'It is pitch dark in there, and I am not putting my hand into '
+    barred:
+        'It is pitch dark in there, and I am not putting my hand into '
         'the dark in a house with a murderer in it. I want a light.',
     action: 'Shine the lantern in',
     junk: [
@@ -293,10 +489,10 @@ const farmNooks = <Nook>[
   Nook(
     id: 'footlocker',
     name: "Taffy's Footlocker",
-    room: 'bunk',
-    pos: Offset(480, 350),
+    room: 'pressroom',
+    pos: Offset(880, 400),
     icon: Icons.inventory_2,
-    blurb: 'A tin footlocker at the end of the lower bunk.',
+    blurb: 'A tin footlocker at the end of the bunk in the press shed.',
     junk: [
       Junk(
         'Spare shirts',
@@ -323,11 +519,13 @@ const farmNooks = <Nook>[
   ),
   Nook(
     id: 'vanity',
-    name: "Lolly's Vanity",
-    room: 'lollyroom',
-    pos: Offset(850, 290),
+    name: "Lolly's Dressing Table",
+    room: 'frontroom',
+    pos: Offset(900, 330),
     icon: Icons.face_retouching_natural,
-    blurb: 'A vanity table with a looking glass ringed in light bulbs.',
+    blurb:
+        'A dressing table in the corner of the front room, with a '
+        'looking glass ringed in light bulbs.',
     junk: [
       Junk(
         'Song sheets',
@@ -340,8 +538,8 @@ const farmNooks = <Nook>[
   Nook(
     id: 'recipebox',
     name: 'Recipe Box',
-    room: 'marsharoom',
-    pos: Offset(560, 392),
+    room: 'fkitchen',
+    pos: Offset(430, 300),
     icon: Icons.receipt_long,
     blurb: 'A tin box of recipe cards, worn smooth at the corners.',
     junk: [
@@ -355,11 +553,11 @@ const farmNooks = <Nook>[
   ),
   Nook(
     id: 'nightstand',
-    name: "Farmer's Nightstand",
-    room: 'farmerroom',
-    pos: Offset(280, 372),
-    icon: Icons.nightlight,
-    blurb: 'A plain pine nightstand, with a candle and a Bible on top.',
+    name: 'Deed Box',
+    room: 'office',
+    pos: Offset(160, 196),
+    icon: Icons.inventory_2,
+    blurb: 'A black tin deed box on the shelf, where he kept what mattered.',
     junk: [
       Junk(
         'Almanac',
@@ -373,8 +571,8 @@ const farmNooks = <Nook>[
   Nook(
     id: 'specimens',
     name: 'Specimen Cabinet',
-    room: 'profroom',
-    pos: Offset(790, 230),
+    room: 'greenhouse',
+    pos: Offset(810, 230),
     icon: Icons.science,
     blurb: 'Rows of little drawers, each holding a different kernel.',
     junk: [
@@ -396,28 +594,31 @@ const farmItems = <Item>[
     room: 'barn',
     pos: Offset(630, 300),
     icon: Icons.agriculture,
-    description: "A trowel hanging by the barn door, its handle worn to the "
+    description:
+        "A trowel hanging by the barn door, its handle worn to the "
         "shape of Gus's hand. Just the thing for turning over a furrow.",
   ),
   Item(
     id: 'lantern',
     name: 'Storm Lantern',
-    room: 'bunk',
-    pos: Offset(760, 200),
+    room: 'pressroom',
+    pos: Offset(780, 150),
     icon: Icons.light,
     color: Color(0xFFFFE082),
-    description: "Taffy's storm lantern, from the hook by his bunk. Full of "
+    description:
+        "Taffy's storm lantern, from the hook over his bunk. Full of "
         "oil, and the wick trimmed. I can see into any dark corner now.",
   ),
   Item(
     id: 'ladder',
     name: 'Orchard Ladder',
-    room: 'cornfield',
-    pos: Offset(700, 300),
+    room: 'orchard',
+    pos: Offset(300, 300),
     icon: Icons.stairs,
     color: Color(0xFFFFCC80),
-    description: "A tall orchard ladder, left lying in the corn where "
-        "nobody would think to look. It belongs in the barn.",
+    description:
+        "A tall orchard ladder, leaning in a candy apple tree "
+        "where nobody would think to look for it. It belongs in the barn.",
   ),
 ];
 
@@ -438,8 +639,8 @@ const chickletRemark = Junk(
 const farmPets = <Pet>[
   Pet(
     person: chicklet,
-    room: 'cornfield',
-    feet: Offset(470, 470),
+    room: 'farmyard',
+    feet: Offset(290, 470),
     width: 54,
     remark: chickletRemark,
     sound: 'cheep',
@@ -461,13 +662,36 @@ const farmSights = <Sight>[
     size: 90,
   ),
   Sight(
+    'coop',
+    'farmyard',
+    Offset(150, 250),
+    Junk(
+      'Chicken Coop',
+      "A coop made of a gingerbread house with the roof left off. Chicklet "
+          "is its only tenant, and she keeps it very badly.",
+      icon: Icons.house,
+    ),
+    size: 90,
+  ),
+  Sight(
+    'hive',
+    'orchard',
+    Offset(150, 330),
+    Junk(
+      'Beehive',
+      "A beehive on a stump. The bees of Candy Land make caramel, and they "
+          "are slower about it than one would like.",
+      icon: Icons.hive,
+    ),
+  ),
+  Sight(
     'windmill',
     'cornfield',
     Offset(640, 150),
     Junk(
       'Windmill',
       "The farm's windmill, turning in the syrup rain. It drives the pump, "
-          "and a belt runs from it to the press room. It never stops.",
+          "and a belt runs from it to the press shed. It never stops.",
       icon: Icons.wind_power,
     ),
   ),
@@ -477,36 +701,36 @@ const farmWindows = <String, Rect>{
   'frontroom': Rect.fromLTWH(90, 90, 150, 150),
   'fkitchen': Rect.fromLTWH(540, 60, 130, 110),
   'office': Rect.fromLTWH(700, 100, 130, 130),
-  'upstairs': Rect.fromLTWH(422, 82, 116, 116),
-  'lollyroom': Rect.fromLTWH(130, 110, 110, 120),
-  'marsharoom': Rect.fromLTWH(420, 90, 110, 110),
-  'farmerroom': Rect.fromLTWH(105, 100, 120, 130),
-  'profroom': Rect.fromLTWH(600, 95, 90, 120),
-  'barn': Rect.fromLTWH(110, 90, 120, 90),
+  'barn': Rect.fromLTWH(760, 70, 120, 80),
+  'pressroom': Rect.fromLTWH(628, 66, 84, 58),
 };
 
 const farmIntroLines = <VoiceLine>[
   (
     voice: narrator,
-    text: "Far from Donut County, where the candy corn grows taller than a "
+    text:
+        "Far from Donut County, where the candy corn grows taller than a "
         "house, a warm syrup rain has fallen all night on the Kernel "
         "family farm. At dawn, the sheriff sent for Detective Churlock.",
   ),
   (
     voice: narrator,
-    text: "Farmer Cornelius Kernel has been found dead in his own root "
+    text:
+        "Farmer Cornelius Kernel has been found dead in his own root "
         "cellar. Five others live on the farm. One of them did it. Or two "
         "of them, together.",
   ),
   (
     voice: 'churlock',
-    text: "A long way from home, Watsonut, and a long way from the "
+    text:
+        "A long way from home, Watsonut, and a long way from the "
         "pavement. Everybody here has a motive, and nobody will confess. "
         "I shall search every room and every stall.",
   ),
   (
     voice: 'churlock',
-    text: "When I am certain, I return to the front hall, and declare the "
+    text:
+        "When I am certain, I return to the front hall, and declare the "
         "case solved.",
   ),
 ];
@@ -514,13 +738,15 @@ const farmIntroLines = <VoiceLine>[
 const farmWinLines = <VoiceLine>[
   (
     voice: narrator,
-    text: "The syrup rain has stopped at last. The sheriff's wagon rolls "
+    text:
+        "The syrup rain has stopped at last. The sheriff's wagon rolls "
         "away down the farm track, between the rows of corn, and this time "
         "the right dessert is inside it.",
   ),
   (
     voice: narrator,
-    text: "The case is closed. Candy Land can sleep soundly again, thanks "
+    text:
+        "The case is closed. Candy Land can sleep soundly again, thanks "
         "to Detective Churlock.",
   ),
   (voice: 'churlock', text: "Corn-gratulations are in order, Watsonut."),
@@ -529,12 +755,14 @@ const farmWinLines = <VoiceLine>[
 const farmLoseAgainLines = <VoiceLine>[
   (
     voice: narrator,
-    text: "The sheriff's wagon rattles away through the syrup rain, with an "
+    text:
+        "The sheriff's wagon rattles away through the syrup rain, with an "
         "innocent dessert behind its bars.",
   ),
   (
     voice: narrator,
-    text: "And on the Kernel farm, a killer is still free. By the next "
+    text:
+        "And on the Kernel farm, a killer is still free. By the next "
         "harvest, there will be another outline in the corn.",
   ),
   (voice: 'churlock', text: "I have made a terrible mistake."),
@@ -543,7 +771,8 @@ const farmLoseAgainLines = <VoiceLine>[
 const farmLoseHalfLines = <VoiceLine>[
   (
     voice: narrator,
-    text: "The sheriff's wagon rattles away through the syrup rain. The "
+    text:
+        "The sheriff's wagon rattles away through the syrup rain. The "
         "killer is inside it. But so is an innocent dessert, who will pay "
         "dearly for the detective's guesswork.",
   ),
@@ -557,14 +786,18 @@ const farm = World(
       'Farmer Kernel, the candy corn king of Candy Land, has been found '
       'dead in his own root cellar. Five desserts live on the farm. Search '
       'the farmhouse, the barn and the field, question the farmhands — and '
-      'name the killer, or killers, before the next harvest.',
+      'name the killer, or killers, before the next harvest. Most of it is '
+      'out of doors.',
   accuseQuestion: 'Who murdered Farmer Kernel?',
   place: 'Candy Land',
   rooms: farmRooms,
-  start: 'fhall',
+  start: 'porch',
   leftStairs: {'rootcellar'},
-  outdoors: {'cornfield'},
-  outbuildings: {'barn'},
+  outdoors: {'orchard', 'cornfield', 'porch', 'farmyard', 'pasture'},
+  outbuildings: {'barn', 'pressroom', 'greenhouse'},
+  links: farmLinks,
+  atticLevel: null,
+  levelNames: ['Underground', 'Outside', 'Indoors'],
   residents: farmResidents,
   police: farmPolice,
   placements: farmPlacements,

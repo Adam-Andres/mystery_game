@@ -12,9 +12,12 @@ them alone, or two of them together.
 - **The Senclair Affair:** Mrs. Senclair's gingerbread mansion in Donut
   County. Seven mysteries, and a rare eighth.
 - **The Candy Corn Caper:** the Kernel family's candy corn farm in Candy
-  Land, where Farmer Kernel has been found dead in his root cellar. A
-  farmhouse, a barn and a field, five new suspects and two new officers,
-  and three mysteries of its own.
+  Land, where Farmer Kernel has been found dead in his root cellar. Most
+  of it is out of doors: you arrive on the front porch and walk the lane
+  from the orchard and the cornfield to the farmyard and the pasture, with
+  the farmhouse, the barn, the press shed and the greenhouse off it. Five
+  new suspects, two new officers, and seven mysteries of its own, with
+  each suspect the killer in exactly two.
 
 On the title screen, the arrow beside the case name slides across to the
 other place, with its own music and its own three case files.

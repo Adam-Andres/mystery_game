@@ -37,6 +37,11 @@ Room? _roomAt(int level, int col) {
 }
 
 Room? neighbor(Room r, Dir d) {
+  // A place with its own paths goes only where they lead.
+  if (world.links.isNotEmpty) {
+    final to = world.links[(r.id, d)];
+    return to == null ? null : roomById(to);
+  }
   switch (d) {
     case Dir.left:
       return _roomAt(r.level, r.col - 1);

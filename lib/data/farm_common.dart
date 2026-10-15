@@ -17,14 +17,22 @@ const farmHints = <String, String>{
   'fwatch': farmTimeHint,
   'fclock': farmTimeHint,
   'fchart': "Splendid. Now all we want is the weapon.",
+  'creamslip': "A slip written by somebody with no reason to lie. That is "
+      "worth ten sworn statements. If it says what it seems to.",
+};
+
+/// Watsonut on the telephone slip, where it is what it seems.
+const farmPhoneHints = <String, String>{
+  'partyline': "That is the exchange's word, not the caller's. An alibi "
+      "that somebody else wrote down is worth ten that are merely spoken.",
+};
+
+/// Watsonut on Marsha's pie and her card, where they are what they seem.
+const farmPieHints = <String, String>{
   'bakecard': "Read it line by line against the clock, Churlock. Every "
       "entry ought to be possible.",
   'harvestpie': "If that card is honest, Marsha never left her oven. I "
       "should ask to see the card itself.",
-  'creamslip': "A slip written by somebody with no reason to lie. That is "
-      "worth ten sworn statements. If it says what it seems to.",
-  'partyline': "That is the operator's word, not the caller's. An alibi "
-      "that somebody else wrote down is worth ten that are merely spoken.",
 };
 
 // Time of death
@@ -66,16 +74,16 @@ const creamSlip = Evidence(
 );
 
 const partyLine = Evidence(
-  'partyline', 'Party-Line Slip', 'upstairs', 0,
-  "The exchange's slip beside the telephone on the landing: “Kernel Farm "
+  'partyline', 'Party-Line Slip', 'frontroom', 3,
+  "The exchange's slip beside the telephone in the front room: “Kernel Farm "
   "line. Call placed 10:50 PM by Miss L. Popwell to the Candy City "
   "Talent Bureau. Cleared 11:30 PM. Line never dropped.”",
   icon: Icons.phone_in_talk, color: Color(0xFFB2EBF2),
 );
 
 const ticketGood = Evidence(
-  'ticket', 'Railway Ticket', 'profroom', 1,
-  "On the Professor's desk, a railway ticket: “Candy Line Railway. Candy "
+  'ticket', 'Railway Ticket', 'greenhouse', 1,
+  "On the Professor's potting bench, a railway ticket: “Candy Line Railway. Candy "
   "City to Kernel Halt. Last train, 11:20 PM. Wednesday the 13th.” It has "
   "been punched by the guard.",
   icon: Icons.train, color: paper,
@@ -89,6 +97,14 @@ const calendar = Evidence(
   icon: Icons.calendar_month, color: paper,
 );
 
+const timetable = Evidence(
+  'timetable', 'Railway Timetable', 'porch', 1,
+  "The Candy Line timetable, pinned by the front door. The last train leaves "
+  "Candy City at 11:20 PM, and reaches Kernel Halt at 11:48 PM. It is a "
+  "twenty-minute walk from the halt to the farm.",
+  icon: Icons.train, color: paper,
+);
+
 // Red herrings
 
 const bigSugar = Evidence(
@@ -100,15 +116,15 @@ const bigSugar = Evidence(
 );
 
 const oldWill = Evidence(
-  'oldwill', "Farmer Kernel's Will", 'farmerroom', 0,
-  "On the farmer's nightstand, a copy of his will, dog-eared: “The farm, "
+  'oldwill', "Farmer Kernel's Will", 'office', 2,
+  "On the farmer's desk, a copy of his will, dog-eared: “The farm, "
   "the corn and the cows to my daughter, Lolly.” The cows are underlined.",
   icon: Icons.description, color: Colors.white,
 );
 
 const contest = Evidence(
-  'contest', 'Talent Contest Entry', 'lollyroom', 0,
-  "On Lolly's bed, an entry form for the Candy City Talent Contest, "
+  'contest', 'Talent Contest Entry', 'frontroom', 7,
+  "Tucked in the frame of Lolly's looking glass, an entry form for the Candy City Talent Contest, "
   "stamped FEE OVERDUE in red. The fee would buy a cow.",
   icon: Icons.mic, color: Color(0xFFF8BBD0),
 );
@@ -123,7 +139,7 @@ const cinnamonFork = Evidence(
 const honeyJar = Evidence(
   'honeyjar', 'Broken Honey Jar', 'fkitchen', 5,
   "A jar of honey smashed on the kitchen floor, and a trail of sticky "
-  "footprints leading away from it toward the hall.",
+  "footprints leading away from it toward the front room.",
   icon: Icons.water_drop, color: Color(0xFFFFB74D),
 );
 
@@ -142,8 +158,8 @@ const wagesDocked = Evidence(
 );
 
 const weedKiller = Evidence(
-  'weedkiller', 'Bottle Marked POISON', 'profroom', 2,
-  "A brown bottle on the Professor's windowsill, with a skull drawn on the "
+  'weedkiller', 'Bottle Marked POISON', 'greenhouse', 2,
+  "A brown bottle on a high shelf in the greenhouse, with a skull drawn on the "
   "label and “POISON” underneath, in a very scientific hand.",
   icon: Icons.science, color: Color(0xFFA5D6A7),
 );
@@ -163,15 +179,15 @@ const markedCards = Evidence(
 );
 
 const lollyDiary = Evidence(
-  'lollydiary', "Lolly's Diary", 'lollyroom', 0,
-  "In the vanity drawer, a diary with a heart-shaped lock, left open. "
+  'lollydiary', "Lolly's Diary", 'frontroom', 0,
+  "In the drawer of her dressing table, a diary with a heart-shaped lock, left open. "
   "Yesterday's entry: “Daddy says the city will chew me up. I said I'd "
   "rather be chewed up than stay a stalk in a field forever.”",
   icon: Icons.book, color: Color(0xFFF8BBD0), inside: 'vanity',
 );
 
 const hotelLetter = Evidence(
-  'hotelletter', 'Letter from a Hotel', 'marsharoom', 0,
+  'hotelletter', 'Letter from a Hotel', 'fkitchen', 0,
   "In Marsha's recipe box: “The Grand Sugar Hotel, Candy City, is pleased "
   "to offer Miss M. Mallow the post of pastry cook, to begin at once.” "
   "There is no reply with it.",
@@ -179,7 +195,7 @@ const hotelLetter = Evidence(
 );
 
 const lovePoem = Evidence(
-  'lovepoem', 'A Poem', 'bunk', 2,
+  'lovepoem', 'A Poem', 'pressroom', 5,
   "Pinned over Taffy's bunk, in a painfully careful hand: “Your stripes "
   "are pink, your stick is true, I'd pull all night for a lick of you.” "
   "It is addressed to “L.”",
@@ -237,7 +253,7 @@ const deputyTopics = [
   Topic(
     'found', 'Who found him?',
     "Miss Mallow, the cook, at six, when she came down for potatoes. She "
-    "rang the exchange from the landing and they rang us. She's been "
+    "rang the exchange from the front room and they rang us. She's been "
     "baking ever since. We've had nine scones each.",
   ),
   Topic(
@@ -268,7 +284,7 @@ const marshaCard = Topic(
 const marshaCommon = [
   Topic(
     'honey', 'There is honey all over your floor.',
-    "That was me, this morning, when I found him. I came up those stairs "
+    "That was me, this morning, when I found him. I came in from the yard "
     "like a bolting rabbit and knocked the jar flying. I've not had the "
     "heart to mop it.",
     needs: ['honeyjar'],
@@ -312,7 +328,7 @@ const gusCommon = [
 
 const lollyWhere = Topic(
   'where', whereQ,
-  "On the telephone on the landing, from ten to eleven till half past, "
+  "On the telephone in the front room, from ten to eleven till half past, "
   "with the Talent Bureau in Candy City. They do auditions down the line "
   "at night. I sang the whole of “Sweet on the City”. Twice.",
 );
@@ -346,7 +362,7 @@ const lollyCommon = [
 
 const taffyWhere = Topic(
   'where', whereQ,
-  "In the press room, crankin' the puller, from twenty to eleven till "
+  "In the press shed, crankin' the puller, from twenty to eleven till "
   "twenty to twelve. Stop crankin' for two minutes and the batch sets "
   "like glass. Counter on the side'll tell you.",
 );
@@ -371,7 +387,8 @@ const taffyPoem = Topic(
 const licoriceWhere = Topic(
   'where', whereQ,
   "In Candy City, at the University, until the last train. I came in at "
-  "ten to twelve, soaked to the stick, and went straight up. Marsha had "
+  "ten to twelve, soaked to the stick, and went straight to my cot in the "
+  "greenhouse. Marsha had "
   "left a pie out. I didn't touch it. I was too tired.",
 );
 

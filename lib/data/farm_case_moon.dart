@@ -17,12 +17,12 @@ const moonCase = MysteryCase(
       "meant to go to the University on Friday and say so. The Professor "
       "said he spent the evening in Candy City and came home on the last "
       "train. In fact he came home at six, kept to his room, and at eleven "
-      "crept down the back stairs with the Giant Gobstopper from the "
+      "crept out of the greenhouse with the Giant Gobstopper from the "
       "trophy shelf. At 11:05 he struck the farmer with it in the root "
       "cellar, and hid it. The ticket he showed was for the next day's "
       "train, and the guard had never punched it. His umbrella had stood "
-      "dry in the hall since nine, and Lolly, on the landing telephone, "
-      "heard his door at eleven. Marsha was at her pie, Taffy at the "
+      "dry on the porch since nine, and Lolly, at the front-room "
+      "telephone, saw his light cross the orchard at eleven. Marsha was at her pie, Taffy at the "
       "puller, and Gus at the barn door with the creamery man.",
   core: [
     Evidence(
@@ -56,15 +56,15 @@ const moonCase = MysteryCase(
     farmTimeOfDeath,
     [
       Evidence(
-        'umbrella', 'Dry Umbrella', 'fhall', 3,
+        'umbrella', 'Dry Umbrella', 'porch', 3,
         "In the stand by the front door, an umbrella with a black liquorice "
         "handle, labelled R.L. It is furled tight and bone dry. It has not "
         "been out in the rain at all.",
         icon: Icons.umbrella, color: Color(0xFF424242),
       ),
       Evidence(
-        'spats', 'Clean Spats', 'profroom', 0,
-        "Under the Professor's bed, his spats: pressed, white, and "
+        'spats', 'Clean Spats', 'greenhouse', 0,
+        "Under the Professor's cot, his spats: pressed, white, and "
         "spotless. There is not a speck of syrup or mud on them.",
         icon: Icons.hiking, color: Colors.white,
       ),
@@ -110,7 +110,7 @@ const moonCase = MysteryCase(
         icon: Icons.mail, color: paper, inside: 'rolltop',
       ),
       Evidence(
-        'seedtags', 'Seed Packets', 'profroom', 0,
+        'seedtags', 'Seed Packets', 'greenhouse', 0,
         "In the specimen cabinet, packets marked “R. Licorice. Rainbow "
         "Hybrid.” Under each new label, the old one shows through: "
         "“KERNEL FARM. NOT FOR SALE.”",
@@ -131,6 +131,8 @@ const moonCase = MysteryCase(
   deskCode: '1871',
   hints: {
     ...farmHints,
+    ...farmPhoneHints,
+    ...farmPieHints,
     'trophygap': "Heavy, and round, and gone. Who in this house dusts that "
         "shelf, and who sits by it?",
     'calendar': "The night of the harvest moon was a Wednesday, then. "
@@ -168,7 +170,7 @@ const moonCase = MysteryCase(
         "dusted. Then ask Marsha who it could belong to.",
     "A ticket is only proof if it is the right ticket, old chap. Read the "
         "date, look for the guard's punch, and then ask who was on the "
-        "landing at eleven and what they heard.",
+        "front-room window at eleven and what they saw.",
   ],
   topics: {
     'butterscotch': [
@@ -276,11 +278,11 @@ const moonCase = MysteryCase(
         "docked his wages. ...No. Not Taffy. I don't know.",
       ),
       Topic(
-        'footsteps', 'Did anyone pass you on the landing?',
-        "Nobody passed me. But the Professor's door went at eleven, I'm "
-        "sure of it: it squeals on the second creak. And something went "
-        "down the back stairs on two thin feet. I thought it was the "
-        "Professor's cat. He hasn't got a cat.",
+        'footsteps', 'Did you see anything from the front room?',
+        "Nobody came through. But at eleven I saw the greenhouse lamp go "
+        "out, and a little light come bobbing across the orchard toward "
+        "the yard, on two long thin legs. I thought it was a heron. We "
+        "haven't got herons.",
         needs: ['partyline'],
       ),
       Topic(
@@ -331,7 +333,7 @@ const moonCase = MysteryCase(
         ),
       ),
       Topic(
-        'umbrella', 'Your umbrella never left the hall.',
+        'umbrella', 'Your umbrella never left the porch.',
         "I bought another in town. A cheap one. It turned inside out at "
         "the station and I threw it in a hedge. ...A large hedge.",
         needs: ['umbrella', 'spats'],
@@ -343,9 +345,9 @@ const moonCase = MysteryCase(
         heard: ['jellybean/train'],
       ),
       Topic(
-        'door', 'Lolly heard your door at eleven.',
-        "The house settles, Detective. Old timber. Every door here squeals "
-        "when the wind gets up.",
+        'door', 'Lolly saw your light cross the orchard at eleven.',
+        "The greenhouse lamp is on a clockwork timer, for the seedlings. "
+        "And Miss Popwell sees whatever makes the better song.",
         heard: ['lolly/footsteps'],
       ),
       Topic(
