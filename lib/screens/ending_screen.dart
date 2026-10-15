@@ -44,7 +44,7 @@ class _EndingScreenState extends State<EndingScreen> {
     if (won) {
       headline = 'CASE CLOSED';
       story = '${_names(culprits)} ${culprits.length == 1 ? 'is' : 'are'} behind bars, '
-          'and Donut County can sleep soundly again. Elementary, my dear Watsonut.';
+          'and ${world.place} can sleep soundly again. Elementary, my dear Watsonut.';
     } else {
       final innocents = g.jailedInnocents;
       final free = g.freeKillers;

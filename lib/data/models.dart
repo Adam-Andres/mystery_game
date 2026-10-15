@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'house.dart' show Dir, world;
+
 enum Dessert {
   churro,
   donutPink,
@@ -318,7 +320,139 @@ class Room {
   final Color wall;
   final Color floor;
 
-  String get levelName => id == 'backyard' || id == 'shed'
+  String get levelName => world.outdoors.contains(id) || world.outbuildings.contains(id)
       ? 'Outside'
       : const ['Basement', 'Ground Floor', 'Attic'][level];
+}
+
+/// One spoken line: who says it, and what they say.
+typedef VoiceLine = ({String voice, String text});
+
+/// The voice that tells the story in the opening and closing scenes.
+const narrator = 'narrator';
+
+/// An animal about the place, who can be clicked on and speaks up now and
+/// then. One may sit somewhere else once [bribedBy] has been opened.
+class Pet {
+  const Pet({
+    required this.person,
+    required this.room,
+    required this.feet,
+    required this.remark,
+    required this.sound,
+    this.width = 80,
+    this.bribedBy,
+    this.bribedFeet,
+  });
+
+  final Person person;
+  final String room;
+
+  /// Where its paws are, in scene coordinates.
+  final Offset feet;
+  final double width;
+
+  /// What Churlock says of it.
+  final Junk remark;
+
+  /// The name of its sound effect.
+  final String sound;
+
+  /// The furniture whose opening moves it to [bribedFeet].
+  final String? bribedBy;
+  final Offset? bribedFeet;
+}
+
+/// A place where mysteries happen: its rooms and people, its furniture and
+/// tools, its mysteries, and how its story is told.
+class World {
+  const World({
+    required this.id,
+    required this.title,
+    required this.blurb,
+    required this.accuseQuestion,
+    required this.place,
+    required this.rooms,
+    this.stairCol = 2,
+    required this.start,
+    this.leftStairs = const {},
+    this.outdoors = const {},
+    this.outbuildings = const {},
+    required this.residents,
+    required this.police,
+    required this.placements,
+    required this.slots,
+    required this.nooks,
+    required this.items,
+    this.sights = const [],
+    this.pets = const [],
+    this.doors = const {},
+    this.windows = const {},
+    required this.cases,
+    this.twist,
+    required this.intro,
+    required this.win,
+    required this.loseAgain,
+    required this.loseHalf,
+    required this.music,
+    required this.certificate,
+    required this.looseCorner,
+  });
+
+  final String id;
+  final String title;
+
+  /// The paragraph on the title screen.
+  final String blurb;
+  final String accuseQuestion;
+
+  /// Where it is, for the closing words: "… can sleep soundly again".
+  final String place;
+  final List<Room> rooms;
+
+  /// The column that holds the staircase on every level.
+  final int stairCol;
+
+  /// The room the investigation begins in, and the case is solved from.
+  final String start;
+
+  /// Rooms whose stairs climb to the left rather than the right.
+  final Set<String> leftStairs;
+
+  /// Rooms out of doors, under the open sky.
+  final Set<String> outdoors;
+
+  /// Rooms in buildings of their own, with a tin roof to drum on.
+  final Set<String> outbuildings;
+  final List<Person> residents;
+  final List<Person> police;
+  final Map<String, List<(String, double)>> placements;
+  final Map<String, List<Offset>> slots;
+  final List<Nook> nooks;
+  final List<Item> items;
+  final List<Sight> sights;
+  final List<Pet> pets;
+
+  /// Doors drawn in a room, by room and the direction they lead.
+  final Map<(String, Dir), Rect> doors;
+
+  /// The glass of each room's window, in scene coordinates.
+  final Map<String, Rect> windows;
+  final List<MysteryCase> cases;
+
+  /// The rare mystery that breaks the rules of the others, if there is one.
+  final MysteryCase? twist;
+  final List<VoiceLine> intro;
+  final List<VoiceLine> win;
+  final List<VoiceLine> loseAgain;
+  final List<VoiceLine> loseHalf;
+
+  /// The title screen's music.
+  final String music;
+
+  /// The certificate that gives the year the victim's business began.
+  final String Function(String year) certificate;
+
+  /// What is in the hidden compartment of the locked desk, in most mysteries.
+  final Junk looseCorner;
 }

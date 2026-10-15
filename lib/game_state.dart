@@ -73,7 +73,7 @@ class GameState extends ChangeNotifier {
 
   Phase phase = Phase.title;
   MysteryCase mystery = allCases.first;
-  String roomId = 'entrance';
+  String roomId = world.start;
   Panel panel = Panel.none;
   Dialogue? dialogue;
 
@@ -181,7 +181,7 @@ class GameState extends ChangeNotifier {
   Iterable<Item> get itemsHere =>
       allItems.where((i) => i.room == roomId && !taken.contains(i.id));
 
-  static const allItems = house.items;
+  static List<Item> get allItems => house.items;
 
   Iterable<Sight> get sightsHere => sights.where((s) => s.room == roomId);
 
@@ -221,7 +221,7 @@ class GameState extends ChangeNotifier {
       ...mystery.gifts,
       mystery.prints,
     ];
-    roomId = 'entrance';
+    roomId = world.start;
     found.clear();
     visited
       ..clear()

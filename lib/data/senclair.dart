@@ -1,0 +1,786 @@
+import 'package:flutter/material.dart';
+
+import 'cases.dart';
+import 'house.dart';
+import 'models.dart';
+
+// The Senclair Affair: Mrs. Senclair's gingerbread mansion in Donut County.
+
+const _stone = Color(0xFF5B5F6B);
+const _stoneFloor = Color(0xFF3F4048);
+const _atticWall = Color(0xFF8B6B4A);
+const _atticFloor = Color(0xFF5E432C);
+
+const senclairRooms = <Room>[
+  // Attic
+  Room(id: 'proom', name: "Penny's Room", level: 2, col: -2, wall: Color(0xFF8A6B6F), floor: _atticFloor),
+  Room(id: 'groom', name: "Servants' Quarters", level: 2, col: -1, wall: Color(0xFF6E7B6A), floor: _atticFloor),
+  Room(id: 'storage', name: 'Storage Nook', level: 2, col: 0, wall: _atticWall, floor: _atticFloor),
+  Room(id: 'bedroom', name: "Tira's Bedroom", level: 2, col: 1, wall: Color(0xFF9A6F7A), floor: _atticFloor),
+  Room(id: 'landing', name: 'Attic Landing', level: 2, col: 2, wall: _atticWall, floor: _atticFloor),
+  Room(id: 'study', name: "Mrs. Senclair's Study", level: 2, col: 3, wall: Color(0xFF5E6B4A), floor: _atticFloor),
+  Room(id: 'mbedroom', name: "Mrs. Senclair's Bedroom", level: 2, col: 4, wall: Color(0xFF6A4A5E), floor: _atticFloor),
+  // Ground floor, with the yard behind the kitchen and the shed beyond it
+  Room(id: 'shed', name: 'Potting Shed', level: 1, col: -2, wall: Color(0xFF6B5136), floor: Color(0xFF4A3724)),
+  Room(id: 'backyard', name: 'Backyard', level: 1, col: -1, wall: Color(0xFF2A2633), floor: Color(0xFF2E3B2A)),
+  Room(id: 'kitchen', name: 'Kitchen', level: 1, col: 0, wall: Color(0xFFD9C9A0), floor: Color(0xFF9A8468)),
+  Room(id: 'dining', name: 'Dining Room', level: 1, col: 1, wall: Color(0xFF3E5C76), floor: Color(0xFF7B5536)),
+  Room(id: 'entrance', name: 'Entrance Hall', level: 1, col: 2, wall: Color(0xFF2F6F73), floor: Color(0xFF8A5A3A)),
+  Room(id: 'parlor', name: 'Parlor', level: 1, col: 3, wall: Color(0xFF7A3B46), floor: Color(0xFF6E4A2F)),
+  Room(id: 'croom', name: "The Colonel's Room", level: 1, col: 4, wall: Color(0xFF55624A), floor: Color(0xFF6E4A2F)),
+  // Basement
+  Room(id: 'pantry', name: 'Pantry', level: 0, col: 1, wall: _stone, floor: _stoneFloor),
+  Room(id: 'cellar', name: 'Cellar', level: 0, col: 2, wall: _stone, floor: _stoneFloor),
+  Room(id: 'boiler', name: 'Boiler Room', level: 0, col: 3, wall: _stone, floor: _stoneFloor),
+];
+
+/// The doors that are drawn in a room, and lead off in a direction: where
+/// the way out is a door in the scene and not simply the edge of it.
+const senclairDoors = <(String, Dir), Rect>{
+  ('kitchen', Dir.left): Rect.fromLTWH(4, 120, 62, 230),
+  ('backyard', Dir.right): Rect.fromLTWH(826, 176, 96, 244),
+};
+
+const senclairResidents = <Person>[
+  Person(
+    id: 'penny',
+    name: 'Penny Cotta',
+    role: 'Housekeeper',
+    dessert: Dessert.pannaCotta,
+    greeting: "Oh! Detective! Forgive me, I'm all of a wobble this morning.",
+  ),
+  Person(
+    id: 'graham',
+    name: 'Graham Cracker',
+    role: 'Butler',
+    dessert: Dessert.cracker,
+    greeting: 'Good morning, sir. I trust you wiped your feet.',
+  ),
+  Person(
+    id: 'cannoli',
+    name: 'Colonel Cannoli',
+    role: 'Retired officer & lodger',
+    dessert: Dessert.cannoli,
+    greeting: 'Churlock, is it? Ghastly business, what! Ask away, ask away.',
+  ),
+  Person(
+    id: 'tira',
+    name: 'Tira Misu',
+    role: "Mrs. Senclair's niece",
+    dessert: Dessert.tiramisu,
+    greeting: "A detective, in my bedroom, before noon. Do make it quick, darling.",
+  ),
+  Person(
+    id: 'barry',
+    name: 'Barry Tart',
+    role: 'Gardener',
+    dessert: Dessert.tart,
+    greeting: "Mornin', guv. Mind the coal.",
+  ),
+];
+
+const senclairPolice = <Person>[
+  Person(
+    id: 'sprinkles',
+    name: 'Sgt. Sprinkles',
+    role: 'Donut County Police',
+    dessert: Dessert.donutPink,
+    greeting: "Detective Churlock. Glad you're here — this one's got us going in circles.",
+  ),
+  Person(
+    id: 'glaze',
+    name: 'Officer Glaze',
+    role: 'Donut County Police',
+    dessert: Dessert.donutGlazed,
+    greeting: 'Morning, Detective. Watch your step around the outline.',
+  ),
+];
+
+/// Who stands where: room id -> (person id, x of their centre).
+const senclairPlacements = <String, List<(String, double)>>{
+  'kitchen': [('penny', 760)],
+  'dining': [('graham', 740)],
+  'parlor': [('cannoli', 720)],
+  'bedroom': [('tira', 720)],
+  'boiler': [('barry', 740)],
+  'cellar': [('sprinkles', 690), ('glaze', 835)],
+};
+
+/// Where evidence can sit in each room, in scene coordinates.
+const senclairSlots = <String, List<Offset>>{
+  'entrance': [Offset(440, 426), Offset(170, 150), Offset(326, 215), Offset(480, 300), Offset(600, 430), Offset(372, 498)],
+  'parlor': [Offset(455, 340), Offset(250, 395), Offset(480, 255), Offset(865, 200), Offset(165, 165), Offset(250, 320)],
+  'dining': [Offset(430, 312), Offset(175, 210), Offset(560, 312), Offset(830, 165), Offset(340, 440), Offset(585, 96)],
+  'kitchen': [Offset(380, 150), Offset(560, 222), Offset(155, 285), Offset(830, 150), Offset(320, 300)],
+  'pantry': [Offset(330, 300), Offset(640, 300), Offset(160, 200), Offset(480, 350), Offset(560, 450)],
+  'backyard': [Offset(150, 300), Offset(275, 404), Offset(790, 395), Offset(872, 330), Offset(585, 470)],
+  'mbedroom': [Offset(280, 286), Offset(730, 282), Offset(500, 250), Offset(165, 300), Offset(560, 440)],
+  'groom': [Offset(250, 215), Offset(560, 392), Offset(450, 300), Offset(160, 440), Offset(640, 300)],
+  'croom': [Offset(450, 408), Offset(460, 150), Offset(640, 300), Offset(250, 440), Offset(880, 430)],
+  'proom': [Offset(300, 160), Offset(560, 300), Offset(160, 420), Offset(760, 220), Offset(620, 440)],
+  'shed': [Offset(300, 430), Offset(520, 282), Offset(165, 300), Offset(840, 420), Offset(440, 440)],
+  'cellar': [Offset(395, 452), Offset(200, 480), Offset(565, 425), Offset(430, 290), Offset(805, 230)],
+  'boiler': [Offset(240, 455), Offset(382, 240), Offset(610, 440), Offset(880, 270), Offset(545, 290)],
+  'landing': [Offset(640, 296), Offset(290, 200), Offset(835, 360), Offset(480, 222), Offset(220, 440), Offset(560, 392)],
+  'study': [Offset(470, 300), Offset(275, 200), Offset(880, 300), Offset(765, 165), Offset(160, 260), Offset(560, 360)],
+  'bedroom': [Offset(268, 312), Offset(430, 400), Offset(855, 215), Offset(850, 290), Offset(185, 170)],
+  'storage': [Offset(485, 395), Offset(180, 300), Offset(650, 290), Offset(800, 250), Offset(615, 410)],
+};
+
+/// The founding-year certificate in the coat closet names a different year
+/// in each mystery.
+String senclairCertificate(String year) =>
+    "A framed certificate, put away behind the coats: “Senclair Confections. "
+    "Founded $year.” She was prouder of that year than of anything.";
+
+/// Furniture that can be searched. What evidence each holds depends on the
+/// mystery; the odds and ends are always there.
+const senclairNooks = <Nook>[
+  Nook(
+    id: 'closet',
+    name: 'Coat Closet',
+    room: 'entrance',
+    pos: Offset(326, 215),
+    icon: Icons.checkroom,
+    blurb: 'Coats, umbrellas, and whatever has been pushed to the back.',
+    junk: [
+      Junk('Framed certificate', '', icon: Icons.workspace_premium),
+      Junk(
+        'Umbrellas',
+        "Five umbrellas, and every one of them bone dry. Nobody took one "
+            "out into the soda rain last night.",
+        icon: Icons.umbrella,
+      ),
+    ],
+  ),
+  Nook(
+    id: 'bookcase',
+    name: 'Bookcase',
+    room: 'parlor',
+    pos: Offset(865, 290),
+    icon: Icons.menu_book,
+    blurb: 'Four shelves of books that nobody in this house appears to read.',
+    junk: [
+      Junk(
+        'War memoirs',
+        "A row of the Colonel's war memoirs. Every one of them is a cookery "
+            "book in a false cover.",
+        icon: Icons.auto_stories,
+      ),
+    ],
+  ),
+  Nook(
+    id: 'cupboard',
+    name: 'Kitchen Cupboards',
+    room: 'kitchen',
+    pos: Offset(440, 305),
+    icon: Icons.kitchen,
+    blurb: 'Everything in its place, and a label on the place.',
+    junk: [
+      Junk(
+        'Cooking sherry',
+        "Cooking sherry. The level is marked in pencil. So is the cork.",
+        icon: Icons.wine_bar,
+      ),
+      Junk(
+        'Wooden spoons',
+        "Forty-one wooden spoons, graded by size. I count them. Forty-one.",
+        icon: Icons.restaurant,
+      ),
+    ],
+  ),
+  Nook(
+    id: 'sacks',
+    name: 'Flour Sacks',
+    room: 'pantry',
+    pos: Offset(480, 350),
+    icon: Icons.shopping_bag,
+    blurb: 'Two fat sacks of flour. Something could be pushed down inside.',
+    junk: [
+      Junk(
+        'Flour',
+        "Flour. A great deal of flour. And now a great deal of it on me.",
+        icon: Icons.grain,
+      ),
+    ],
+  ),
+  Nook(
+    id: 'kitbag',
+    name: "Barry's Kit Bag",
+    room: 'boiler',
+    pos: Offset(870, 410),
+    icon: Icons.backpack,
+    blurb: 'A canvas bag that smells of compost and strong tea.',
+    junk: [
+      Junk(
+        'Lunch',
+        "A flask, three packets of seeds, and a sandwich of some age.",
+        icon: Icons.lunch_dining,
+      ),
+    ],
+  ),
+  Nook(
+    id: 'chest',
+    name: 'Linen Chest',
+    room: 'landing',
+    pos: Offset(835, 360),
+    icon: Icons.inventory_2,
+    blurb: 'Sheets and pillowcases, and room to hide things under them.',
+    junk: [
+      Junk(
+        'Sheets',
+        "Monogrammed sheets, ironed perfectly flat. Graham irons everything.",
+        icon: Icons.bed,
+      ),
+    ],
+  ),
+  Nook(
+    id: 'desk',
+    name: 'Desk Drawer',
+    room: 'study',
+    pos: Offset(560, 360),
+    icon: Icons.lock,
+    blurb: "Mrs. Senclair kept her private papers here, under lock.",
+    locked: true,
+    junk: [
+      Junk(
+        'Peppermints',
+        "A tin of peppermints, with a note on the lid: “Counted.”",
+        icon: Icons.cookie,
+      ),
+    ],
+  ),
+  Nook(
+    id: 'dresser',
+    name: "Tira's Dresser",
+    room: 'bedroom',
+    pos: Offset(850, 290),
+    icon: Icons.dry_cleaning,
+    blurb: 'Three drawers, all of them too full to close.',
+    junk: [
+      Junk(
+        'Hats',
+        "Nineteen hats. I count them twice. Nineteen.",
+        icon: Icons.checkroom,
+      ),
+    ],
+  ),
+  Nook(
+    id: 'trunk',
+    name: "The Colonel's Trunk",
+    room: 'storage',
+    pos: Offset(485, 395),
+    icon: Icons.work,
+    blurb: 'A battered campaign trunk, stencilled “COL. CANNOLI”.',
+    junk: [
+      Junk(
+        'Dress uniform',
+        "A dress uniform, smelling of mothballs and marsala.",
+        icon: Icons.military_tech,
+      ),
+    ],
+  ),
+  Nook(
+    id: 'crates',
+    name: 'Old Crates',
+    room: 'storage',
+    pos: Offset(180, 300),
+    icon: Icons.inventory,
+    blurb: 'Thirty years of things nobody could bear to throw away.',
+    junk: [
+      Junk(
+        'Curtains',
+        "Old curtains, older curtains, and a stuffed pheasant with a "
+            "disapproving look.",
+        icon: Icons.curtains,
+      ),
+    ],
+  ),
+  Nook(
+    id: 'strongbox',
+    name: 'Iron Strongbox',
+    room: 'cellar',
+    pos: Offset(600, 318),
+    icon: Icons.lock,
+    blurb: 'A squat iron box bolted to the cellar wall. Nobody admits to '
+        'having the key.',
+    needs: 'lockpicks',
+    barred: 'The keyhole is the old lever kind. With the right picks I could '
+        'have it open in a minute. With my fingers, never.',
+    action: 'Pick the lock',
+    pick: true,
+    junk: [
+      Junk(
+        'Spare keys',
+        "A ring of spare keys, each with a neat brass tag. The tag marked "
+            "“Strongbox” has no key on it.",
+        icon: Icons.key,
+      ),
+    ],
+  ),
+  Nook(
+    id: 'dirt',
+    name: 'Loose Earth',
+    room: 'backyard',
+    pos: Offset(292, 452),
+    icon: Icons.landscape,
+    blurb: 'A patch of earth beside the kennel, darker and softer than the '
+        'ground around it.',
+    needs: 'shovel',
+    barred: 'It has been turned over lately, and patted flat again. I am '
+        'not digging with my hands in this rain. I want a shovel.',
+    action: 'Dig',
+    junk: [
+      Junk(
+        'Old bones',
+        "Biscuit bones, a great many, buried at careful intervals. Somebody "
+            "small has been saving for his retirement.",
+        icon: Icons.pets,
+      ),
+    ],
+  ),
+  Nook(
+    id: 'kennel',
+    name: 'Dog House',
+    room: 'backyard',
+    pos: Offset(508, 262),
+    icon: Icons.cottage,
+    blurb: 'A gingerbread kennel with an iced roof. The plate over the door '
+        'reads “PUPCAKE”.',
+    needs: 'biscuit',
+    barred: 'Pupcake has wedged himself in the doorway, and growls like a '
+        'small kettle when I reach past him. He wants bribing.',
+    action: 'Offer the biscuit',
+    junk: [
+      Junk(
+        'Blanket',
+        "A tartan blanket, thick with sprinkles. He sheds.",
+        icon: Icons.bed,
+      ),
+    ],
+  ),
+  Nook(
+    id: 'cabinet',
+    name: 'Bedside Cabinet',
+    room: 'mbedroom',
+    pos: Offset(280, 372),
+    icon: Icons.lock,
+    blurb: 'A little walnut cabinet beside her bed, with a brass lock no '
+        'bigger than a thumbnail.',
+    needs: 'brasskey',
+    barred: 'Locked, and too fine a lock to force without splintering it. '
+        'There will be a key to this somewhere in the house.',
+    action: 'Use the brass key',
+    junk: [
+      Junk(
+        'Smelling salts',
+        "Smelling salts, three bottles, all empty. Running this household "
+            "took it out of her.",
+        icon: Icons.science,
+      ),
+    ],
+  ),
+  Nook(
+    id: 'swardrobe',
+    name: "Mrs. Senclair's Wardrobe",
+    room: 'mbedroom',
+    pos: Offset(880, 235),
+    icon: Icons.checkroom,
+    blurb: 'A tall wardrobe that smells of lavender and vanilla.',
+    junk: [
+      Junk(
+        'Black dresses',
+        "Thirty black dresses, all exactly alike. She had found what "
+            "suited her and saw no reason to look further.",
+        icon: Icons.dry_cleaning,
+      ),
+    ],
+  ),
+  Nook(
+    id: 'gwardrobe',
+    name: "Graham's Wardrobe",
+    room: 'groom',
+    pos: Offset(790, 235),
+    icon: Icons.checkroom,
+    blurb: 'The butler\'s plain deal wardrobe, kept as neat as an operating '
+        'theatre.',
+    junk: [
+      Junk(
+        'Tailcoats',
+        "Seven identical tailcoats, each on a numbered hanger. Number four "
+            "is at the laundry. There is a note pinned to the rail to say "
+            "so.",
+        icon: Icons.dry_cleaning,
+      ),
+    ],
+  ),
+  Nook(
+    id: 'washstand',
+    name: 'Washstand',
+    room: 'croom',
+    pos: Offset(170, 300),
+    icon: Icons.wash,
+    blurb: 'A marble-topped washstand with a jug, a basin and a drawer.',
+    junk: [
+      Junk(
+        'Moustache wax',
+        "Moustache wax, in three strengths: Parade, Mess Dinner, and "
+            "Enemy in Sight.",
+        icon: Icons.face,
+      ),
+    ],
+  ),
+  Nook(
+    id: 'wardrobetop',
+    name: 'Top of the Wardrobe',
+    room: 'croom',
+    pos: Offset(790, 118),
+    icon: Icons.height,
+    blurb: 'Something has been pushed to the back on top of the wardrobe, '
+        'out of sight from the floor.',
+    needs: 'stepstool',
+    barred: 'I am a churro of moderate height, and that is seven feet up. '
+        'I want something to stand on.',
+    action: 'Climb up on the stool',
+    junk: [
+      Junk(
+        'Dust',
+        "Dust, a quarter of an inch deep, with one clean square in it "
+            "where the box sat.",
+        icon: Icons.grain,
+      ),
+    ],
+  ),
+  Nook(
+    id: 'sewing',
+    name: 'Sewing Basket',
+    room: 'proom',
+    pos: Offset(720, 400),
+    icon: Icons.shopping_basket,
+    blurb: 'A wicker basket of wools, needles and other people\'s buttons.',
+    junk: [
+      Junk(
+        'Knitting',
+        "Half a scarf, in the Colonel's regimental colours. She is "
+            "fonder of the old fraud than she lets on.",
+        icon: Icons.gesture,
+      ),
+    ],
+  ),
+  Nook(
+    id: 'floorboard',
+    name: 'Loose Floorboard',
+    room: 'proom',
+    pos: Offset(470, 462),
+    icon: Icons.view_day,
+    blurb: 'One board under the rug sits a hair higher than its neighbours.',
+    needs: 'crowbar',
+    barred: 'It is nailed at one end, and I cannot get so much as a '
+        'fingernail under the other. It wants levering up.',
+    action: 'Lever it up',
+    junk: [
+      Junk(
+        'Mouse nest',
+        "A mouse's nest, made of shredded grocery lists. I apologise to "
+        "the occupant and put the board back gently.",
+        icon: Icons.pest_control_rodent,
+      ),
+    ],
+  ),
+  Nook(
+    id: 'toolrack',
+    name: 'Tool Rack',
+    room: 'shed',
+    pos: Offset(760, 215),
+    icon: Icons.handyman,
+    blurb: 'Rakes, hoes and shears, each hung on its own painted outline.',
+    junk: [
+      Junk(
+        'Scythe',
+        "A scythe with “MIND” painted along the blade in red. Barry is a "
+            "careful man with anything sharp.",
+        icon: Icons.content_cut,
+      ),
+    ],
+  ),
+];
+
+/// Tools that can be picked up and carried. Each opens one place in [nooks].
+const senclairItems = <Item>[
+  Item(
+    id: 'shovel',
+    name: 'Coal Shovel',
+    room: 'boiler',
+    pos: Offset(655, 285),
+    icon: Icons.construction,
+    description: "Barry's coal shovel, propped by the bunker. A broad blade "
+        "and a long handle: just the thing for turning over loose earth. "
+        "Barry watches me take it and says nothing.",
+  ),
+  Item(
+    id: 'lockpicks',
+    name: 'Lock Pick Box',
+    room: 'storage',
+    pos: Offset(720, 418),
+    icon: Icons.vpn_key,
+    description: "A flat tin behind the dress form, stencilled “Catering "
+        "Corps — Larder Entry Kit”. Inside, a tidy row of picks and "
+        "tension wrenches. Nothing with a keyhole is safe from me now.",
+  ),
+  Item(
+    id: 'biscuit',
+    name: 'Dog Biscuit',
+    room: 'pantry',
+    pos: Offset(770, 196),
+    icon: Icons.cookie,
+    color: Color(0xFFFFCC80),
+    description: "A bone-shaped shortbread from a jar on the pantry shelf, "
+        "labelled “PUPCAKE'S. One a day, however he looks at you.” I know a "
+        "bribe when I see one.",
+  ),
+  Item(
+    id: 'brasskey',
+    name: 'Brass Key',
+    room: 'groom',
+    pos: Offset(620, 205),
+    icon: Icons.key,
+    color: Color(0xFFFFD54F),
+    description: "A small brass key on the hook board in the servants' quarters, "
+        "under a label in Graham's hand: “Madam's bedside cabinet. Spare.” A "
+        "butler keeps a spare of everything.",
+  ),
+  Item(
+    id: 'stepstool',
+    name: 'Step Stool',
+    room: 'proom',
+    pos: Offset(850, 400),
+    icon: Icons.chair_alt,
+    color: Color(0xFFFFCC80),
+    description: "Penny's three-legged step stool, from beside her bed. She "
+        "uses it for the top shelves. I shall use it for the tops of other "
+        "people's wardrobes.",
+  ),
+  Item(
+    id: 'crowbar',
+    name: 'Crowbar',
+    room: 'shed',
+    pos: Offset(650, 300),
+    icon: Icons.hardware,
+    description: "A crowbar from among Barry's tools, with “NOT A TOY” "
+        "painted down it. Just the thing for a floorboard that does not "
+        "want to come up.",
+  ),
+];
+
+/// The dog. Half pup, half cupcake.
+const pupcake = Person(
+  id: 'pupcake',
+  name: 'Pupcake',
+  role: 'Dog',
+  dessert: Dessert.pupcake,
+);
+
+/// Where Pupcake's paws are: in his doorway until he has been bribed out of
+/// it.
+const pupcakeGuarding = Offset(508, 420);
+const pupcakeFed = Offset(680, 446);
+
+/// What is usually in the hidden compartment behind the lining of the desk
+/// drawer.
+const senclairLooseCorner = Junk(
+  'Hidden jewellery',
+  "A velvet pouch, tucked in a little compartment behind the lining. A "
+      "garnet brooch, two rings, and a locket with nobody in it. Her private "
+      "jewellery. Pretty, and nothing to do with last night.",
+  icon: Icons.diamond,
+);
+
+/// What Churlock makes of the dog.
+const pupcakeRemark = Junk(
+  'Pupcake',
+  "Pupcake. Half pup, half cupcake, and all appetite. He wags his cherry "
+      "at me. I suspect he would wag it at a burglar.",
+  icon: Icons.pets,
+);
+
+/// The house cat, who lives in the entrance hall. Half purr, half parfait.
+const purrfait = Person(
+  id: 'purrfait',
+  name: 'Purrfait',
+  role: 'Cat',
+  dessert: Dessert.purrfait,
+);
+
+/// Where Purrfait's paws are.
+const purrfaitSpot = Offset(722, 470);
+
+const senclairSights = <Sight>[
+  Sight(
+    'catbowl',
+    'kitchen',
+    Offset(620, 430),
+    Junk(
+      'Cat Bowl',
+      "A glass dish under a card that reads PURRFAIT, filled with tuna "
+          "tartlets and a swirl of cream. Untouched. She is making a point.",
+      icon: Icons.ramen_dining,
+    ),
+  ),
+  Sight(
+    'bowl',
+    'backyard',
+    Offset(396, 418),
+    Junk(
+      'Dog Bowl',
+      "A sugar bowl with DOG painted on the side, heaped with Kibbles and "
+          "Sprinkles. Somebody in this house spoils him.",
+      icon: Icons.ramen_dining,
+    ),
+  ),
+];
+
+/// What Churlock makes of the cat.
+const purrfaitRemark = Junk(
+  'Purrfait',
+  "Purrfait, the house cat. Layers of cream and berries, and a look of "
+      "perfect contempt. She saw everything last night, and she will "
+      "tell me nothing.",
+  icon: Icons.pets,
+);
+
+/// The animals of the house, who speak up now and then.
+const senclairPets = <Pet>[
+  Pet(
+    person: pupcake,
+    room: 'backyard',
+    feet: pupcakeGuarding,
+    width: 84,
+    remark: pupcakeRemark,
+    sound: 'bark',
+    bribedBy: 'kennel',
+    bribedFeet: pupcakeFed,
+  ),
+  Pet(
+    person: purrfait,
+    room: 'entrance',
+    feet: purrfaitSpot,
+    width: 66,
+    remark: purrfaitRemark,
+    sound: 'meow',
+  ),
+];
+
+/// The glass of each room's window, in scene coordinates.
+const senclairWindows = <String, Rect>{
+  'parlor': Rect.fromLTWH(90, 90, 150, 150),
+  'dining': Rect.fromLTWH(760, 90, 140, 150),
+  'kitchen': Rect.fromLTWH(540, 60, 130, 110),
+  'study': Rect.fromLTWH(700, 100, 130, 130),
+  'bedroom': Rect.fromLTWH(130, 110, 110, 120),
+  'landing': Rect.fromLTWH(422, 82, 116, 116),
+  'mbedroom': Rect.fromLTWH(105, 100, 120, 130),
+  'groom': Rect.fromLTWH(420, 90, 110, 110),
+  'croom': Rect.fromLTWH(600, 95, 90, 120),
+  'shed': Rect.fromLTWH(110, 110, 130, 110),
+};
+
+const senclairIntroLines = <VoiceLine>[
+  (
+    voice: narrator,
+    text: "It is a gloomy morning in Donut County, and the soda rain has not let "
+        "up since midnight. At dawn, the police telephoned Detective Churlock. "
+        "Mrs. Éclaire Senclair has been found dead, in the cellar of her own "
+        "gingerbread mansion.",
+  ),
+  (
+    voice: narrator,
+    text: "Five residents were home, and every door was latched from the "
+        "inside. One of them did it. Or two of them, together.",
+  ),
+  (
+    voice: 'churlock',
+    text: "Everybody here has a motive, and nobody will confess, so I must "
+        "cross-check every story. I shall search every room, examine anything "
+        "suspicious, and put what one dessert says to another.",
+  ),
+  (
+    voice: 'churlock',
+    text: "When I am certain, I return to the entrance hall, and declare the "
+        "case solved.",
+  ),
+];
+
+const senclairWinLines = <VoiceLine>[
+  (
+    voice: narrator,
+    text: "The soda rain has stopped at last. The police wagon rolls away "
+        "down the lane, and this time, the right dessert is inside it.",
+  ),
+  (
+    voice: narrator,
+    text: "The case is closed. Donut County can sleep soundly again, thanks "
+        "to Detective Churlock.",
+  ),
+  (voice: 'churlock', text: "Elementary, my dear Watsonut."),
+];
+
+const senclairLoseAgainLines = <VoiceLine>[
+  (
+    voice: narrator,
+    text: "The police wagon rattles away through the soda rain, with an "
+        "innocent dessert behind its bars.",
+  ),
+  (
+    voice: narrator,
+    text: "And in the gingerbread mansion, a killer is still free. By "
+        "morning, there will be another outline on the floor.",
+  ),
+  (voice: 'churlock', text: "I have made a terrible mistake."),
+];
+
+const senclairLoseHalfLines = <VoiceLine>[
+  (
+    voice: narrator,
+    text: "The police wagon rattles away through the soda rain. The killer "
+        "is inside it. But so is an innocent dessert, who will pay dearly "
+        "for the detective's guesswork.",
+  ),
+  (voice: 'churlock', text: "Half right, I fear, is not right at all."),
+];
+
+
+const senclair = World(
+  id: 'senclair',
+  title: 'The Senclair Affair',
+  blurb:
+      'Mrs. Senclair, the éclair of Donut County, has been murdered in '
+      'her own cellar. Five desserts were in the house. Search three '
+      'floors, gather the evidence, question the residents — and name '
+      'the killer, or killers, before somebody else gets creamed.',
+  accuseQuestion: 'Who murdered Mrs. Senclair?',
+  place: 'Donut County',
+  rooms: senclairRooms,
+  start: 'entrance',
+  leftStairs: {'cellar'},
+  outdoors: {'backyard'},
+  outbuildings: {'shed'},
+  residents: senclairResidents,
+  police: senclairPolice,
+  placements: senclairPlacements,
+  slots: senclairSlots,
+  nooks: senclairNooks,
+  items: senclairItems,
+  sights: senclairSights,
+  pets: senclairPets,
+  doors: senclairDoors,
+  windows: senclairWindows,
+  cases: senclairCases,
+  twist: senclairTwist,
+  intro: senclairIntroLines,
+  win: senclairWinLines,
+  loseAgain: senclairLoseAgainLines,
+  loseHalf: senclairLoseHalfLines,
+  music: 'title.wav',
+  certificate: senclairCertificate,
+  looseCorner: senclairLooseCorner,
+);

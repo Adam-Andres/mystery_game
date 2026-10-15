@@ -19,18 +19,7 @@ const _stormSky = LinearGradient(
 );
 
 /// The glass of each room's window, in scene coordinates.
-const roomWindows = <String, Rect>{
-  'parlor': Rect.fromLTWH(90, 90, 150, 150),
-  'dining': Rect.fromLTWH(760, 90, 140, 150),
-  'kitchen': Rect.fromLTWH(540, 60, 130, 110),
-  'study': Rect.fromLTWH(700, 100, 130, 130),
-  'bedroom': Rect.fromLTWH(130, 110, 110, 120),
-  'landing': Rect.fromLTWH(422, 82, 116, 116),
-  'mbedroom': Rect.fromLTWH(105, 100, 120, 130),
-  'groom': Rect.fromLTWH(420, 90, 110, 110),
-  'croom': Rect.fromLTWH(600, 95, 90, 120),
-  'shed': Rect.fromLTWH(110, 110, 130, 110),
-};
+Map<String, Rect> get roomWindows => world.windows;
 
 /// Soda rain streaking past a room's window. [cycle] loops 0..1.
 class WindowRainPainter extends CustomPainter {

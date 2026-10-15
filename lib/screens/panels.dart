@@ -355,7 +355,7 @@ class AccusePanel extends StatelessWidget {
     return Plaque(
       child: Column(
         children: [
-          const Text('Who murdered Mrs. Senclair?', style: kHeading),
+          Text(world.accuseQuestion, style: kHeading),
           const SizedBox(height: 4),
           const Text(
             'Choose one culprit, or two if they did it together. There is no '

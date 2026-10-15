@@ -47,7 +47,7 @@ List<Offset> _wayOut(String room, Dir d) {
     Dir.right => const [Offset(sceneW + 75, _standY)],
     // The cellar steps climb to the left, the hall's to the right.
     Dir.up =>
-      room == 'cellar'
+      world.leftStairs.contains(room)
           ? const [Offset(315, 392), Offset(-60, -38)]
           : const [Offset(625, 392), Offset(sceneW + 40, -38)],
     Dir.down => const [Offset(480, _standY + 10), Offset(480, sceneH + 33)],
@@ -205,13 +205,9 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
           _scheduleCreature(const Duration(seconds: 3));
           return;
         }
-        final sound = switch (g.roomId) {
-          'entrance' => 'meow',
-          'backyard' => 'bark',
-          _ => null,
-        };
-        if (sound != null && _random.nextBool()) {
-          AmbienceScope.maybeOf(context)?.creature(sound);
+        final here = [for (final p in pets) if (p.room == g.roomId) p];
+        if (here.isNotEmpty && _random.nextBool()) {
+          AmbienceScope.maybeOf(context)?.creature(here.first.sound);
         }
         _scheduleCreature();
       },
@@ -535,33 +531,25 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                                     painter: _DoorPainter(
                                       door,
                                       open,
-                                      outside: room.id == 'backyard',
+                                      outside: world.outdoors.contains(room.id),
                                     ),
                                   );
                                 },
                               ),
                             ),
                           ),
-                          if (room.id == 'backyard')
-                            Positioned.fill(
-                              child: IgnorePointer(
-                                child: DessertFigureAt(
-                                  pupcake.dessert,
-                                  feet: _dogFeet,
-                                  width: 84,
+                          // The animals about the place.
+                          for (final pet in pets)
+                            if (pet.room == room.id)
+                              Positioned.fill(
+                                child: IgnorePointer(
+                                  child: DessertFigureAt(
+                                    pet.person.dessert,
+                                    feet: _petFeet(pet),
+                                    width: pet.width,
+                                  ),
                                 ),
                               ),
-                            ),
-                          if (room.id == 'entrance')
-                            const Positioned.fill(
-                              child: IgnorePointer(
-                                child: DessertFigureAt(
-                                  Dessert.purrfait,
-                                  feet: purrfaitSpot,
-                                  width: 66,
-                                ),
-                              ),
-                            ),
                           for (final item in g.itemsHere)
                             Positioned(
                               left: item.pos.dx - 24,
@@ -632,7 +620,8 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                       in placements[room.id] ?? const <(String, double)>[])
                     _character(personById(id), x),
                   // Lightning: the windows flare, or out of doors the whole sky.
-                  if (room.id == 'backyard' || roomWindows.containsKey(room.id))
+                  if (world.outdoors.contains(room.id) ||
+                      roomWindows.containsKey(room.id))
                     Positioned.fill(
                       child: IgnorePointer(
                         child: AnimatedBuilder(
@@ -647,7 +636,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                         ),
                       ),
                     ),
-                  if (room.id == 'backyard') ...[
+                  if (world.outdoors.contains(room.id)) ...[
                     Positioned.fill(
                       child: IgnorePointer(
                         child: AnimatedBuilder(
@@ -658,13 +647,15 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                         ),
                       ),
                     ),
-                    _tapTarget(
-                      'pupcake',
-                      _dogFeet.translate(0, -45),
-                      90,
-                      () => g.remark(pupcakeRemark),
-                    ),
                   ],
+                  for (final pet in pets)
+                    if (pet.room == room.id)
+                      _tapTarget(
+                        pet.person.id,
+                        _petFeet(pet).translate(0, -pet.width * .55),
+                        pet.width + 6,
+                        () => g.remark(pet.remark),
+                      ),
                   for (final s in g.sightsHere)
                     _tapTarget(s.id, s.pos, s.size, () => g.remark(s.junk)),
                   for (final n in g.nooksHere) _nook(n),
@@ -690,7 +681,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                       child: _Hud(g, widget.voice),
                     ),
                   ),
-                  if (room.id == 'entrance')
+                  if (room.id == world.start)
                     Positioned(
                       left: 60,
                       bottom: 16,
@@ -858,9 +849,12 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     return (door, Curves.easeOut.transform(open));
   }
 
-  /// Where Pupcake's paws are: in his doorway until he has been bribed.
-  Offset get _dogFeet =>
-      g.unlocked.contains('kennel') ? pupcakeFed : pupcakeGuarding;
+  /// Where an animal's paws are: where it sits, or where it goes once it
+  /// has been bribed out of the way.
+  Offset _petFeet(Pet pet) =>
+      pet.bribedBy != null && g.unlocked.contains(pet.bribedBy)
+      ? pet.bribedFeet!
+      : pet.feet;
 
   /// An unmarked part of the scene that can be clicked for a remark.
   Widget _tapTarget(String id, Offset centre, double size, VoidCallback then) {
