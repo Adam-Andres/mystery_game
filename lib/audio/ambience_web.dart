@@ -16,7 +16,10 @@ class _WebAmbience implements Ambience {
   web.GainNode? _master;
   web.GainNode? _rain;
   web.GainNode? _hum;
-  web.GainNode? _music;
+  /// A loop for each piece of title music, by asset, once it has loaded.
+  final _music = <String, web.GainNode>{};
+  final _loading = <String>{};
+  String _track = 'title.wav';
   bool _musicOn = false;
   bool _musicMuted = false;
   web.AudioBuffer? _thunder;
@@ -42,6 +45,31 @@ class _WebAmbience implements Ambience {
   void setMusic(bool playing) {
     _musicOn = playing;
     _apply();
+  }
+
+  @override
+  void setTrack(String asset) {
+    _track = asset;
+    _loadTrack(asset);
+    _apply();
+  }
+
+  /// Starts a piece of music looping, silently, so it can be faded up.
+  Future<void> _loadTrack(String asset) async {
+    final context = _context;
+    if (context == null || !_loading.add(asset)) return;
+    try {
+      // The music has its own switch, and does not pass through the
+      // haptics' one.
+      _music[asset] = _loop(
+        context,
+        await _load(context, asset),
+        context.destination,
+      );
+      _apply();
+    } catch (_) {
+      _loading.remove(asset);
+    }
   }
 
   @override
@@ -125,8 +153,18 @@ class _WebAmbience implements Ambience {
 
   final _creatures = <String, web.AudioBuffer>{};
 
+  /// Plays an animal's sound, fetching it the first time it is wanted.
   @override
-  void creature(String sound) => _once(_creatures[sound], _master, .55);
+  void creature(String sound) {
+    final buffer = _creatures[sound];
+    if (buffer != null) return _once(buffer, _master, .55);
+    final context = _context;
+    if (context == null) return;
+    _load(context, '$sound.wav').then((b) {
+      _creatures[sound] = b;
+      _once(b, _master, .55);
+    }, onError: (Object _) {});
+  }
 
   Future<void> _start() async {
     if (_starting) return;
@@ -152,19 +190,9 @@ class _WebAmbience implements Ambience {
       _apply();
       _hum = _loop(context, await _load(context, 'hum.wav'), master);
       _apply();
-      // The music has its own switch, and does not pass through the
-      // haptics' one.
-      _music = _loop(
-        context,
-        await _load(context, 'title.wav'),
-        context.destination,
-      );
-      _apply();
+      await _loadTrack(_track);
       _thunder = await _load(context, 'thunder.wav');
       _buzz = await _load(context, 'buzz.wav');
-      for (final sound in const ['bark', 'meow']) {
-        _creatures[sound] = await _load(context, '$sound.wav');
-      }
     } catch (_) {
       // No sound, then. The game is none the worse for it.
       _starting = false;
@@ -183,10 +211,14 @@ class _WebAmbience implements Ambience {
     _hum?.gain.setTargetAtTime(_weather.hum, now, .35);
     // The music comes up gently, and fades out over a few seconds as the
     // opening scene takes over.
-    _music?.gain.setTargetAtTime(
-      _musicOn && !_musicMuted ? .5 : 0,
-      now,
-      _musicOn ? .6 : 1.3,
-    );
+    // Changing place on the title screen fades one tune into the other.
+    for (final entry in _music.entries) {
+      final playing = _musicOn && entry.key == _track;
+      entry.value.gain.setTargetAtTime(
+        playing && !_musicMuted ? .5 : 0,
+        now,
+        playing ? .6 : 1.3,
+      );
+    }
   }
 }

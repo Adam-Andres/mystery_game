@@ -323,6 +323,22 @@ class _DessertPainter extends CustomPainter {
         _pupcake();
       case Dessert.purrfait:
         _purrfait();
+      case Dessert.lollipop:
+        _lollipop();
+      case Dessert.taffy:
+        _taffy();
+      case Dessert.gumdrop:
+        _gumdrop();
+      case Dessert.marshmallow:
+        _marshmallow();
+      case Dessert.licorice:
+        _licorice();
+      case Dessert.butterscotch:
+        _butterscotch();
+      case Dessert.jellybean:
+        _jellybean();
+      case Dessert.chicklet:
+        _chicklet();
     }
   }
 
@@ -721,6 +737,190 @@ class _DessertPainter extends CustomPainter {
       fill(_dark),
     );
     c.drawCircle(o(.5, .72), w * .03, fill(const Color(0xFF6D1B1B)));
+  }
+
+  // The farm
+
+  /// Lolly: a swirled lollipop on a stick, with a bow.
+  void _lollipop() {
+    feet(.95, gap: .1);
+    c.drawRRect(rr(.46, .62, .54, .93, .02), fill(const Color(0xFFFFF8EE)));
+    final head = o(.5, .38);
+    final radius = w * .34;
+    c.drawCircle(head, radius, fill(Colors.white));
+    // The swirl, turning slowly.
+    final turn = time == null ? 0.0 : _t * 2 * pi / 12;
+    for (var i = 0; i < 4; i++) {
+      c.drawArc(
+        Rect.fromCircle(center: head, radius: radius * (.3 + i * .18)),
+        turn + i * 1.4,
+        pi * 1.1,
+        false,
+        _line(const Color(0xFFEC407A), w * .06),
+      );
+    }
+    c.drawCircle(head, radius, _line(const Color(0xFFD81B60), w * .02));
+    // Bow.
+    const pink = Color(0xFFAB47BC);
+    c.drawPath(Path()..addPolygon([o(.5, .06), o(.36, .0), o(.36, .12)], true), fill(pink));
+    c.drawPath(Path()..addPolygon([o(.5, .06), o(.64, .0), o(.64, .12)], true), fill(pink));
+    c.drawCircle(o(.5, .06), w * .04, fill(const Color(0xFF7B1FA2)));
+    eyes(.36, gap: .12);
+    smile(.47, width: .09);
+  }
+
+  /// Taffy: a pulled taffy in a twist of wax paper, stretched tall.
+  void _taffy() {
+    feet(.95, gap: .14);
+    const paper = Color(0xFFF5F0E6);
+    for (final sx in [-1.0, 1.0]) {
+      c.drawPath(
+        Path()..addPolygon([o(.5 + sx * .3, .5), o(.5 + sx * .48, .38), o(.5 + sx * .48, .66)], true),
+        fill(paper),
+      );
+    }
+    final body = rr(.2, .28, .8, .9, .14);
+    c.drawRRect(body, fill(const Color(0xFFF8BBD0)));
+    c.save();
+    c.clipRRect(body);
+    for (var i = -3; i < 7; i++) {
+      c.drawLine(o(.1 + i * .12, .95), o(.4 + i * .12, .2), _line(Colors.white70, w * .05));
+    }
+    c.restore();
+    eyes(.5, gap: .12);
+    smile(.62, width: .09);
+  }
+
+  /// Gus: a green gumdrop in a straw hat.
+  void _gumdrop() {
+    feet(.95, gap: .16);
+    final body = Path()
+      ..moveTo(w * .12, h * .92)
+      ..cubicTo(w * .1, h * .3, w * .9, h * .3, w * .88, h * .92)
+      ..close();
+    c.drawPath(body, fill(const Color(0xFF43A047)));
+    for (final (x, y) in const [(.3, .55), (.62, .5), (.45, .78), (.72, .72), (.24, .82), (.52, .62)]) {
+      c.drawCircle(o(x, y), w * .018, fill(Colors.white70));
+    }
+    // Straw hat.
+    const straw = Color(0xFFE6C36A);
+    c.drawOval(r(.12, .36, .88, .46), fill(straw));
+    c.drawRRect(rr(.3, .22, .7, .42, .06), fill(straw));
+    c.drawRect(r(.3, .36, .7, .4), fill(const Color(0xFFC62828)));
+    eyes(.58, gap: .13);
+    smile(.7, width: .09);
+  }
+
+  /// Marsha: a marshmallow in an apron and a cook's cap.
+  void _marshmallow() {
+    feet(.95, gap: .14);
+    c.drawRRect(rr(.18, .28, .82, .92, .2), fill(const Color(0xFFFFFDF7)));
+    c.drawRRect(rr(.18, .28, .82, .92, .2), _line(const Color(0xFFE0DACB), w * .02));
+    // Apron.
+    c.drawRRect(rr(.3, .62, .7, .9, .05), fill(const Color(0xFF90CAF9)));
+    c.drawLine(o(.3, .64), o(.7, .64), _line(const Color(0xFF64B5F6), w * .03));
+    // Cap, puffing.
+    for (final (x, y) in const [(.38, .22), (.5, .18), (.62, .22)]) {
+      c.drawCircle(o(x, y), w * .1, fill(Colors.white));
+    }
+    c.drawRect(r(.32, .24, .68, .31), fill(Colors.white));
+    for (final sx in [-1.0, 1.0]) {
+      c.drawCircle(o(.5 + sx * .2, .55), w * .05, fill(const Color(0x55F06292)));
+    }
+    eyes(.46, gap: .12);
+    smile(.56, width: .08);
+  }
+
+  /// The Professor: a long twist of black liquorice in spectacles.
+  void _licorice() {
+    feet(.95, gap: .08);
+    const black = Color(0xFF2B2B2B);
+    final body = rr(.36, .06, .64, .93, .12);
+    c.drawRRect(body, fill(black));
+    c.save();
+    c.clipRRect(body);
+    for (var i = 0; i < 14; i++) {
+      final y = .02 + i * .07;
+      c.drawLine(o(.34, y + .05), o(.66, y), _line(const Color(0xFF4A4A4A), w * .025));
+    }
+    c.restore();
+    // Spectacles.
+    for (final sx in [-1.0, 1.0]) {
+      c.drawCircle(o(.5 + sx * .07, .26), w * .07, _line(const Color(0xFFFFD54F), w * .015));
+    }
+    c.drawLine(o(.47, .26), o(.53, .26), _line(const Color(0xFFFFD54F), w * .015));
+    eyes(.26, gap: .07, size: .04);
+    smile(.34, width: .06);
+    // Bow tie.
+    c.drawPath(Path()..addPolygon([o(.5, .45), o(.4, .41), o(.4, .49)], true), fill(const Color(0xFF7B1F1F)));
+    c.drawPath(Path()..addPolygon([o(.5, .45), o(.6, .41), o(.6, .49)], true), fill(const Color(0xFF7B1F1F)));
+  }
+
+  /// The Sheriff: a butterscotch disc in cellophane, with a hat and a star.
+  void _butterscotch() {
+    feet(.95, gap: .14);
+    final centre = o(.5, .6);
+    final radius = w * .34;
+    for (final sx in [-1.0, 1.0]) {
+      c.drawPath(
+        Path()..addPolygon([centre.translate(sx * radius * .8, 0), centre.translate(sx * radius * 1.45, -radius * .45), centre.translate(sx * radius * 1.45, radius * .45)], true),
+        fill(const Color(0x88FFF8E1)),
+      );
+    }
+    c.drawCircle(centre, radius, fill(const Color(0xFFE0A030)));
+    c.drawCircle(centre.translate(-radius * .3, -radius * .35), radius * .25, fill(Colors.white30));
+    // Badge.
+    final star = Path();
+    for (var i = 0; i < 10; i++) {
+      final a = -pi / 2 + i * pi / 5;
+      final rad = w * (i.isEven ? .07 : .03);
+      final p = centre.translate(radius * .45 + cos(a) * rad, radius * .45 + sin(a) * rad);
+      i == 0 ? star.moveTo(p.dx, p.dy) : star.lineTo(p.dx, p.dy);
+    }
+    c.drawPath(star..close(), fill(const Color(0xFFCFD8DC)));
+    // Hat.
+    const felt = Color(0xFF6D4C41);
+    c.drawOval(r(.14, .26, .86, .34), fill(felt));
+    c.drawRRect(rr(.3, .12, .7, .3, .08), fill(felt));
+    c.drawRect(r(.3, .25, .7, .28), fill(const Color(0xFF3E2723)));
+    eyes(.55, gap: .12);
+    smile(.66, width: .09);
+  }
+
+  /// The Deputy: an orange jelly bean in a peaked cap.
+  void _jellybean() {
+    feet(.95, gap: .12);
+    c.save();
+    c.translate(w * .5, h * .62);
+    c.rotate(-.18);
+    c.drawOval(Rect.fromCenter(center: Offset.zero, width: w * .66, height: h * .56), fill(const Color(0xFFFF8F00)));
+    c.drawOval(Rect.fromCenter(center: Offset(-w * .12, -h * .14), width: w * .16, height: h * .1), fill(Colors.white38));
+    c.restore();
+    const navy = Color(0xFF1A2A5E);
+    c.drawRRect(rr(.3, .27, .7, .38, .05), fill(navy));
+    c.drawRRect(rr(.26, .35, .66, .4, .03), fill(const Color(0xFF0E1838)));
+    c.drawCircle(o(.5, .32), w * .03, fill(const Color(0xFFFFD54F)));
+    eyes(.55, gap: .12);
+    smile(.67, width: .09);
+  }
+
+  /// Chicklet: a sugar-coated chick no bigger than a gumball.
+  void _chicklet() {
+    feet(.95, gap: .1);
+    final hop = time == null ? 0.0 : -(_wave(.8).abs()) * h * .03;
+    c.save();
+    c.translate(0, hop);
+    c.drawCircle(o(.5, .62), w * .34, fill(const Color(0xFFFFEB3B)));
+    c.drawCircle(o(.5, .32), w * .24, fill(const Color(0xFFFFEE58)));
+    for (final sx in [-1.0, 1.0]) {
+      c.drawOval(Rect.fromCenter(center: o(.5 + sx * .3, .62), width: w * .18, height: w * .3), fill(const Color(0xFFFDD835)));
+    }
+    c.drawPath(Path()..addPolygon([o(.5, .36), o(.6, .39), o(.5, .43)], true), fill(const Color(0xFFFF8F00)));
+    for (final (x, y) in const [(.36, .55), (.6, .7), (.46, .8), (.66, .5)]) {
+      c.drawCircle(o(x, y), w * .02, fill(Colors.white));
+    }
+    eyes(.3, gap: .09, size: .045);
+    c.restore();
   }
 
   /// Purrfait: a cat in a parfait glass, cream on top and berries below.

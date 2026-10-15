@@ -13,6 +13,8 @@ import 'package:mystery/audio/voice.dart';
 import 'package:mystery/data/cases.dart';
 import 'package:mystery/data/hints.dart';
 import 'package:mystery/data/house.dart';
+import 'package:mystery/data/senclair.dart';
+import 'package:mystery/data/farm.dart';
 import 'package:mystery/data/models.dart';
 import 'package:mystery/game_state.dart';
 import 'package:mystery/main.dart';
@@ -55,8 +57,13 @@ class _HangingPlayer implements ClipPlayer {
 
 void main() {
   group('case data', () {
-    for (final mystery in allCases) {
+    tearDown(() => world = senclair);
+    for (final (w, mystery) in [
+      for (final w in worlds)
+        for (final m in w.cases) (w, m),
+    ]) {
       test('${mystery.title} is consistent', () {
+        world = w;
         final residentIds = residents.map((p) => p.id).toSet();
         final poolIds = mystery.pool.map((e) => e.id).toSet();
         expect(
@@ -136,6 +143,7 @@ void main() {
       });
 
       test('${mystery.title} draws varied evidence', () {
+        world = w;
         final index = allCases.indexOf(mystery);
         final draws = <String>{};
         for (var seed = 0; seed < 40; seed++) {
@@ -154,6 +162,7 @@ void main() {
       });
 
       test('${mystery.title}: every follow-up can be reached in some game', () {
+        world = w;
         final index = allCases.indexOf(mystery);
         final reached = <String>{};
         for (var seed = 0; seed < 60; seed++) {
@@ -295,11 +304,7 @@ void main() {
       final settings = Settings(store);
       final g = GameState(random: Random(2), twistChance: 0);
       await tester.pumpWidget(
-        MysteryApp(
-          state: g,
-          voice: Voice(SilentPlayer()),
-          settings: settings,
-        ),
+        MysteryApp(state: g, voice: Voice(SilentPlayer()), settings: settings),
       );
       g.newGame(caseIndex: 0, skipIntro: true);
       await tester.pump();
@@ -382,7 +387,9 @@ void main() {
     tester,
   ) async {
     final g = GameState(random: Random(2));
-    await tester.pumpWidget(MysteryApp(state: g, voice: Voice(_HangingPlayer())));
+    await tester.pumpWidget(
+      MysteryApp(state: g, voice: Voice(_HangingPlayer())),
+    );
     g.newGame(caseIndex: 0);
     g.beginInvestigation();
     await tester.pump();
@@ -436,7 +443,10 @@ void main() {
           voice: voice,
           child: Scaffold(
             body: Center(
-              child: DialLock(combination: const [10, 69, 36], onTry: (_) => true),
+              child: DialLock(
+                combination: const [10, 69, 36],
+                onTry: (_) => true,
+              ),
             ),
           ),
         ),
@@ -504,6 +514,105 @@ void main() {
     expect(reading, inInclusiveRange(15, 25));
   });
 
+  group('the Kernel farm', () {
+    tearDown(() => world = senclair);
+
+    testWidgets(
+      'is reached from the title screen, with its own files and tune',
+      (tester) async {
+        final store = MemoryStore();
+        final music = SilentAmbience();
+        final g = GameState(random: Random(3), store: store);
+        await tester.pumpWidget(
+          MysteryApp(state: g, voice: Voice(SilentPlayer()), ambience: music),
+        );
+        expect(find.text('The Senclair Affair'), findsWidgets);
+        expect(music.track, 'title.wav');
+        expect(_key('world-back'), findsNothing);
+        await tester.tap(_key('world-next'));
+        await tester.pump();
+        await tester.pump(const Duration(seconds: 1));
+        expect(world, farm);
+        expect(find.text('The Candy Corn Caper'), findsWidgets);
+        expect(music.track, 'farm.wav');
+        expect(find.text('New case'), findsNWidgets(3));
+        expect(_key('world-next'), findsNothing);
+
+        // A case on the farm, kept apart from the mansion's files.
+        await tester.tap(_key('start'));
+        await tester.pump();
+        g.beginInvestigation();
+        await tester.pump();
+        await tester.pump(const Duration(seconds: 24));
+        expect(g.roomId, 'fhall');
+        expect(farm.cases, contains(g.mystery));
+        expect(store.slots.keys, [3]);
+        expect(find.text('Lolly Popwell'), findsNothing);
+        g.enter(roomById('frontroom'));
+        await tester.pump();
+        expect(find.text('Lolly Popwell'), findsOneWidget);
+        g.toTitle();
+        await tester.pump();
+        expect(find.text('Continue'), findsOneWidget);
+
+        // And back again, where the mansion's files are untouched.
+        await tester.tap(_key('world-back'));
+        await tester.pump();
+        await tester.pump(const Duration(seconds: 1));
+        expect(world, senclair);
+        expect(music.track, 'title.wav');
+        expect(find.text('New case'), findsNWidgets(3));
+      },
+    );
+
+    test('has five suspects, the police, and no rare mystery', () {
+      world = farm;
+      expect(residents.map((p) => p.id), [
+        'lolly',
+        'taffy',
+        'gus',
+        'marsha',
+        'licorice',
+      ]);
+      expect(hasTwist, isFalse);
+      final g = GameState(random: Random(1), twistChance: 1)..newGame();
+      expect(farm.cases, contains(g.mystery));
+      // One or two killers in each, as in the mansion.
+      for (final c in farm.cases) {
+        expect(c.culprits.length, inInclusiveRange(1, 2));
+      }
+      expect(farm.cases.map((c) => c.culprits.length).toSet(), {1, 2});
+    });
+
+    testWidgets('is solved the same way as the mansion', (tester) async {
+      world = farm;
+      final g = GameState(random: Random(2));
+      await tester.pumpWidget(
+        MysteryApp(state: g, voice: Voice(SilentPlayer())),
+      );
+      g.newGame(caseIndex: 0, skipIntro: true);
+      await tester.pump();
+      expect(_key('solve'), findsOneWidget);
+      g.openPanel(Panel.accuse);
+      await tester.pump();
+      expect(find.text('Who murdered Farmer Kernel?'), findsOneWidget);
+      for (final id in g.mystery.culprits) {
+        await tester.tap(_key('accuse-$id'));
+      }
+      await tester.pump();
+      await tester.tap(_key('arrest'));
+      await tester.pump();
+      expect(g.won, isTrue);
+      await tester.pump(const Duration(seconds: 4));
+      await tester.tap(_key('cutscene-done'));
+      await tester.pump();
+      expect(
+        find.textContaining('Candy Land can sleep soundly'),
+        findsOneWidget,
+      );
+    });
+  });
+
   group('saving', () {
     test('a game in progress survives being closed and reopened', () {
       final store = MemoryStore();
@@ -530,9 +639,10 @@ void main() {
       expect(again.phase, Phase.playing);
       expect(again.mystery.id, g.mystery.id);
       expect(again.roomId, 'boiler');
-      expect([for (final e in again.evidence) e.id], [
-        for (final e in g.evidence) e.id,
-      ]);
+      expect(
+        [for (final e in again.evidence) e.id],
+        [for (final e in g.evidence) e.id],
+      );
       expect(again.found, g.found);
       expect(again.visited, g.visited);
       expect(again.items, ['shovel']);
@@ -706,11 +816,7 @@ void main() {
       final settings = Settings();
       final g = GameState(random: Random(3), twistChance: 0);
       await tester.pumpWidget(
-        MysteryApp(
-          state: g,
-          voice: Voice(SilentPlayer()),
-          settings: settings,
-        ),
+        MysteryApp(state: g, voice: Voice(SilentPlayer()), settings: settings),
       );
       g.newGame(caseIndex: 0);
       g.beginInvestigation();
@@ -816,7 +922,9 @@ void main() {
       expect(rain.muted, isFalse);
     });
 
-    testWidgets('thunder follows the lightning by a few seconds', (tester) async {
+    testWidgets('thunder follows the lightning by a few seconds', (
+      tester,
+    ) async {
       final storm = SilentAmbience();
       final g = GameState(random: Random(3), twistChance: 0);
       await tester.pumpWidget(
@@ -994,7 +1102,9 @@ void main() {
     // The question mark goes when there is nothing left to find there.
     final kitchen = roomById('kitchen');
     expect(g.unexplored(kitchen), isTrue);
-    g.found.addAll(g.evidence.where((e) => e.room == 'kitchen').map((e) => e.id));
+    g.found.addAll(
+      g.evidence.where((e) => e.room == 'kitchen').map((e) => e.id),
+    );
     g.unlocked.addAll(nooks.where((n) => n.room == 'kitchen').map((n) => n.id));
     g.taken.addAll(items.where((i) => i.room == 'kitchen').map((i) => i.id));
     expect(g.unexplored(kitchen), isFalse);
@@ -1015,7 +1125,12 @@ void main() {
     await tester.pump();
     // Partway there the door is opening, and Churlock is making for it.
     await tester.pump(const Duration(milliseconds: 1300));
-    expect(find.byWidgetPredicate((w) => w is CustomPaint && '${w.painter}'.contains('_DoorPainter')), findsOneWidget);
+    expect(
+      find.byWidgetPredicate(
+        (w) => w is CustomPaint && '${w.painter}'.contains('_DoorPainter'),
+      ),
+      findsOneWidget,
+    );
     await tester.pump(const Duration(milliseconds: 2300));
     await tester.pump();
     expect(g.roomId, 'backyard');
@@ -1165,7 +1280,9 @@ void main() {
       expect(find.text('CASE CLOSED'), findsOneWidget);
     });
 
-    testWidgets('elsewhere the compartment holds only jewellery', (tester) async {
+    testWidgets('elsewhere the compartment holds only jewellery', (
+      tester,
+    ) async {
       final g = GameState(random: Random(4));
       await tester.pumpWidget(
         MysteryApp(state: g, voice: Voice(SilentPlayer())),
@@ -1205,22 +1322,27 @@ void main() {
       expect(seen.length, greaterThan(25));
     });
 
-    test('the butler mentions the compartment when asked about the initials', () {
-      final g = GameState()..newGame(twist: true, skipIntro: true);
-      bool offered() => g.topicsFor('graham').any((t) => t.id == 'initials');
-      expect(offered(), isFalse);
-      g.found.add(
-        g.evidence.firstWhere((e) => e.id == 'wwnote' || e.id == 'wwbill').id,
-      );
-      expect(offered(), isTrue);
-      final topic = g.topicsFor('graham').firstWhere((t) => t.id == 'initials');
-      expect(topic.answer, contains('behind the lining'));
-      for (final c in allCases) {
-        for (final t in c.topics.values.expand((l) => l)) {
-          expect(t.answer, isNot(contains('lining')));
+    test(
+      'the butler mentions the compartment when asked about the initials',
+      () {
+        final g = GameState()..newGame(twist: true, skipIntro: true);
+        bool offered() => g.topicsFor('graham').any((t) => t.id == 'initials');
+        expect(offered(), isFalse);
+        g.found.add(
+          g.evidence.firstWhere((e) => e.id == 'wwnote' || e.id == 'wwbill').id,
+        );
+        expect(offered(), isTrue);
+        final topic = g
+            .topicsFor('graham')
+            .firstWhere((t) => t.id == 'initials');
+        expect(topic.answer, contains('behind the lining'));
+        for (final c in allCases) {
+          for (final t in c.topics.values.expand((l) => l)) {
+            expect(t.answer, isNot(contains('lining')));
+          }
         }
-      }
-    });
+      },
+    );
 
     test('is lost by arresting a resident', () {
       final g = GameState()..newGame(twist: true, skipIntro: true);
@@ -1853,14 +1975,19 @@ void main() {
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
     final clashes = <String>[];
-    for (final mystery in [...allCases, twistCase]) {
+    addTearDown(() => world = senclair);
+    for (final (w, mystery) in [
+      for (final w in worlds)
+        for (final m in [...w.cases, ?w.twist]) (w, m),
+    ]) {
+      world = w;
       final g = GameState(random: Random(1));
       await tester.pumpWidget(
         MysteryApp(key: UniqueKey(), state: g, voice: Voice(SilentPlayer())),
       );
       g.newGame(
-        caseIndex: mystery == twistCase ? null : allCases.indexOf(mystery),
-        twist: mystery == twistCase,
+        caseIndex: mystery == w.twist ? null : w.cases.indexOf(mystery),
+        twist: mystery == w.twist,
         skipIntro: true,
       );
       // Every possible clue at once, wherever it might be lying.
@@ -1872,12 +1999,14 @@ void main() {
         final arrows = {
           for (final d in Dir.values)
             if (_key('go-${d.name}').evaluate().isNotEmpty)
-              d: tester.getRect(
-                find.descendant(
-                  of: _key('go-${d.name}'),
-                  matching: find.byType(Icon),
-                ),
-              ).inflate(11),
+              d: tester
+                  .getRect(
+                    find.descendant(
+                      of: _key('go-${d.name}'),
+                      matching: find.byType(Icon),
+                    ),
+                  )
+                  .inflate(11),
         };
         final things = {
           for (final e in g.evidenceHere)
@@ -1923,7 +2052,10 @@ void main() {
               height: 16,
             ),
         };
-        for (final arrow in {...arrows.map((d, r) => MapEntry(d.name, r)), ...names}.entries) {
+        for (final arrow in {
+          ...arrows.map((d, r) => MapEntry(d.name, r)),
+          ...names,
+        }.entries) {
           for (final thing in labelled.entries) {
             if (arrow.value.overlaps(thing.value)) {
               clashes.add('${room.id}: ${arrow.key} over ${thing.key}');
@@ -1936,7 +2068,12 @@ void main() {
   });
 
   testWidgets('every room lays out without errors', (tester) async {
-    for (var i = 0; i < allCases.length; i++) {
+    addTearDown(() => world = senclair);
+    for (final (w, i) in [
+      for (final w in worlds)
+        for (var i = 0; i < w.cases.length; i++) (w, i),
+    ]) {
+      world = w;
       final g = GameState(random: Random(i));
       await tester.pumpWidget(
         MysteryApp(key: UniqueKey(), state: g, voice: Voice(SilentPlayer())),

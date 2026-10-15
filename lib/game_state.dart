@@ -135,7 +135,7 @@ class GameState extends ChangeNotifier {
 
   /// True while the list of suspects has a strip torn off it: only in the
   /// mystery where somebody had a reason to tear it.
-  bool get listTorn => mystery.id == twistCase.id && !sheetAttached;
+  bool get listTorn => mystery == world.twist && !sheetAttached;
 
   /// Whether the torn strip has been found and is waiting to be put back.
   bool get canAttachSheet => found.contains('tornsheet') && !sheetAttached;
@@ -207,7 +207,8 @@ class GameState extends ChangeNotifier {
     if (caseIndex == null && next == previous) {
       next = (next + 1 + _rng.nextInt(allCases.length - 1)) % allCases.length;
     }
-    if (twist ?? (caseIndex == null && _rng.nextDouble() < twistChance)) {
+    if (hasTwist &&
+        (twist ?? (caseIndex == null && _rng.nextDouble() < twistChance))) {
       mystery = twistCase;
     } else {
       _caseIndex = next;
@@ -248,7 +249,7 @@ class GameState extends ChangeNotifier {
     puzzle = null;
     task = Task.none;
     dialogue = null;
-    store?.clear(slot);
+    store?.clear(_box(slot));
     phase = skipIntro ? Phase.playing : Phase.intro;
     notifyListeners();
   }
@@ -256,6 +257,7 @@ class GameState extends ChangeNotifier {
   /// Everything needed to pick the investigation up where it was left.
   Map<String, Object?> toJson() => {
     'version': _saveVersion,
+    'world': world.id,
     'case': mystery.id,
     'caseIndex': _caseIndex,
     'evidence': [for (final e in evidence) e.id],
@@ -279,17 +281,30 @@ class GameState extends ChangeNotifier {
   /// Which of the save slots this investigation is kept in.
   int slot = 0;
 
+  /// Where a slot of the place being played is kept: each place has its
+  /// own three, and the mansion's are the ones it always had.
+  int _box(int slot) => worlds.indexOf(world) * saveSlots + slot;
+
+  /// Moves the title screen on to another place, with its own case files.
+  void switchWorld(World next) {
+    if (phase != Phase.title || next == world) return;
+    world = next;
+    _caseIndex = null;
+    roomId = next.start;
+    notifyListeners();
+  }
+
   /// Whenever anything changes during an investigation, it is saved.
   @override
   void notifyListeners() {
-    if (phase == Phase.playing) store?.write(slot, jsonEncode(toJson()));
+    if (phase == Phase.playing) store?.write(_box(slot), jsonEncode(toJson()));
     super.notifyListeners();
   }
 
   /// What is in [slot], for the title screen: how many clues have been
   /// found out of how many, and where Churlock was standing. Null if empty.
   ({int found, int total, String room})? summaryOf(int slot) {
-    final saved = store?.read(slot);
+    final saved = store?.read(_box(slot));
     if (saved == null) return null;
     try {
       final json = jsonDecode(saved) as Map<String, dynamic>;
@@ -305,7 +320,7 @@ class GameState extends ChangeNotifier {
 
   /// Throws away whatever is in [slot], from the title screen.
   void erase(int slot) {
-    store?.clear(slot);
+    store?.clear(_box(slot));
     notifyListeners();
   }
 
@@ -321,14 +336,15 @@ class GameState extends ChangeNotifier {
   /// Picks up the saved investigation, if there is one, and says whether
   /// there was. A save that no longer makes sense is thrown away.
   bool restore() {
-    final saved = store?.read(slot);
+    final saved = store?.read(_box(slot));
     if (saved == null) return false;
     try {
       final json = jsonDecode(saved) as Map<String, dynamic>;
       if (json['version'] != _saveVersion) throw const FormatException();
+      if (json['world'] != world.id) throw const FormatException();
       final m = [
         ...allCases,
-        twistCase,
+        ?world.twist,
       ].firstWhere((c) => c.id == json['case']);
       final known = {
         for (final e in [...m.pool, ...m.gifts, m.prints]) e.id: e,
@@ -365,7 +381,7 @@ class GameState extends ChangeNotifier {
       cornerLifted = json['cornerLifted'] as bool;
       sheetAttached = json['sheetAttached'] as bool;
     } catch (_) {
-      store?.clear(slot);
+      store?.clear(_box(slot));
       return false;
     }
     accused.clear();
@@ -393,7 +409,7 @@ class GameState extends ChangeNotifier {
 
   /// Goes back to the title screen, leaving the investigation saved.
   void toTitle() {
-    if (phase == Phase.playing) store?.write(slot, jsonEncode(toJson()));
+    if (phase == Phase.playing) store?.write(_box(slot), jsonEncode(toJson()));
     _leave();
     notifyListeners();
   }
@@ -687,7 +703,7 @@ class GameState extends ChangeNotifier {
     panel = Panel.none;
     dialogue = null;
     // The case is over, one way or the other.
-    store?.clear(slot);
+    store?.clear(_box(slot));
     phase = Phase.outro;
     notifyListeners();
   }

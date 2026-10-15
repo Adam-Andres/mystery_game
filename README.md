@@ -7,6 +7,18 @@ The Donut County Police have called in Detective Churlock, a churro, to search
 her three-floor house, its bedrooms, yard and potting shed, and work out which of the five residents did it — one of
 them alone, or two of them together.
 
+## Two places
+
+- **The Senclair Affair:** Mrs. Senclair's gingerbread mansion in Donut
+  County. Seven mysteries, and a rare eighth.
+- **The Candy Corn Caper:** the Kernel family's candy corn farm in Candy
+  Land, where Farmer Kernel has been found dead in his root cellar. A
+  farmhouse, a barn and a field, five new suspects and two new officers,
+  and three mysteries of its own.
+
+On the title screen, the arrow beside the case name slides across to the
+other place, with its own music and its own three case files.
+
 ## How to play
 
 - **Move** between rooms with the on-screen arrows or the arrow keys.

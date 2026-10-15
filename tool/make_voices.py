@@ -28,6 +28,14 @@ VOICES = {
     "barry": ("en_GB-northern_english_male-medium", 1.0, 1.0),
     "sprinkles": ("en_US-joe-medium", 1.0, 1.0),
     "glaze": ("en_US-bryce-medium", 1.0, 1.05),
+    # The Kernel farm.
+    "lolly": ("en_US-amy-medium", 1.0, 1.06),
+    "marsha": ("en_GB-jenny_dioco-medium", 1.0, 1.04),
+    "taffy": ("en_US-danny-low", 1.05, 0.98),
+    "licorice": ("en_US-kusal-medium", 1.08, 0.95),
+    "gus": ("en_US-sam-medium", 1.08, 0.9),
+    "butterscotch": ("en_US-bryce-medium", 1.05, 0.88),
+    "jellybean": ("en_US-kristin-medium", 0.95, 1.05),
 }
 
 # Voices that tremble with fright: a wavering pitch and an unsteady breath.

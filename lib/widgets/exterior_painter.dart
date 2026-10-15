@@ -23,7 +23,11 @@ class ExteriorPainter extends CustomPainter {
     required this.time,
     this.lurker = 0,
     this.door = 0,
+    this.farm = false,
   });
+
+  /// Whether this is the Kernel farm in Candy Land, not the mansion.
+  final bool farm;
 
   final bool gloomy;
   final double time;
@@ -40,8 +44,12 @@ class ExteriorPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     c = canvas;
     _sky();
-    _yard();
-    _mansion();
+    if (farm) {
+      _farmstead();
+    } else {
+      _yard();
+      _mansion();
+    }
     _ground();
   }
 
@@ -50,7 +58,8 @@ class ExteriorPainter extends CustomPainter {
       old.time != time ||
       old.gloomy != gloomy ||
       old.lurker != lurker ||
-      old.door != door;
+      old.door != door ||
+      old.farm != farm;
 
   void _rect(double x, double y, double w, double h, Color col, [double r = 0]) {
     c.drawRRect(
@@ -164,6 +173,88 @@ class ExteriorPainter extends CustomPainter {
       );
     }
     _rect(92, 366, 310, 5, Color.lerp(Colors.black, const Color(0xFF6B4226), dim)!);
+  }
+
+  /// The Kernel farm: a clapboard farmhouse among the candy corn, with the
+  /// red barn and the silo beside it and the windmill turning behind.
+  void _farmstead() {
+    final dim = gloomy ? .6 : 1.0;
+    Color shade(Color c) => Color.lerp(Colors.black, c, dim)!;
+    // The windmill and the corn, beyond the house.
+    c.drawPath(
+      Path()..addPolygon(const [Offset(240, 400), Offset(270, 400), Offset(262, 250), Offset(248, 250)], true),
+      fill(shade(const Color(0xFF5D4037))),
+    );
+    for (var i = 0; i < 4; i++) {
+      final a = i * pi / 2 + time * 2;
+      c.drawLine(const Offset(255, 250), Offset(255 + cos(a) * 54, 250 + sin(a) * 54), stroke(shade(const Color(0xFFD7CCC8)), 7));
+    }
+    for (var row = 0; row < 2; row++) {
+      for (var x = 20.0 + row * 20; x < 430; x += 34) {
+        final top = 330.0 + row * 24;
+        c.drawLine(Offset(x, ground), Offset(x, top), stroke(shade(const Color(0xFF558B2F)), 4));
+        c.drawPath(
+          Path()..addPolygon([Offset(x, top - 16), Offset(x - 7, top), Offset(x + 7, top)], true),
+          fill(shade(const Color(0xFFFF9800))),
+        );
+        c.drawPath(
+          Path()..addPolygon([Offset(x, top - 16), Offset(x - 3, top - 9), Offset(x + 3, top - 9)], true),
+          fill(shade(Colors.white)),
+        );
+      }
+    }
+    // The silo and the red barn, to the right.
+    _rect(872, 170, 70, ground - 170, shade(const Color(0xFFB0BEC5)));
+    c.drawArc(Rect.fromLTWH(872, 140, 70, 60), pi, pi, true, fill(shade(const Color(0xFF90A4AE))));
+    _rect(780, 250, 110, ground - 250, shade(const Color(0xFF9E3A2E)));
+    c.drawPath(
+      Path()..addPolygon(const [Offset(770, 254), Offset(835, 200), Offset(900, 254)], true),
+      fill(shade(const Color(0xFF7B1F1F))),
+    );
+    _rect(808, 300, 54, 100, shade(const Color(0xFF7B1F1F)), 3);
+    c.drawLine(const Offset(808, 300), const Offset(862, 400), stroke(_icing, 3));
+    c.drawLine(const Offset(862, 300), const Offset(808, 400), stroke(_icing, 3));
+    // The farmhouse: yellow clapboard under a shingle roof, a porch, and a
+    // door in the same place as every other front door Churlock walks to.
+    const clapboard = Color(0xFFE8C770);
+    _rect(470, 220, 300, ground - 220, clapboard);
+    for (var y = 230.0; y < ground; y += 16) {
+      c.drawLine(Offset(470, y), Offset(770, y), stroke(Colors.black12, 2));
+    }
+    c.drawPath(
+      Path()..addPolygon(const [Offset(450, 226), Offset(790, 226), Offset(700, 130), Offset(540, 130)], true),
+      fill(const Color(0xFF6D4C41)),
+    );
+    _rect(612, 92, 30, 50, const Color(0xFF8D6E63));
+    for (var i = 0; i < 4; i++) {
+      final rise = (time * 3 + i / 4) % 1;
+      c.drawCircle(
+        Offset(627 + 22 * rise + 8 * sin(rise * 6), 84 - rise * 80),
+        8 + rise * 14,
+        fill(Colors.white.withValues(alpha: .22 * (1 - rise))),
+      );
+    }
+    _window(500, 248, 50, 56);
+    _window(560, 160, 44, 44);
+    _window(700, 248, 50, 56);
+    _window(500, 330, 50, 48);
+    // Porch roof on two posts.
+    _rect(620, 296, 120, 10, const Color(0xFF6D4C41), 3);
+    for (final x in [624.0, 730.0]) {
+      _rect(x, 306, 8, ground - 306, _icing);
+    }
+    // The front door swings inward on its left-hand hinges.
+    final leaf = 62 * (1 - .78 * door);
+    if (door > 0) {
+      _rect(650, 312, 62, ground - 312, const Color(0xFF2A1408), 4);
+      _rect(650 + leaf, 322, 62 - leaf, ground - 322, const Color(0xFFFFC56B).withValues(alpha: .85));
+    }
+    _rect(650, 312, leaf, ground - 312, Color.lerp(const Color(0xFF6D4C41), const Color(0xFF4E342E), door)!, 4);
+    c.drawCircle(Offset(650 + leaf - 12, 362), 4, fill(const Color(0xFFFFD54F)));
+    // Candy corn wreath on the door.
+    if (door < .3) {
+      c.drawCircle(const Offset(681, 336), 12, stroke(const Color(0xFFFF9800), 5));
+    }
   }
 
   void _mansion() {

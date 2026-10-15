@@ -50,6 +50,9 @@ abstract class Ambience {
   /// Starts the title music, or lets it fade away.
   void setMusic(bool playing);
 
+  /// Changes the title music to [asset], fading one into the other.
+  void setTrack(String asset);
+
   void setMusicMuted(bool muted);
 
   /// Called whenever the player touches the page, since a browser will not
@@ -86,6 +89,11 @@ class SilentAmbience implements Ambience {
 
   @override
   void setMusic(bool playing) => music = playing;
+
+  String? track;
+
+  @override
+  void setTrack(String asset) => track = asset;
 
   @override
   void setMusicMuted(bool muted) => musicMuted = muted;

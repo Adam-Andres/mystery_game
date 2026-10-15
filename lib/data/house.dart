@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'models.dart';
+import 'farm.dart';
 import 'senclair.dart';
 
 export 'senclair.dart'
@@ -14,7 +15,7 @@ const double floorY = 350;
 
 /// Every place a mystery can be set, in the order the title screen shows
 /// them.
-const worlds = <World>[senclair];
+const worlds = <World>[senclair, farm];
 
 /// The place being played, or shown on the title screen.
 World world = senclair;

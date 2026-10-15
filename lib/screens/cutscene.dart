@@ -237,6 +237,7 @@ class _CutsceneState extends State<Cutscene> with TickerProviderStateMixin {
               time: t,
               lurker: lurking,
               door: door,
+              farm: world.id == 'farm',
             ),
           ),
         ),
@@ -358,8 +359,9 @@ class _CutsceneState extends State<Cutscene> with TickerProviderStateMixin {
               maxHeight: 120,
               child: Transform.translate(
                 offset: Offset(0, 44 * (1 + hop / 6) - 8),
-                child: const DessertFigure(
-                  Dessert.pupcake,
+                // The place's own animal: Pupcake, or the farm's chick.
+                child: DessertFigure(
+                  world.pets.first.person.dessert,
                   width: 54,
                   animate: true,
                 ),

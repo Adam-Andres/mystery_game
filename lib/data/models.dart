@@ -14,6 +14,14 @@ enum Dessert {
   cracker,
   pupcake,
   purrfait,
+  lollipop,
+  taffy,
+  gumdrop,
+  marshmallow,
+  licorice,
+  butterscotch,
+  jellybean,
+  chicklet,
 }
 
 class Person {
@@ -397,6 +405,7 @@ class World {
     required this.music,
     required this.certificate,
     required this.looseCorner,
+    this.titleColors = const [Color(0xFF4A2A3A), Color(0xFF140A10)],
   });
 
   final String id;
@@ -455,4 +464,7 @@ class World {
 
   /// What is in the hidden compartment of the locked desk, in most mysteries.
   final Junk looseCorner;
+
+  /// The glow behind the title screen.
+  final List<Color> titleColors;
 }

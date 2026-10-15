@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import '../data/cases.dart';
 import '../data/house.dart';
 import '../data/models.dart';
 import '../game_state.dart';
@@ -411,7 +410,7 @@ class AccusePanel extends StatelessWidget {
             ),
           ),
           // A scroll bar that scrolls nothing, where the list was wider.
-          if (g.mystery.id == twistCase.id) ...[
+          if (g.mystery == world.twist) ...[
             const SizedBox(height: 4),
             const _IdleScrollbar(),
           ],

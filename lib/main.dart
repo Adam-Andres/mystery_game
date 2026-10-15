@@ -101,6 +101,7 @@ class _MysteryAppState extends State<MysteryApp> {
       _ => Weather.outside,
     });
     // The title screen has its music, which fades as the story begins.
+    ambience.setTrack(world.music);
     ambience.setMusic(g.phase == Phase.title);
   }
 
