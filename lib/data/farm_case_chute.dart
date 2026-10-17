@@ -6,17 +6,17 @@ import 'farm_common.dart';
 import 'models.dart';
 
 /// Two killers whose alibis are perfectly true. Neither of them had to be
-/// in the cellar: one sent him there, and the other pulled a lever.
+/// in the shelter: one sent him there, and the other pulled a lever.
 const chuteCase = MysteryCase(
   id: 'fchute',
   title: 'Down the Chute',
   culprits: {'marsha', 'gus'},
   nextVictims: ['lolly', 'taffy', 'licorice'],
-  herringCount: 10,
+  herringCount: 13,
   solution:
       "The farm's pension fund passed, on Farmer Kernel's death, to his two "
       "longest-serving hands: Gus Gumdrop and Marsha Mallow. On Friday he "
-      "meant to dissolve it. Neither of them went near the root cellar. At "
+      "meant to dissolve it. Neither of them went near the tornado shelter. At "
       "five to eleven Marsha sent the farmer down with a note, to fetch up "
       "a sack of potatoes for a pie that has no potatoes in it, and stood "
       "him under the mouth of the corn chute. Gus handed his churns to the "
@@ -34,7 +34,8 @@ const chuteCase = MysteryCase(
       'barn',
       5,
       "The iron lever of the corn chute, which drops candy corn from the "
-          "barn store into the root cellar bins. It has been pulled right "
+          "barn store down a long tin pipe under the yard, into the shelter "
+          "bins. It has been pulled right "
           "down, and the grease on it is fresh. It wants dusting for "
           "fingerprints.",
     ),
@@ -43,7 +44,7 @@ const chuteCase = MysteryCase(
       'Heap of Corn',
       'rootcellar',
       2,
-      "A mountain of candy corn under the mouth of the chute in the cellar "
+      "A mountain of candy corn under the mouth of the chute in the shelter "
           "ceiling, burying the outline almost to the top. It came down all at "
           "once.",
       icon: Icons.landslide,
@@ -119,9 +120,9 @@ const chuteCase = MysteryCase(
       Evidence(
         'dissolve',
         'Letter to the Bank',
-        'office',
+        'kernelroom',
         0,
-        "In the deed box, unsent: “Sirs, I wish the staff pension fund "
+        "In the deed box by his bed, unsent: “Sirs, I wish the staff pension fund "
             "closed on Friday and the money returned to me. Two of them have "
             "been counting on it for twenty years, and I am tired of being "
             "counted.”",
@@ -151,7 +152,7 @@ const chuteCase = MysteryCase(
     ...farmPieHints,
     'chutelever':
         "Pulled from the barn, Churlock, and it fell in the "
-        "cellar. Nobody had to be anywhere near him. Dust it.",
+        "shelter. Nobody had to be anywhere near him. Dust it.",
     'cornheap':
         "All at once, from above. Who works the chute, and who "
         "could see down it?",
@@ -184,7 +185,7 @@ const chuteCase = MysteryCase(
     "Before you name anyone, Churlock: do we know how he died, and from "
         "where? Find out what came down on him.",
     "Every one of the five has an alibi, and I believe all five. So ask "
-        "who did not need to be in the cellar at all.",
+        "who did not need to be in the shelter at all.",
     "Somebody sent him to stand in one particular spot, and somebody held "
         "the key to what came down on it. Look for a note, and a key.",
     "A note signed M., a key in the cook's box, and a lever with the "
@@ -338,8 +339,8 @@ const chuteCase = MysteryCase(
         'note',
         'Did you hear anything from the kitchen?',
         "Marsha, at ten to eleven, at the front door: “Go on out to the "
-            "cellar, Cornelius, there's a dear.” And a lot of grumbling. Then "
-            "the cellar door.",
+            "shelter, Cornelius, there's a dear.” And a lot of grumbling. Then "
+            "the shelter door.",
         needs: ['partyline'],
       ),
       ...lollyCommon,
@@ -355,9 +356,9 @@ const chuteCase = MysteryCase(
       Topic('suspect', suspectQ, "Couldn't say. I was crankin'."),
       Topic(
         'rumble',
-        'Did you hear anything from the cellar?',
+        'Did you hear anything from the shelter?',
         "The chute, at five past eleven. Sounds like thunder through the "
-            "press shed wall. Thought Gus was fillin' the bins at night, which "
+            "yard, along the pipe. Thought Gus was fillin' the bins at night, which "
             "he never does.",
         needs: ['puller'],
       ),

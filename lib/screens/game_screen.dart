@@ -1236,7 +1236,7 @@ class _Hud extends StatelessWidget {
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                    for (var level = 2; level >= 0; level--)
+                    for (var level = topLevel; level >= 0; level--)
                       Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [

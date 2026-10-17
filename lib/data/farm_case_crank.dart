@@ -12,7 +12,7 @@ const crankCase = MysteryCase(
   title: 'No Crank',
   culprits: {'taffy'},
   nextVictims: ['lolly', 'marsha', 'gus', 'licorice'],
-  herringCount: 10,
+  herringCount: 13,
   solution:
       "For three summers Taffy Pulman had been pulling taffy from Kernel "
       "sugar on Kernel time and selling it at the county fair under his own "
@@ -20,8 +20,8 @@ const crankCase = MysteryCase(
       "alibi was the puller's counter: 1,190 pulls, a fair hour's cranking. "
       "But he cranked that batch at eight o'clock, not at eleven, and left "
       "it on the slab, where it went cold and gathered dust. At eleven he "
-      "took the iron crank handle off the machine, went down to the root "
-      "cellar, and at 11:05 struck the farmer with it. Without its handle "
+      "took the iron crank handle off the machine, went down to the tornado "
+      "shelter, and at 11:05 struck the farmer with it. Without its handle "
       "the puller could not be turned at all, and that night, for the first "
       "time in years, it never squealed. His tally card has the batch warm "
       "as toast at midnight. Marsha was at her pie, Gus at the barn door, "
@@ -89,24 +89,24 @@ const crankCase = MysteryCase(
         icon: Icons.savings, color: Color(0xFFFFD54F), inside: 'footlocker',
       ),
       Evidence(
-        'thiefnote', "Farmer's Note", 'office', 0,
-        "In the rolltop, in the farmer's hand: “T.P. has been pulling taffy "
+        'thiefnote', "Farmer's Note", 'kernelroom', 0,
+        "In the deed box by his bed, in the farmer's hand: “T.P. has been pulling taffy "
         "from my sugar on my time and selling it at the fair as his own. "
         "The Sheriff, Friday.”",
-        icon: Icons.mail, color: paper, inside: 'rolltop',
+        icon: Icons.mail, color: paper, inside: 'nightstand',
       ),
     ],
     [
       Evidence(
         'pinkthumb', 'Sticky Thumbprint', 'rootcellar', 1,
-        "A pink, sticky thumbprint on the cellar rail, stretched out long "
+        "A pink, sticky thumbprint on the shelter rail, stretched out long "
         "as though the thumb that made it had given a little. It is on top "
         "of the spilled candy corn.",
         icon: Icons.fingerprint, color: Color(0xFFF48FB1),
       ),
       Evidence(
         'stretchsteps', 'Stretched Footprints', 'rootcellar', 2,
-        "Footprints on the cellar steps, each one pulled out long at the "
+        "Footprints on the shelter steps, each one pulled out long at the "
         "heel, as if the walker were made of something that stretched. They "
         "are on top of the scattered corn.",
         icon: Icons.directions_walk, color: Color(0xFFBCAAA4),

@@ -10,7 +10,7 @@ const moonCase = MysteryCase(
   title: 'Under the Harvest Moon',
   culprits: {'licorice'},
   nextVictims: ['marsha', 'gus', 'lolly', 'taffy'],
-  herringCount: 10,
+  herringCount: 13,
   solution:
       "Farmer Kernel had found out that Professor Licorice's famous rainbow "
       "corn was grown from seed stolen out of the Kernel seed chest, and he "
@@ -18,8 +18,8 @@ const moonCase = MysteryCase(
       "said he spent the evening in Candy City and came home on the last "
       "train. In fact he came home at six, kept to his room, and at eleven "
       "crept out of the greenhouse with the Giant Gobstopper from the "
-      "trophy shelf. At 11:05 he struck the farmer with it in the root "
-      "cellar, and hid it. The ticket he showed was for the next day's "
+      "trophy shelf. At 11:05 he struck the farmer with it in the tornado "
+      "shelter, and hid it. The ticket he showed was for the next day's "
       "train, and the guard had never punched it. His umbrella had stood "
       "dry on the porch since nine, and Lolly, at the front-room "
       "telephone, saw his light cross the orchard at eleven. Marsha was at her pie, Taffy at the "
@@ -27,7 +27,7 @@ const moonCase = MysteryCase(
   core: [
     Evidence(
       'trophygap', 'Gap on the Trophy Shelf', 'frontroom', 0,
-      "The trophy shelf over the hearth. Between two silver cups, a round "
+      "The trophy shelf over the stove. Between two silver cups, a round "
       "ring in the dust where the Giant Gobstopper sat: Best in Show, "
       "1902, and heavy as a cannonball. It is gone.",
       icon: Icons.emoji_events, color: gold2,
@@ -73,7 +73,7 @@ const moonCase = MysteryCase(
       Evidence(
         'aniseed', 'Liquorice on a Nail', 'rootcellar', 1,
         "A strand of black liquorice snagged on a nail at the foot of the "
-        "cellar steps. It lies on top of the spilled candy corn, so it came "
+        "shelter steps. It lies on top of the spilled candy corn, so it came "
         "after the struggle.",
         icon: Icons.gesture, color: Color(0xFF424242),
       ),
@@ -88,7 +88,7 @@ const moonCase = MysteryCase(
     [
       Evidence(
         'gobcrawl', 'Giant Gobstopper', 'rootcellar', 0,
-        "Pushed to the back of the crawlspace: the Giant Gobstopper, its "
+        "Pushed to the back of the escape tunnel: the Giant Gobstopper, its "
         "rainbow rings dulled, and a crust of candy corn on one side. It "
         "wants dusting for fingerprints.",
         inside: 'crawlspace',
@@ -166,7 +166,7 @@ const moonCase = MysteryCase(
         "Then find where each of the five was at that minute.",
     "Four of them can be placed by a slip of paper or a machine. One says "
         "he was not on the farm at all. Is there anything that proves it?",
-    "Look at what was left in the cellar, and at the weapon once it is "
+    "Look at what was left in the shelter, and at the weapon once it is "
         "dusted. Then ask Marsha who it could belong to.",
     "A ticket is only proof if it is the right ticket, old chap. Read the "
         "date, look for the guard's punch, and then ask who was on the "
@@ -281,7 +281,7 @@ const moonCase = MysteryCase(
         'footsteps', 'Did you see anything from the front room?',
         "Nobody came through. But at eleven I saw the greenhouse lamp go "
         "out, and a little light come bobbing across the orchard toward "
-        "the yard, on two long thin legs. I thought it was a heron. We "
+        "the porch, on two long thin legs. I thought it was a heron. We "
         "haven't got herons.",
         needs: ['partyline'],
       ),

@@ -12,14 +12,14 @@ const sliceCase = MysteryCase(
   title: 'A Slice Too Many',
   culprits: {'marsha', 'licorice'},
   nextVictims: ['gus', 'lolly', 'taffy'],
-  herringCount: 10,
+  herringCount: 13,
   solution:
       "Marsha Mallow and Professor Licorice had sold the Kernel candy corn "
       "recipe and seed to Big Sugar, half each, and Farmer Kernel had found "
       "the letters. The Professor never took the last train: he came home "
       "early and kept to his room, and his ticket was never punched. At "
       "five to eleven Marsha left her pie and took the farmer down to the "
-      "root cellar for a look at the corn, and at 11:05 the Professor "
+      "tornado shelter for a look at the corn, and at 11:05 the Professor "
       "struck him with her iron skillet. Her pie went a quarter of an hour "
       "unturned and burnt black on one side, and two slices were gone from "
       "it by midnight. The bake card she produced has the Professor coming "
@@ -55,7 +55,7 @@ const sliceCase = MysteryCase(
     ),
     Evidence(
       'skilletgap', 'Empty Hook', 'fkitchen', 2,
-      "Over the range, a row of iron pans on hooks, graded by size. The "
+      "Over the hearth, a row of iron pans on hooks, graded by size. The "
       "biggest hook is empty, and there is a clean round mark on the wall "
       "where the great skillet hangs.",
       icon: Icons.soup_kitchen, color: Color(0xFF90A4AE),
@@ -81,7 +81,7 @@ const sliceCase = MysteryCase(
     [
       Evidence(
         'skilletcrawl', 'Iron Skillet', 'rootcellar', 0,
-        "Pushed to the back of the crawlspace: the great iron skillet from "
+        "Pushed to the back of the escape tunnel: the great iron skillet from "
         "the kitchen, wiped, with a crust of candy corn baked into the rim. "
         "It wants dusting for fingerprints.",
         inside: 'crawlspace',
@@ -113,14 +113,14 @@ const sliceCase = MysteryCase(
     [
       Evidence(
         'flourhand', 'Floury Handprint', 'rootcellar', 1,
-        "A soft, floury handprint on the cellar rail, and beside it on the "
+        "A soft, floury handprint on the shelter rail, and beside it on the "
         "step a long strand of black liquorice. Both are on top of the "
         "spilled candy corn.",
         icon: Icons.back_hand, color: Colors.white,
       ),
       Evidence(
         'twotracks', 'Footprints on the Steps', 'rootcellar', 2,
-        "In the spilled sugar on the cellar steps, two trails of prints: "
+        "In the spilled sugar on the shelter steps, two trails of prints: "
         "one round and puffy, one long and thin, as if on a stick. They are "
         "on top of the scattered corn.",
         icon: Icons.directions_walk, color: Color(0xFFBCAAA4),

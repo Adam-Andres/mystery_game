@@ -27,6 +27,10 @@ enum Dir { left, right, up, down }
 
 List<Room> get rooms => world.rooms;
 
+/// The highest floor of the place, so the maps know how tall to be.
+int get topLevel =>
+    rooms.fold(0, (top, r) => r.level > top ? r.level : top);
+
 Room roomById(String id) => rooms.firstWhere((r) => r.id == id);
 
 Room? _roomAt(int level, int col) {

@@ -12,7 +12,7 @@ const creamCase = MysteryCase(
   title: 'The Cream of the Crop',
   culprits: {'gus'},
   nextVictims: ['taffy', 'lolly', 'marsha', 'licorice'],
-  herringCount: 10,
+  herringCount: 13,
   solution:
       "Forty years ago Gus Gumdrop's father staked the Gumdrop farm on a "
       "hand of cards, and lost it to Cornelius Kernel. Gus had worked the "
@@ -22,7 +22,7 @@ const creamCase = MysteryCase(
       "churns at the barn door at eleven. But the driver never comes to "
       "the barn: he takes the churns from the stand at the gate at half "
       "past ten, and writes eleven on every slip from habit. Gus left the "
-      "churns out early, went down to the root cellar, and at 11:05 struck "
+      "churns out early, went down to the tornado shelter, and at 11:05 struck "
       "the farmer with a full iron milk churn. The cows were never milked "
       "at all, and bellowed all night. The milking card he produced lists "
       "Fudge Ripple, a cow sold to the Nougat farm on the first of the "
@@ -76,7 +76,7 @@ const creamCase = MysteryCase(
     [
       Evidence(
         'churncrawl', 'Dented Milk Churn', 'rootcellar', 0,
-        "Shoved to the back of the crawlspace: an iron milk churn, still "
+        "Shoved to the back of the escape tunnel: an iron milk churn, still "
         "half full, with a deep dent in the rim and a crust of crushed "
         "candy corn in it. It wants dusting for fingerprints.",
         inside: 'crawlspace',
@@ -98,17 +98,17 @@ const creamCase = MysteryCase(
         icon: Icons.style, color: paper, inside: 'feedbin',
       ),
       Evidence(
-        'saleagreement', 'Bill of Sale', 'office', 0,
-        "In the rolltop, a draft from Big Sugar & Co.: “The Kernel farm, "
+        'saleagreement', 'Bill of Sale', 'kernelroom', 0,
+        "In the deed box by his bed, a draft from Big Sugar & Co.: “The Kernel farm, "
         "its corn and cows, to be sold entire. The foreman, G. Gumdrop, is "
         "not to be kept on.” It is ready to sign.",
-        icon: Icons.description, color: Colors.white, inside: 'rolltop',
+        icon: Icons.description, color: Colors.white, inside: 'nightstand',
       ),
     ],
     [
       Evidence(
         'greensugar', 'Green Sugar', 'rootcellar', 1,
-        "A scatter of coarse green sugar crystals at the foot of the cellar "
+        "A scatter of coarse green sugar crystals at the foot of the shelter "
         "steps, on top of the spilled candy corn. They are not the farmer's: "
         "he was striped, and smooth.",
         icon: Icons.grain, color: Color(0xFF81C784),
@@ -158,7 +158,7 @@ const creamCase = MysteryCase(
         "off the list.",
     'greensugar': "Not the farmer's. Marsha knows every dessert on this "
         "farm. Ask her whose sugar that is.",
-    'haybootprint': "Hay, in the cellar. Marsha knows every boot on this "
+    'haybootprint': "Hay, in the shelter. Marsha knows every boot on this "
         "farm. Ask her whose that is.",
     'milkcard': "Read the names, old chap. Every cow on that card ought to "
         "be standing in the barn.",

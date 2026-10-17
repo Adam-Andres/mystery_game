@@ -235,7 +235,9 @@ class ExteriorPainter extends CustomPainter {
       );
     }
     _window(500, 248, 50, 56);
+    // The two bedrooms upstairs, Lolly's and her father's.
     _window(560, 160, 44, 44);
+    _window(652, 160, 44, 44);
     _window(700, 248, 50, 56);
     _window(500, 330, 50, 48);
     // Porch roof on two posts.
@@ -254,6 +256,11 @@ class ExteriorPainter extends CustomPainter {
     // Candy corn wreath on the door.
     if (door < .3) {
       c.drawCircle(const Offset(681, 336), 12, stroke(const Color(0xFFFF9800), 5));
+    }
+    // The tornado shelter, dug into a mound at the side of the porch.
+    c.drawOval(Rect.fromLTWH(734, ground - 30, 110, 50), fill(shade(const Color(0xFF4A3B2A))));
+    for (final x in [752.0, 790.0]) {
+      _rect(x, ground - 20, 36, 18, shade(const Color(0xFF8D4A2B)), 2);
     }
   }
 

@@ -152,6 +152,10 @@ class RoomPainter extends CustomPainter {
         _orchard();
       case 'greenhouse':
         _greenhouse();
+      case 'lollyroom':
+        _lollyroom();
+      case 'kernelroom':
+        _kernelroom();
       case 'pressroom':
         _pressroom();
     }
@@ -188,6 +192,10 @@ class RoomPainter extends CustomPainter {
   }
 
   void _shell() {
+    if (world.id == 'farm') {
+      _farmShell();
+      return;
+    }
     c.drawRect(const Rect.fromLTWH(0, 0, sceneW, floorY), fill(room.wall));
     switch (room.level) {
       case 0:
@@ -1467,12 +1475,6 @@ class RoomPainter extends CustomPainter {
   // The farm
 
   /// Clapboard: the farmhouse's painted plank walls.
-  void _boards(Color line) {
-    for (var y = 30.0; y < floorY; y += 30) {
-      c.drawLine(Offset(0, y), Offset(sceneW, y), stroke(line, 2));
-    }
-  }
-
   /// A piece of candy corn, point up, [size] tall, at [centre].
   void _candyCorn(Offset centre, double size, {double tilt = 0}) {
     c.save();
@@ -1495,58 +1497,6 @@ class RoomPainter extends CustomPainter {
     c.drawPath(band(.34, .68), fill(const Color(0xFFFF9800)));
     c.drawPath(band(.68, 1), fill(const Color(0xFFFFD54F)));
     c.restore();
-  }
-
-  void _rootcellar() {
-    _stairs(300, -1);
-    _hangingLamp(480, 70);
-    // Crates of candy corn.
-    for (final (x, y, size) in const [
-      (340.0, 250.0, 90.0),
-      (440.0, 270.0, 70.0),
-      (390.0, 190.0, 64.0),
-    ]) {
-      _crate(x, y, size);
-      _candyCorn(Offset(x + size / 2, y - 6), 22);
-    }
-    // Potato racks, and the black gap of the crawlspace behind them.
-    _rect(560, 290, 84, 60, Colors.black, 4);
-    _rect(700, 110, 210, 240, _darkWood, 4);
-    for (var y = 140.0; y < 340; y += 44) {
-      _rect(710, y, 190, 6, _wood);
-      for (var x = 722.0; x < 896; x += 26) {
-        c.drawOval(
-          Rect.fromLTWH(x, y - 18, 22, 16),
-          fill(const Color(0xFFA1887F)),
-        );
-      }
-    }
-    // What is left of Farmer Kernel: a candy corn outline, and spilt corn.
-    for (var i = 0; i < 18; i++) {
-      _candyCorn(
-        Offset(230 + (i * 61.0) % 330, 430 + (i * 37.0) % 70),
-        14,
-        tilt: i * .7,
-      );
-    }
-    c.drawPath(
-      Path()..addPolygon(const [
-        Offset(260, 470),
-        Offset(520, 420),
-        Offset(520, 500),
-      ], true),
-      stroke(Colors.white, 5),
-    );
-    for (final x in [270.0, 520.0]) {
-      c.drawPath(
-        Path()..addPolygon([
-          Offset(x - 10, 505),
-          Offset(x + 10, 505),
-          Offset(x, 482),
-        ], true),
-        fill(const Color(0xFFFDD835)),
-      );
-    }
   }
 
   /// The sky and the ground of an outdoor place, in the syrup rain.
@@ -1592,108 +1542,6 @@ class RoomPainter extends CustomPainter {
       3,
     );
     c.drawCircle(Offset(r.right - 12, r.center.dy), 5, fill(_brass));
-  }
-
-  void _porch() {
-    _outside(const Color(0xFF5A4630));
-    // The farmhouse front, yellow clapboard, filling the scene.
-    _rect(0, 40, sceneW, 310, const Color(0xFFE8C770));
-    for (var y = 56.0; y < 350; y += 18) {
-      c.drawLine(Offset(0, y), Offset(sceneW, y), stroke(Colors.black12, 2));
-    }
-    c.drawPath(
-      Path()..addPolygon(const [
-        Offset(0, 40),
-        Offset(sceneW, 40),
-        Offset(sceneW, 0),
-        Offset(0, 0),
-      ], true),
-      fill(const Color(0xFF6D4C41)),
-    );
-    for (final x in [150.0, 760.0]) {
-      _rect(x, 120, 110, 120, _darkWood, 4);
-      final pane = Rect.fromLTWH(x + 8, 128, 94, 104);
-      c.drawRect(pane, fill(const Color(0xFFFFD98A)));
-      c.drawLine(pane.topCenter, pane.bottomCenter, stroke(_darkWood, 4));
-      c.drawLine(pane.centerLeft, pane.centerRight, stroke(_darkWood, 4));
-    }
-    _door(const Rect.fromLTWH(420, 110, 120, 240), const Color(0xFF795548));
-    c.drawCircle(
-      const Offset(480, 170),
-      30,
-      stroke(const Color(0xFF558B2F), 10),
-    );
-    for (var i = 0; i < 6; i++) {
-      final a = i * pi / 3;
-      _candyCorn(
-        Offset(480 + cos(a) * 30, 170 + sin(a) * 30),
-        13,
-        tilt: a + pi / 2,
-      );
-    }
-    // Porch roof posts and boards.
-    _rect(0, 344, sceneW, 30, const Color(0xFF8A6238));
-    for (var x = 0.0; x < sceneW; x += 60) {
-      c.drawLine(Offset(x, 344), Offset(x, 374), stroke(Colors.black26, 2));
-    }
-    for (final x in [80.0, 880.0]) {
-      _rect(x, 30, 16, 320, const Color(0xFFFFF8EE));
-    }
-    // Coat pegs, the timetable, the umbrella stand and the rocking chair.
-    _rect(268, 160, 116, 10, _darkWood, 3);
-    for (final x in [284.0, 326.0, 368.0]) {
-      c.drawCircle(Offset(x, 172), 5, fill(_brass));
-      _rect(x - 14, 176, 28, 86, const Color(0xFFFFC107), 8);
-    }
-    _rect(570, 160, 60, 70, const Color(0xFFFFF3DC), 2);
-    for (var y = 172.0; y < 222; y += 9) {
-      c.drawLine(Offset(578, y), Offset(622, y), stroke(Colors.black38, 1.5));
-    }
-    _rect(576, 290, 30, 60, const Color(0xFF8D6E63), 5);
-    if (caseId != 'fline') {
-      _candyCorn(const Offset(640, 334), 30);
-    }
-    _rect(720, 280, 70, 64, _darkWood, 10);
-    c.drawArc(
-      const Rect.fromLTWH(704, 330, 104, 34),
-      0,
-      pi,
-      false,
-      stroke(_darkWood, 5),
-    );
-  }
-
-  void _farmyard() {
-    _outside(const Color(0xFF7A5E3A));
-    // The chicken coop: a gingerbread house with the roof left off.
-    _rect(70, 200, 170, 120, const Color(0xFF8A5A2B), 4);
-    for (var x = 74.0; x < 240; x += 24) {
-      c.drawCircle(Offset(x, 200), 10, fill(const Color(0xFFFFF3DC)));
-    }
-    _rect(130, 250, 50, 70, const Color(0xFF3E2723), 20);
-    // The pump, and a cart wheel against the fence.
-    _rect(740, 250, 26, 90, const Color(0xFF546E7A), 4);
-    c.drawLine(
-      const Offset(766, 262),
-      const Offset(810, 240),
-      stroke(const Color(0xFF546E7A), 6),
-    );
-    _rect(726, 336, 56, 20, const Color(0xFF8D6E63), 4);
-    c.drawCircle(const Offset(880, 300), 44, stroke(_darkWood, 6));
-    for (var i = 0; i < 6; i++) {
-      final a = i * pi / 3;
-      c.drawLine(
-        const Offset(880, 300),
-        Offset(880 + cos(a) * 44, 300 + sin(a) * 44),
-        stroke(_darkWood, 4),
-      );
-    }
-    // The storm-cellar doors, set in the ground.
-    _rect(394, 426, 172, 68, const Color(0xFF3E2723), 4);
-    _rect(400, 432, 78, 56, const Color(0xFF6D4C41), 3);
-    _rect(482, 432, 78, 56, const Color(0xFF6D4C41), 3);
-    c.drawCircle(const Offset(470, 460), 5, fill(_brass));
-    c.drawCircle(const Offset(490, 460), 5, fill(_brass));
   }
 
   void _pasture() {
@@ -1845,112 +1693,6 @@ class RoomPainter extends CustomPainter {
     }
   }
 
-  void _frontroom() {
-    _window();
-    _rect(150, 320, 150, 100, const Color(0xFF8E2A4A), 16);
-    _rect(140, 380, 170, 46, const Color(0xFFAD3A5E), 12);
-    _table(330, 362, 90, 430);
-    _rect(338, 350, 74, 12, const Color(0xFF2E7D32), 3);
-    // Fireplace, and the trophies on the mantel.
-    _rect(440, 170, 160, 180, const Color(0xFFA1887F), 4);
-    _rect(470, 225, 100, 125, const Color(0xFF1B1B1B));
-    c.drawCircle(const Offset(520, 320), 22, fill(const Color(0xFFFF6D00)));
-    _rect(430, 158, 180, 16, _darkWood, 3);
-    for (final x in [455.0, 585.0]) {
-      _rect(x - 10, 128, 20, 28, const Color(0xFFFFD54F), 4);
-      c.drawCircle(Offset(x, 124), 10, stroke(const Color(0xFFFFD54F), 3));
-    }
-    if (caseId == 'fmoon') {
-      c.drawOval(
-        const Rect.fromLTWH(500, 150, 40, 8),
-        stroke(Colors.white38, 2),
-      );
-    } else {
-      c.drawCircle(const Offset(520, 136), 20, fill(const Color(0xFFE53935)));
-      c.drawCircle(const Offset(520, 136), 14, fill(const Color(0xFF42A5F5)));
-      c.drawCircle(const Offset(520, 136), 7, fill(const Color(0xFFFFEB3B)));
-    }
-    // The front door, out to the porch.
-    _door(const Rect.fromLTWH(630, 120, 80, 230), const Color(0xFF795548));
-    // The telephone on its table.
-    _table(740, 322, 80, 420);
-    _rect(760, 288, 40, 34, Colors.black87, 4);
-    c.drawCircle(const Offset(780, 302), 9, stroke(Colors.white54, 2));
-    // Lolly's dressing table, ringed in bulbs.
-    _table(850, 322, 100, 420);
-    _rect(860, 170, 80, 120, const Color(0xFFB3E5FC), 6);
-    for (var i = 0; i < 5; i++) {
-      c.drawCircle(
-        Offset(864 + i * 18.0, 166),
-        5,
-        fill(const Color(0xFFFFF59D)),
-      );
-    }
-  }
-
-  void _fkitchen() {
-    _boards(Colors.black12);
-    _window();
-    _rect(80, 140, 150, 20, const Color(0xFF424242), 4);
-    _rect(90, 215, 130, 135, const Color(0xFF212121), 6);
-    _rect(112, 258, 86, 54, const Color(0xFFBF5B17), 3);
-    _rect(140, 40, 30, 100, const Color(0xFF424242));
-    // Pans on hooks over the range; the biggest may be missing.
-    for (var i = 0; i < 4; i++) {
-      final x = 96.0 + i * 34;
-      c.drawLine(Offset(x, 164), Offset(x, 172), stroke(_brass, 2));
-      if (i == 3 && caseId == 'fslice') continue;
-      c.drawCircle(Offset(x, 186), 9.0 + i * 3, fill(const Color(0xFF37474F)));
-    }
-    _rect(300, 104, 60, 80, const Color(0xFFFFF3DC), 2);
-    _rect(300, 104, 60, 16, const Color(0xFFC62828), 2);
-    c.drawCircle(const Offset(318, 150), 7, stroke(const Color(0xFFC62828), 2));
-    _rect(250, 254, 470, 96, _lightWood);
-    for (var x = 262.0; x < 700; x += 114) {
-      _rect(x, 270, 100, 70, _wood, 4);
-    }
-    _rect(240, 240, 490, 16, const Color(0xFFE0E0E0), 3);
-    // Marsha's recipe box, and the pie.
-    _rect(410, 222, 44, 20, const Color(0xFF90A4AE), 4);
-    c.drawOval(
-      const Rect.fromLTWH(530, 214, 60, 22),
-      fill(const Color(0xFFD9A05B)),
-    );
-    for (var x = 538.0; x < 586; x += 9) {
-      c.drawLine(
-        Offset(x, 218),
-        Offset(x + 6, 232),
-        stroke(const Color(0xFF8D5A2B), 2),
-      );
-    }
-    _shelves(740, 90, 180, 260, 4);
-  }
-
-  void _office() {
-    _boards(Colors.black12);
-    _books(100, 230, 220, 120, 2);
-    // The deed box, on the top shelf.
-    _rect(100, 210, 220, 10, _wood);
-    _rect(134, 178, 54, 32, const Color(0xFF212121), 3);
-    _window();
-    _rect(200, 300, 100, 110, const Color(0xFF5D4037), 16);
-    _rect(190, 370, 120, 46, const Color(0xFF6D4C41), 12);
-    _rect(370, 250, 240, 176, _darkWood, 6);
-    c.drawArc(
-      const Rect.fromLTWH(370, 210, 240, 90),
-      pi,
-      pi,
-      true,
-      fill(_wood),
-    );
-    _rect(386, 300, 208, 30, _lightWood, 3);
-    for (final x in [400.0, 520.0]) {
-      _rect(x, 344, 80, 30, _wood, 3);
-      c.drawCircle(Offset(x + 40, 359), 4, fill(_brass));
-    }
-    _rect(620, 280, 50, 40, const Color(0xFFFFF3DC), 2);
-  }
-
   void _barn() {
     const red = Color(0xFF8E2F24);
     c.drawRect(const Rect.fromLTWH(0, 0, sceneW, floorY), fill(red));
@@ -2019,67 +1761,6 @@ class RoomPainter extends CustomPainter {
         stroke(const Color(0xFF90A4AE), 3),
       );
     }
-  }
-
-  void _cornfield() {
-    _outside(const Color(0xFF6B4E2A));
-    c.drawPath(
-      Path()..addPolygon(const [
-        Offset(622, 300),
-        Offset(658, 300),
-        Offset(646, 150),
-        Offset(634, 150),
-      ], true),
-      fill(const Color(0xFF5D4037)),
-    );
-    for (var i = 0; i < 4; i++) {
-      final a = i * pi / 2 + .4;
-      c.drawLine(
-        const Offset(640, 150),
-        Offset(640 + cos(a) * 64, 150 + sin(a) * 64),
-        stroke(const Color(0xFFD7CCC8), 8),
-      );
-    }
-    c.drawCircle(const Offset(640, 150), 8, fill(_darkWood));
-    for (var row = 0; row < 3; row++) {
-      final y = 250.0 + row * 34;
-      for (var x = 20.0 + row * 22; x < sceneW; x += 46) {
-        c.drawLine(
-          Offset(x, y + 70),
-          Offset(x, y),
-          stroke(const Color(0xFF558B2F), 5),
-        );
-        c.drawOval(
-          Rect.fromCenter(center: Offset(x - 10, y + 40), width: 22, height: 8),
-          fill(const Color(0xFF689F38)),
-        );
-        _candyCorn(Offset(x, y - 8), 26);
-      }
-    }
-    c.drawLine(
-      const Offset(520, 330),
-      const Offset(520, 200),
-      stroke(_darkWood, 6),
-    );
-    c.drawLine(
-      const Offset(480, 230),
-      const Offset(560, 230),
-      stroke(_darkWood, 6),
-    );
-    c.drawCircle(const Offset(520, 194), 20, fill(const Color(0xFFC8843C)));
-    c.drawOval(
-      const Rect.fromLTWH(492, 168, 56, 14),
-      fill(const Color(0xFF6D4C41)),
-    );
-    _rect(506, 150, 28, 22, const Color(0xFF6D4C41), 4);
-    c.drawOval(
-      const Rect.fromLTWH(232, 440, 122, 40),
-      fill(const Color(0xFF4A3218)),
-    );
-    c.drawOval(
-      const Rect.fromLTWH(246, 434, 92, 28),
-      fill(const Color(0xFF5E4020)),
-    );
   }
 
   void _pressroom() {
@@ -2164,5 +1845,888 @@ class RoomPainter extends CustomPainter {
       stroke(_brass, 3),
     );
     _rect(840, 376, 92, 48, const Color(0xFF607D8B), 4);
+  }
+
+  /// The farm's own rooms: log and board walls under open beams, wide
+  /// planks underfoot, and nothing like the mansion's papered halls.
+  void _farmShell() {
+    c.drawRect(const Rect.fromLTWH(0, 0, sceneW, floorY), fill(room.wall));
+    switch (room.id) {
+      case 'frontroom' || 'office' || 'kernelroom':
+        // Round logs, with pale chinking between them.
+        for (var y = 0.0; y < floorY; y += 34) {
+          final log = Rect.fromLTWH(-10, y + 2, sceneW + 20, 30);
+          c.drawRRect(
+            RRect.fromRectAndRadius(log, const Radius.circular(15)),
+            Paint()
+              ..shader = LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Color.lerp(room.wall, Colors.white, .18)!,
+                  room.wall,
+                  Color.lerp(room.wall, Colors.black, .35)!,
+                ],
+              ).createShader(log),
+          );
+          c.drawLine(
+            Offset(0, y + 1),
+            Offset(sceneW, y + 1),
+            stroke(const Color(0xFFE8DCC0), 2),
+          );
+        }
+      case 'fkitchen':
+        // Whitewashed beadboard, with a gingham band along the top.
+        for (var x = 0.0; x < sceneW; x += 16) {
+          c.drawLine(
+            Offset(x, 30),
+            Offset(x, floorY),
+            stroke(Colors.black12, 1.5),
+          );
+        }
+        for (var x = 0.0; x < sceneW; x += 12) {
+          for (var row = 0; row < 2; row++) {
+            if ((x ~/ 12 + row).isEven) {
+              _rect(x, 24.0 + row * 6, 12, 6, const Color(0x55D32F2F));
+            }
+          }
+        }
+        _rect(0, 196, sceneW, 8, const Color(0xFFD7C9A8));
+      case 'lollyroom':
+        // Pink paper, sprinkled with little stars.
+        for (var y = 30.0; y < floorY; y += 46) {
+          for (var x = (y ~/ 46).isEven ? 20.0 : 43.0; x < sceneW; x += 46) {
+            _star(Offset(x, y), 5, const Color(0x88FFFFFF));
+          }
+        }
+      case 'rootcellar':
+        // Poured concrete, under a ribbed tin vault.
+        final seam = stroke(Colors.black26, 2);
+        for (var y = 120.0; y < floorY; y += 90) {
+          c.drawLine(Offset(0, y), Offset(sceneW, y), seam);
+        }
+        for (var x = 160.0; x < sceneW; x += 160) {
+          c.drawLine(Offset(x, 120), Offset(x, floorY), seam);
+        }
+        c.drawPath(
+          Path()
+            ..moveTo(0, 0)
+            ..lineTo(sceneW, 0)
+            ..lineTo(sceneW, 110)
+            ..quadraticBezierTo(480, -10, 0, 110)
+            ..close(),
+          fill(const Color(0xFF6E7378)),
+        );
+        for (var x = 0.0; x <= sceneW; x += 24) {
+          final t = (x - 480) / 480;
+          c.drawLine(
+            Offset(x, 0),
+            Offset(x, 50 + 60 * t * t),
+            stroke(Colors.black26, 3),
+          );
+        }
+      case 'pressroom':
+        // Corrugated tin, streaked with rust.
+        for (var x = 0.0; x < sceneW; x += 14) {
+          _rect(x, 0, 7, floorY, Colors.white.withValues(alpha: .07));
+        }
+        for (final (x, w) in const [
+          (120.0, 40.0),
+          (480.0, 26.0),
+          (860.0, 50.0),
+        ]) {
+          _rect(x, 0, w, 140, const Color(0x33BF5B17), 10);
+        }
+    }
+    // Open beams across the top of the house rooms.
+    if (const {
+      'frontroom',
+      'office',
+      'kernelroom',
+      'fkitchen',
+      'lollyroom',
+    }.contains(room.id)) {
+      _rect(0, 0, sceneW, 22, _darkWood);
+      for (var x = 40.0; x < sceneW; x += 180) {
+        _rect(x, 0, 26, 30, const Color(0xFF3E2A1A), 2);
+      }
+    }
+    // Wide planks, laid across the room, or bare concrete in the shelter.
+    c.drawRect(
+      const Rect.fromLTWH(0, floorY, sceneW, sceneH - floorY),
+      fill(room.floor),
+    );
+    if (room.id == 'rootcellar') {
+      c.drawPath(
+        Path()
+          ..moveTo(620, floorY)
+          ..lineTo(650, 420)
+          ..lineTo(630, 470)
+          ..lineTo(700, sceneH),
+        stroke(Colors.black38, 2),
+      );
+    } else {
+      var y = floorY;
+      for (var i = 0; y < sceneH; i++) {
+        final h = 14.0 + i * 5;
+        c.drawLine(Offset(0, y), Offset(sceneW, y), stroke(Colors.black26, 2));
+        for (var x = (i * 173.0) % 300; x < sceneW; x += 300) {
+          c.drawLine(Offset(x, y), Offset(x, y + h), stroke(Colors.black26, 2));
+          c.drawCircle(Offset(x + 6, y + h / 2), 1.6, fill(Colors.black38));
+        }
+        y += h;
+      }
+    }
+    _rect(0, floorY - 10, sceneW, 10, Colors.black38);
+  }
+
+  void _star(Offset centre, double r, Color colour) {
+    final path = Path();
+    for (var i = 0; i < 10; i++) {
+      final a = -pi / 2 + i * pi / 5;
+      final d = i.isEven ? r : r * .45;
+      final p = centre + Offset(cos(a) * d, sin(a) * d);
+      i == 0 ? path.moveTo(p.dx, p.dy) : path.lineTo(p.dx, p.dy);
+    }
+    c.drawPath(path..close(), fill(colour));
+  }
+
+  /// The side of the farmhouse, its yellow clapboard and two floors of
+  /// windows, standing at the edge of an outdoor place: from [x0] to [x1].
+  void _houseSide(double x0, double x1, {required bool roofLeft}) {
+    const clap = Color(0xFFE8C770);
+    _rect(x0, 30, x1 - x0, 320, clap);
+    for (var y = 44.0; y < 350; y += 16) {
+      c.drawLine(Offset(x0, y), Offset(x1, y), stroke(Colors.black12, 2));
+    }
+    // The gable end, rising to the ridge.
+    final peak = roofLeft ? x0 : x1;
+    c.drawPath(
+      Path()
+        ..addPolygon([Offset(x0, 30), Offset(x1, 30), Offset(peak, -20)], true),
+      fill(const Color(0xFF6D4C41)),
+    );
+    final mid = (x0 + x1) / 2;
+    for (final y in [70.0, 200.0]) {
+      _rect(mid - 40, y, 80, 90, _darkWood, 3);
+      final pane = Rect.fromLTWH(mid - 34, y + 6, 68, 78);
+      c.drawRect(pane, fill(const Color(0xFFFFD98A)));
+      c.drawLine(pane.topCenter, pane.bottomCenter, stroke(_darkWood, 3));
+      c.drawLine(pane.centerLeft, pane.centerRight, stroke(_darkWood, 3));
+    }
+    _rect(x0, 340, x1 - x0, 14, const Color(0xFF8A6238));
+  }
+
+  void _porch() {
+    _outside(const Color(0xFF5A4630));
+    // The farmhouse front, yellow clapboard, as far as the corner.
+    _rect(0, 30, 720, 320, const Color(0xFFE8C770));
+    for (var y = 46.0; y < 350; y += 18) {
+      c.drawLine(Offset(0, y), Offset(720, y), stroke(Colors.black12, 2));
+    }
+    _rect(0, 0, 740, 34, const Color(0xFF6D4C41));
+    _rect(50, 120, 110, 120, _darkWood, 4);
+    final pane = const Rect.fromLTWH(58, 128, 94, 104);
+    c.drawRect(pane, fill(const Color(0xFFFFD98A)));
+    c.drawLine(pane.topCenter, pane.bottomCenter, stroke(_darkWood, 4));
+    c.drawLine(pane.centerLeft, pane.centerRight, stroke(_darkWood, 4));
+    _door(const Rect.fromLTWH(330, 110, 120, 240), const Color(0xFF795548));
+    c.drawCircle(
+      const Offset(390, 170),
+      30,
+      stroke(const Color(0xFF558B2F), 10),
+    );
+    for (var i = 0; i < 6; i++) {
+      final a = i * pi / 3;
+      _candyCorn(
+        Offset(390 + cos(a) * 30, 170 + sin(a) * 30),
+        13,
+        tilt: a + pi / 2,
+      );
+    }
+    // Porch boards and posts.
+    _rect(0, 344, 720, 30, const Color(0xFF8A6238));
+    for (var x = 0.0; x < 720; x += 60) {
+      c.drawLine(Offset(x, 344), Offset(x, 374), stroke(Colors.black26, 2));
+    }
+    for (final x in [16.0, 700.0]) {
+      _rect(x, 30, 16, 320, const Color(0xFFFFF8EE));
+    }
+    // Coat pegs, the timetable, the umbrella stand, the doorstop, the rocker.
+    _rect(188, 160, 116, 10, _darkWood, 3);
+    for (final x in [205.0, 245.0, 285.0]) {
+      c.drawCircle(Offset(x, 172), 5, fill(_brass));
+      _rect(x - 14, 176, 28, 86, const Color(0xFFFFC107), 8);
+    }
+    _rect(482, 165, 56, 70, const Color(0xFFFFF3DC), 2);
+    for (var y = 176.0; y < 228; y += 9) {
+      c.drawLine(Offset(490, y), Offset(530, y), stroke(Colors.black38, 1.5));
+    }
+    _rect(482, 290, 30, 60, const Color(0xFF8D6E63), 5);
+    if (caseId != 'fline') {
+      _candyCorn(const Offset(300, 336), 26);
+    }
+    _rect(570, 280, 70, 64, _darkWood, 10);
+    c.drawArc(
+      const Rect.fromLTWH(554, 330, 104, 34),
+      0,
+      pi,
+      false,
+      stroke(_darkWood, 5),
+    );
+    // Round the corner: the corn crib, and the tornado shelter dug into a
+    // mound of earth beside the porch.
+    _rect(790, 130, 140, 200, const Color(0xFF8D6E63), 3);
+    for (var x = 796.0; x < 928; x += 14) {
+      _rect(x, 140, 8, 186, const Color(0xFF6D4C41));
+    }
+    for (var x = 802.0; x < 928; x += 14) {
+      _candyCorn(Offset(x, 300), 12);
+    }
+    c.drawPath(
+      Path()..addPolygon(const [
+        Offset(776, 136),
+        Offset(860, 90),
+        Offset(944, 136),
+      ], true),
+      fill(const Color(0xFF5D4037)),
+    );
+    c.drawOval(
+      const Rect.fromLTWH(720, 372, 240, 130),
+      fill(const Color(0xFF4A3B2A)),
+    );
+    c.drawOval(
+      const Rect.fromLTWH(734, 380, 212, 100),
+      fill(const Color(0xFF5E4A33)),
+    );
+    _rect(752, 400, 176, 64, const Color(0xFF37474F), 4);
+    for (final x in [756.0, 842.0]) {
+      _rect(x, 404, 82, 56, const Color(0xFF8D4A2B), 3);
+      c.drawLine(
+        Offset(x + 4, 456),
+        Offset(x + 78, 408),
+        stroke(const Color(0xFF5D2F1A), 5),
+      );
+    }
+    c.drawCircle(const Offset(830, 432), 5, fill(_brass));
+    c.drawCircle(const Offset(850, 432), 5, fill(_brass));
+  }
+
+  void _farmyard() {
+    _outside(const Color(0xFF7A5E3A));
+    // The farmhouse, its gable end on to the yard.
+    _houseSide(0, 160, roofLeft: true);
+    // The chicken coop: a gingerbread house with the roof left off.
+    _rect(210, 200, 170, 120, const Color(0xFF8A5A2B), 4);
+    for (var x = 214.0; x < 380; x += 24) {
+      c.drawCircle(Offset(x, 200), 10, fill(const Color(0xFFFFF3DC)));
+    }
+    _rect(270, 250, 50, 70, const Color(0xFF3E2723), 20);
+    // The pump and its trough.
+    _rect(600, 250, 26, 90, const Color(0xFF546E7A), 4);
+    c.drawLine(
+      const Offset(626, 262),
+      const Offset(668, 240),
+      stroke(const Color(0xFF546E7A), 6),
+    );
+    _rect(470, 330, 120, 30, const Color(0xFF6D4C41), 4);
+    _rect(476, 334, 108, 10, const Color(0xFF8D6E63), 3);
+    // The woodpile, and a cart wheel against the fence.
+    for (var row = 0; row < 3; row++) {
+      for (var i = 0; i < 5 - row; i++) {
+        final centre = Offset(700 + row * 13 + i * 26.0, 340 - row * 22.0);
+        c.drawCircle(centre, 12, fill(const Color(0xFF8D6E63)));
+        c.drawCircle(centre, 6, stroke(const Color(0xFFBCAAA4), 2));
+      }
+    }
+    c.drawCircle(const Offset(880, 300), 44, stroke(_darkWood, 6));
+    for (var i = 0; i < 6; i++) {
+      final a = i * pi / 3;
+      c.drawLine(
+        const Offset(880, 300),
+        Offset(880 + cos(a) * 44, 300 + sin(a) * 44),
+        stroke(_darkWood, 4),
+      );
+    }
+  }
+
+  void _cornfield() {
+    _outside(const Color(0xFF6B4E2A));
+    // The farmhouse, at the end of the field.
+    _houseSide(810, sceneW, roofLeft: false);
+    c.drawPath(
+      Path()..addPolygon(const [
+        Offset(622, 300),
+        Offset(658, 300),
+        Offset(646, 150),
+        Offset(634, 150),
+      ], true),
+      fill(const Color(0xFF5D4037)),
+    );
+    for (var i = 0; i < 4; i++) {
+      final a = i * pi / 2 + .4;
+      c.drawLine(
+        const Offset(640, 150),
+        Offset(640 + cos(a) * 64, 150 + sin(a) * 64),
+        stroke(const Color(0xFFD7CCC8), 8),
+      );
+    }
+    c.drawCircle(const Offset(640, 150), 8, fill(_darkWood));
+    for (var row = 0; row < 3; row++) {
+      final y = 250.0 + row * 34;
+      for (var x = 20.0 + row * 22; x < 800; x += 46) {
+        c.drawLine(
+          Offset(x, y + 70),
+          Offset(x, y),
+          stroke(const Color(0xFF558B2F), 5),
+        );
+        c.drawOval(
+          Rect.fromCenter(center: Offset(x - 10, y + 40), width: 22, height: 8),
+          fill(const Color(0xFF689F38)),
+        );
+        _candyCorn(Offset(x, y - 8), 26);
+      }
+    }
+    c.drawLine(
+      const Offset(520, 330),
+      const Offset(520, 200),
+      stroke(_darkWood, 6),
+    );
+    c.drawLine(
+      const Offset(480, 230),
+      const Offset(560, 230),
+      stroke(_darkWood, 6),
+    );
+    c.drawCircle(const Offset(520, 194), 20, fill(const Color(0xFFC8843C)));
+    c.drawOval(
+      const Rect.fromLTWH(492, 168, 56, 14),
+      fill(const Color(0xFF6D4C41)),
+    );
+    _rect(506, 150, 28, 22, const Color(0xFF6D4C41), 4);
+    c.drawOval(
+      const Rect.fromLTWH(232, 440, 122, 40),
+      fill(const Color(0xFF4A3218)),
+    );
+    c.drawOval(
+      const Rect.fromLTWH(246, 434, 92, 28),
+      fill(const Color(0xFF5E4020)),
+    );
+  }
+
+  void _frontroom() {
+    // The pot-bellied stove, and the trophy shelf over it.
+    c.drawLine(
+      const Offset(120, 250),
+      const Offset(120, 22),
+      stroke(const Color(0xFF263238), 16),
+    );
+    c.drawOval(
+      const Rect.fromLTWH(72, 240, 96, 100),
+      fill(const Color(0xFF263238)),
+    );
+    _rect(84, 330, 72, 20, const Color(0xFF37474F), 4);
+    c.drawOval(
+      const Rect.fromLTWH(102, 280, 36, 22),
+      fill(const Color(0xFFFF6D00)),
+    );
+    _rect(46, 150, 168, 12, _wood, 2);
+    for (final x in [78.0, 182.0]) {
+      _rect(x - 10, 122, 20, 28, const Color(0xFFCFD8DC), 4);
+      c.drawCircle(Offset(x, 118), 10, stroke(const Color(0xFFCFD8DC), 3));
+    }
+    if (caseId == 'fmoon') {
+      c.drawOval(
+        const Rect.fromLTWH(108, 144, 40, 8),
+        stroke(Colors.black38, 2),
+      );
+    } else {
+      c.drawCircle(const Offset(128, 130), 20, fill(const Color(0xFFE53935)));
+      c.drawCircle(const Offset(128, 130), 14, fill(const Color(0xFF42A5F5)));
+      c.drawCircle(const Offset(128, 130), 7, fill(const Color(0xFFFFEB3B)));
+    }
+    _window();
+    // A settee with a crocheted throw.
+    _rect(200, 316, 172, 70, const Color(0xFF7B8D42), 18);
+    _rect(196, 360, 180, 50, const Color(0xFF8FA34E), 12);
+    for (var x = 214.0; x < 360; x += 22) {
+      c.drawCircle(Offset(x, 330), 8, stroke(const Color(0xFFFFF3DC), 2));
+    }
+    // The stairs up to the bedrooms, climbing the back wall.
+    for (var i = 0; i < 9; i++) {
+      final x = 400.0 + i * 19;
+      final y = 318.0 - i * 32;
+      _rect(x, y, 60, 12, _lightWood, 2);
+      _rect(x, y + 12, 60, 20, Color.lerp(room.wall, Colors.black, .25)!);
+    }
+    c.drawLine(
+      const Offset(462, 330),
+      const Offset(630, 42),
+      stroke(_darkWood, 6),
+    );
+    for (var i = 0; i < 9; i++) {
+      final x = 466.0 + i * 19;
+      final y = 324.0 - i * 32;
+      c.drawLine(Offset(x, y), Offset(x - 4, y - 34), stroke(_darkWood, 3));
+    }
+    // The card table, and the cards.
+    _table(590, 360, 70, 430);
+    _rect(600, 350, 50, 10, const Color(0xFF2E7D32), 2);
+    // The front door, out to the porch.
+    _door(const Rect.fromLTWH(680, 120, 80, 230), const Color(0xFF795548));
+    // The telephone on the wall: a wooden box with bells and a crank.
+    _rect(788, 150, 48, 100, _wood, 4);
+    c.drawCircle(const Offset(800, 166), 8, fill(_brass));
+    c.drawCircle(const Offset(824, 166), 8, fill(_brass));
+    _rect(804, 196, 16, 22, Colors.black87, 3);
+    c.drawLine(
+      const Offset(836, 210),
+      const Offset(852, 222),
+      stroke(Colors.black87, 4),
+    );
+    c.drawLine(
+      const Offset(788, 200),
+      const Offset(776, 236),
+      stroke(Colors.black87, 3),
+    );
+    _rect(776, 300, 72, 10, _darkWood, 2);
+    // A rag rug, braided round and round.
+    for (var i = 0; i < 4; i++) {
+      c.drawOval(
+        Rect.fromCenter(
+          center: const Offset(430, 470),
+          width: 360 - i * 60.0,
+          height: 60 - i * 12.0,
+        ),
+        fill(
+          [
+            const Color(0xFFB5603A),
+            const Color(0xFFE6C36A),
+            const Color(0xFF6D8B5A),
+            const Color(0xFFB5603A),
+          ][i],
+        ),
+      );
+    }
+  }
+
+  void _fkitchen() {
+    // The open hearth, its crane and kettle, and the pans over it.
+    _rect(40, 140, 230, 210, const Color(0xFF9E9E9E), 4);
+    for (var y = 150.0; y < 350; y += 26) {
+      for (var x = (y ~/ 26).isEven ? 40.0 : 60.0; x < 270; x += 40) {
+        c.drawRRect(
+          RRect.fromRectAndRadius(
+            Rect.fromLTWH(x + 1, y, 38, 24),
+            const Radius.circular(6),
+          ),
+          stroke(Colors.black26, 2),
+        );
+      }
+    }
+    _rect(80, 230, 150, 120, const Color(0xFF1B1B1B), 8);
+    c.drawCircle(const Offset(155, 330), 20, fill(const Color(0xFFFF6D00)));
+    c.drawLine(
+      const Offset(92, 240),
+      const Offset(92, 340),
+      stroke(const Color(0xFF424242), 5),
+    );
+    c.drawLine(
+      const Offset(92, 250),
+      const Offset(170, 250),
+      stroke(const Color(0xFF424242), 5),
+    );
+    c.drawOval(
+      const Rect.fromLTWH(136, 270, 50, 40),
+      fill(const Color(0xFF263238)),
+    );
+    c.drawLine(
+      const Offset(160, 250),
+      const Offset(160, 272),
+      stroke(const Color(0xFF424242), 3),
+    );
+    _rect(30, 150, 250, 14, _darkWood, 2);
+    for (var i = 0; i < 4; i++) {
+      final x = 80.0 + i * 40;
+      c.drawLine(Offset(x, 164), Offset(x, 172), stroke(_brass, 2));
+      if (i == 3 && caseId == 'fslice') continue;
+      c.drawCircle(Offset(x, 184), 9.0 + i * 3, fill(const Color(0xFF37474F)));
+    }
+    // Strings of dried corn and peppers from the beam.
+    for (var x = 300.0; x < 720; x += 70) {
+      c.drawLine(
+        Offset(x, 22),
+        Offset(x, 60),
+        stroke(const Color(0xFF8D6E63), 2),
+      );
+      for (var i = 0; i < 4; i++) {
+        _candyCorn(Offset(x + (i.isEven ? -5 : 5), 62.0 + i * 12), 12);
+      }
+    }
+    // The calendar, the recipe tin on its little shelf.
+    _rect(300, 104, 60, 80, const Color(0xFFFFF3DC), 2);
+    _rect(300, 104, 60, 16, const Color(0xFFC62828), 2);
+    c.drawCircle(const Offset(318, 150), 7, stroke(const Color(0xFFC62828), 2));
+    _rect(380, 310, 100, 8, _wood, 2);
+    _rect(408, 288, 44, 22, const Color(0xFF90A4AE), 4);
+    _window();
+    // The dry sink under the window, with its hand pump, and the pie.
+    _rect(480, 300, 240, 50, _wood, 4);
+    _rect(476, 294, 248, 10, _lightWood, 2);
+    _rect(640, 230, 16, 66, const Color(0xFF455A64), 3);
+    c.drawLine(
+      const Offset(656, 238),
+      const Offset(690, 226),
+      stroke(const Color(0xFF455A64), 5),
+    );
+    c.drawOval(
+      const Rect.fromLTWH(530, 278, 60, 18),
+      fill(const Color(0xFFD9A05B)),
+    );
+    for (var x = 538.0; x < 586; x += 9) {
+      c.drawLine(
+        Offset(x, 280),
+        Offset(x + 6, 292),
+        stroke(const Color(0xFF8D5A2B), 2),
+      );
+    }
+    // The trestle table in the middle of the floor.
+    _rect(290, 396, 200, 14, _lightWood, 3);
+    for (final x in [304.0, 466.0]) {
+      c.drawPath(
+        Path()..addPolygon([
+          Offset(x, 410),
+          Offset(x + 10, 410),
+          Offset(x + 20, 480),
+          Offset(x - 10, 480),
+        ], true),
+        fill(_wood),
+      );
+    }
+    // The pie safe, its tin doors punched in stars.
+    _rect(730, 140, 170, 210, _wood, 4);
+    for (final x in [742.0, 818.0]) {
+      _rect(x, 156, 70, 180, const Color(0xFFB0BEC5), 3);
+      for (var y = 176.0; y < 330; y += 36) {
+        _star(Offset(x + 35, y), 9, const Color(0xFF607D8B));
+      }
+    }
+  }
+
+  void _office() {
+    // The field map, pinned to a board.
+    _rect(80, 80, 240, 150, const Color(0xFFBC8A5F), 4);
+    for (final (x, y, w, h, col) in const [
+      (92.0, 92.0, 70.0, 60.0, Color(0xFFFFD54F)),
+      (166.0, 92.0, 140.0, 40.0, Color(0xFF9CCC65)),
+      (166.0, 136.0, 80.0, 80.0, Color(0xFFFFB74D)),
+      (92.0, 156.0, 70.0, 60.0, Color(0xFF81C784)),
+      (250.0, 136.0, 56.0, 80.0, Color(0xFFFFF176)),
+    ]) {
+      _rect(x, y, w, h, col, 2);
+    }
+    for (final (x, y) in const [
+      (120.0, 120.0),
+      (230.0, 108.0),
+      (200.0, 180.0),
+      (276.0, 170.0),
+    ]) {
+      c.drawCircle(Offset(x, y), 5, fill(const Color(0xFFD32F2F)));
+    }
+    _rect(90, 262, 220, 10, _wood, 2);
+    _rect(120, 244, 50, 18, const Color(0xFF6D4C41), 2);
+    _window();
+    // The farmer's leather chair.
+    _rect(292, 300, 86, 90, const Color(0xFF6D3A1F), 16);
+    _rect(286, 360, 98, 40, const Color(0xFF7F4526), 10);
+    _rect(296, 400, 10, 26, _darkWood);
+    _rect(364, 400, 10, 26, _darkWood);
+    // The rolltop desk.
+    _rect(400, 250, 240, 176, _darkWood, 6);
+    c.drawArc(
+      const Rect.fromLTWH(400, 210, 240, 90),
+      pi,
+      pi,
+      true,
+      fill(_wood),
+    );
+    _rect(416, 300, 208, 30, _lightWood, 3);
+    for (final x in [430.0, 550.0]) {
+      _rect(x, 344, 80, 30, _wood, 3);
+      c.drawCircle(Offset(x + 40, 359), 4, fill(_brass));
+    }
+    // The filing cabinet, and the candy corn scale hanging by it.
+    _rect(720, 210, 80, 140, const Color(0xFF607D8B), 3);
+    for (var y = 222.0; y < 340; y += 40) {
+      _rect(732, y, 56, 30, const Color(0xFF78909C), 2);
+      _rect(752, y + 12, 16, 6, const Color(0xFFCFD8DC), 2);
+    }
+    c.drawLine(
+      const Offset(870, 230),
+      const Offset(870, 270),
+      stroke(_brass, 3),
+    );
+    c.drawLine(
+      const Offset(840, 270),
+      const Offset(900, 270),
+      stroke(_brass, 3),
+    );
+    for (final x in [840.0, 900.0]) {
+      c.drawArc(Rect.fromLTWH(x - 16, 280, 32, 20), 0, pi, true, fill(_brass));
+      c.drawLine(Offset(x, 270), Offset(x - 14, 290), stroke(_brass, 1.5));
+      c.drawLine(Offset(x, 270), Offset(x + 14, 290), stroke(_brass, 1.5));
+    }
+    _candyCorn(const Offset(840, 282), 12);
+  }
+
+  void _kernelroom() {
+    _window();
+    // The washstand, its jug and basin.
+    _rect(60, 270, 100, 80, _wood, 3);
+    _rect(56, 264, 108, 10, _lightWood, 2);
+    c.drawOval(const Rect.fromLTWH(70, 250, 60, 18), fill(Colors.white));
+    _rect(124, 222, 26, 40, Colors.white, 8);
+    // His overalls and hat on the pegs.
+    _rect(190, 120, 150, 10, _darkWood, 2);
+    c.drawCircle(const Offset(220, 136), 5, fill(_brass));
+    _rect(240, 136, 52, 120, const Color(0xFF3F6BA8), 6);
+    _rect(250, 136, 32, 40, const Color(0xFF345A8E), 4);
+    c.drawOval(
+      const Rect.fromLTWH(196, 130, 50, 16),
+      fill(const Color(0xFFE6C36A)),
+    );
+    _rect(206, 112, 30, 22, const Color(0xFFE6C36A), 6);
+    // The blanket chest.
+    _rect(190, 360, 140, 60, const Color(0xFFC49A6C), 4);
+    _rect(186, 352, 148, 12, const Color(0xFFA77B4F), 3);
+    _rect(250, 362, 20, 18, const Color(0xFF6D4C41), 2);
+    // Little Lolly, framed, in a crown of candy corn.
+    _rect(590, 104, 72, 84, _darkWood, 3);
+    _rect(598, 112, 56, 68, const Color(0xFFFFF3DC), 2);
+    c.drawCircle(const Offset(626, 140), 14, fill(const Color(0xFFF48FB1)));
+    _candyCorn(const Offset(626, 120), 12);
+    // The iron bedstead and its patchwork quilt.
+    c.drawLine(
+      const Offset(604, 420),
+      const Offset(604, 250),
+      stroke(const Color(0xFF37474F), 6),
+    );
+    c.drawLine(
+      const Offset(870, 420),
+      const Offset(870, 290),
+      stroke(const Color(0xFF37474F), 6),
+    );
+    c.drawArc(
+      const Rect.fromLTWH(604, 230, 60, 60),
+      pi,
+      pi / 2,
+      false,
+      stroke(const Color(0xFF37474F), 6),
+    );
+    _rect(610, 330, 256, 70, const Color(0xFF6D4C41), 4);
+    const patches = [
+      Color(0xFFE57373),
+      Color(0xFFFFD54F),
+      Color(0xFF81C784),
+      Color(0xFF64B5F6),
+    ];
+    for (var i = 0; i < 16; i++) {
+      _rect(
+        640.0 + (i % 8) * 28,
+        318.0 + (i ~/ 8) * 28,
+        28,
+        28,
+        patches[(i + i ~/ 8) % 4],
+      );
+    }
+    _rect(612, 304, 50, 26, Colors.white, 8);
+    // The bedside table, the lamp, and the deed box on its shelf.
+    _rect(880, 290, 60, 10, _lightWood, 2);
+    _rect(884, 300, 52, 110, _wood, 3);
+    _rect(890, 320, 40, 22, const Color(0xFF212121), 3);
+    c.drawOval(
+      const Rect.fromLTWH(918, 262, 20, 26),
+      fill(const Color(0x88FFF59D)),
+    );
+    _rect(922, 280, 12, 10, _brass, 2);
+    // The stairhead, and its rail.
+    _rect(390, 410, 180, 70, const Color(0xFF1B1B1B), 2);
+    for (var i = 0; i < 3; i++) {
+      _rect(394, 416.0 + i * 20, 172, 8, _lightWood, 2);
+    }
+    c.drawLine(
+      const Offset(390, 380),
+      const Offset(570, 380),
+      stroke(_darkWood, 6),
+    );
+    for (var x = 390.0; x <= 570; x += 30) {
+      c.drawLine(Offset(x, 380), Offset(x, 410), stroke(_darkWood, 4));
+    }
+  }
+
+  void _lollyroom() {
+    // A brass bed, and a pink quilt.
+    for (var i = 0; i < 4; i++) {
+      c.drawLine(
+        Offset(70 + i * 14.0, 240),
+        Offset(70 + i * 14.0, 330),
+        stroke(_brass, 4),
+      );
+    }
+    c.drawArc(
+      const Rect.fromLTWH(60, 210, 80, 60),
+      pi,
+      pi,
+      false,
+      stroke(_brass, 5),
+    );
+    _rect(80, 320, 240, 70, const Color(0xFFF06292), 10);
+    _rect(90, 296, 64, 28, Colors.white, 10);
+    for (var x = 170.0; x < 320; x += 30) {
+      c.drawCircle(Offset(x, 350), 6, fill(const Color(0xFFFFF59D)));
+    }
+    _rect(84, 386, 10, 34, _brass);
+    _rect(306, 386, 10, 34, _brass);
+    // The wastepaper basket.
+    c.drawPath(
+      Path()..addPolygon(const [
+        Offset(322, 418),
+        Offset(358, 418),
+        Offset(352, 462),
+        Offset(328, 462),
+      ], true),
+      fill(const Color(0xFFBCAAA4)),
+    );
+    // Candy City, on a poster: towers of rock candy under a night sky.
+    _rect(400, 92, 140, 120, const Color(0xFF1A237E), 3);
+    for (final (x, h, col) in const [
+      (410.0, 70.0, Color(0xFFF48FB1)),
+      (432.0, 96.0, Color(0xFF80DEEA)),
+      (458.0, 60.0, Color(0xFFFFF59D)),
+      (480.0, 104.0, Color(0xFFCE93D8)),
+      (506.0, 78.0, Color(0xFFA5D6A7)),
+    ]) {
+      _rect(x, 210 - h, 22, h, col, 4);
+    }
+    _star(const Offset(424, 112), 6, Colors.white);
+    _star(const Offset(520, 104), 5, Colors.white);
+    // The dressing table, ringed in bulbs like a theatre's.
+    _rect(560, 324, 120, 12, _lightWood, 3);
+    _rect(566, 336, 108, 40, _wood, 3);
+    _rect(566, 376, 10, 50, _wood);
+    _rect(664, 376, 10, 50, _wood);
+    _rect(578, 170, 84, 140, const Color(0xFFB3E5FC), 6);
+    for (var i = 0; i < 5; i++) {
+      c.drawCircle(
+        Offset(582 + i * 19.0, 166),
+        5,
+        fill(const Color(0xFFFFF59D)),
+      );
+      c.drawCircle(
+        Offset(582 + i * 19.0, 314),
+        5,
+        fill(const Color(0xFFFFF59D)),
+      );
+    }
+    _window();
+    // The packed suitcase by the door, and its little padlock.
+    _rect(740, 396, 104, 56, const Color(0xFFEC407A), 6);
+    _rect(780, 386, 24, 12, const Color(0xFF880E4F), 4);
+    _rect(784, 418, 14, 14, _brass, 3);
+    // A rag rug in her colours.
+    c.drawOval(
+      const Rect.fromLTWH(380, 440, 300, 50),
+      fill(const Color(0xFFF8BBD0)),
+    );
+    c.drawOval(
+      const Rect.fromLTWH(420, 448, 220, 34),
+      fill(const Color(0xFFCE93D8)),
+    );
+  }
+
+  void _rootcellar() {
+    // Concrete steps up to the open storm doors, and the grey sky.
+    c.drawPath(
+      Path()..addPolygon(const [
+        Offset(0, 0),
+        Offset(140, 0),
+        Offset(110, 70),
+        Offset(0, 70),
+      ], true),
+      fill(const Color(0xFF8E9AA6)),
+    );
+    for (var i = 0; i < 8; i++) {
+      final x = 30.0 + i * 36;
+      final y = 70.0 + i * 37;
+      _rect(0, y, x + 40, 37, const Color(0xFF9E9E9E));
+      _rect(0, y, x + 40, 6, const Color(0xFFBDBDBD));
+    }
+    c.drawLine(
+      const Offset(90, 40),
+      const Offset(350, 330),
+      stroke(const Color(0xFF546E7A), 5),
+    );
+    // The storm lantern on its hook.
+    c.drawLine(
+      const Offset(480, 40),
+      const Offset(480, 80),
+      stroke(Colors.black54, 2),
+    );
+    _rect(466, 80, 28, 36, const Color(0xFF37474F), 6);
+    c.drawCircle(const Offset(480, 98), 9, fill(const Color(0xFFFFE082)));
+    // The corn chute, a tin pipe through the vault.
+    _rect(540, 0, 50, 80, const Color(0xFF90A4AE), 4);
+    _rect(532, 74, 66, 12, const Color(0xFF607D8B), 3);
+    // Water barrels.
+    for (final x in [330.0, 380.0]) {
+      _rect(x, 280, 44, 70, const Color(0xFF1565C0), 10);
+      c.drawLine(
+        Offset(x, 300),
+        Offset(x + 44, 300),
+        stroke(Colors.black26, 3),
+      );
+      c.drawLine(
+        Offset(x, 330),
+        Offset(x + 44, 330),
+        stroke(Colors.black26, 3),
+      );
+    }
+    // The escape tunnel: a ribbed tin culvert, black inside.
+    c.drawCircle(const Offset(600, 310), 44, fill(const Color(0xFF78909C)));
+    c.drawCircle(const Offset(600, 310), 36, fill(Colors.black));
+    for (var r = 40.0; r < 46; r += 3) {
+      c.drawCircle(const Offset(600, 310), r, stroke(Colors.black26, 1.5));
+    }
+    // Shelves of tins and jugs, for a week underground.
+    _rect(700, 110, 210, 240, const Color(0xFF546E7A), 3);
+    for (var y = 150.0; y < 350; y += 50) {
+      _rect(706, y, 198, 6, const Color(0xFF90A4AE));
+      for (var x = 714.0; x < 896; x += 26) {
+        final tall = (x ~/ 26 + y ~/ 50).isEven;
+        _rect(
+          x,
+          y - (tall ? 34 : 22),
+          20,
+          tall ? 34 : 22,
+          tall ? const Color(0xFFFFB74D) : const Color(0xFFE57373),
+          3,
+        );
+      }
+    }
+    // What is left of Farmer Kernel: a candy corn outline, and spilt corn.
+    for (var i = 0; i < 18; i++) {
+      _candyCorn(
+        Offset(230 + (i * 61.0) % 330, 430 + (i * 37.0) % 70),
+        14,
+        tilt: i * .7,
+      );
+    }
+    c.drawPath(
+      Path()..addPolygon(const [
+        Offset(260, 470),
+        Offset(520, 420),
+        Offset(520, 500),
+      ], true),
+      stroke(Colors.white, 5),
+    );
   }
 }

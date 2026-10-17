@@ -12,7 +12,7 @@ const pullCase = MysteryCase(
   title: 'Pulled Together',
   culprits: {'lolly', 'taffy'},
   nextVictims: ['gus', 'marsha', 'licorice'],
-  herringCount: 10,
+  herringCount: 13,
   solution:
       "Lolly Popwell and Taffy Pulman were secretly engaged, and Farmer "
       "Kernel had found out. He meant to dismiss Taffy on Saturday and "
@@ -21,7 +21,7 @@ const pullCase = MysteryCase(
       "cranking the puller while Lolly watched. But at twenty to eleven "
       "Taffy belted the puller to the windmill shaft, and it cranked "
       "itself, faster than any hand could, all night. Together they "
-      "carried a barrel of rock candy to the top of the cellar steps and "
+      "carried a barrel of rock candy to the top of the shelter steps and "
       "at 11:05 rolled it down onto the farmer. The tally Taffy produced "
       "counts 3,412 pulls in an hour, on a machine whose own brass plate "
       "says no hand can do more than twenty a minute. And the taffy came "
@@ -31,7 +31,7 @@ const pullCase = MysteryCase(
   core: [
     Evidence(
       'rockbarrel', 'Barrel of Rock Candy', 'rootcellar', 2,
-      "A barrel of rock candy at the foot of the cellar steps, split across "
+      "A barrel of rock candy at the foot of the shelter steps, split across "
       "the outline. It has a rope handle at either end, and a long dent "
       "down each step where it bounced. It wants dusting for fingerprints.",
     ),
@@ -71,7 +71,7 @@ const pullCase = MysteryCase(
     ],
     [
       Evidence(
-        'ring', 'Ring Box', 'frontroom', 0,
+        'ring', 'Ring Box', 'lollyroom', 0,
         "At the back of Lolly's dressing-table drawer, a little velvet box. In it, "
         "a ring twisted out of pink sugar, and a card: “To L. from T. "
         "When we are free.”",
@@ -95,7 +95,7 @@ const pullCase = MysteryCase(
       ),
       Evidence(
         'twosets', 'Footprints on the Steps', 'rootcellar', 1,
-        "In the spilled sugar on the cellar steps, two trails of prints "
+        "In the spilled sugar on the shelter steps, two trails of prints "
         "going up side by side: one round and sticky, one small and "
         "pointed. They are on top of the scattered corn.",
         icon: Icons.directions_walk, color: Color(0xFFBCAAA4),
@@ -156,7 +156,7 @@ const pullCase = MysteryCase(
       Topic(
         'what', 'What happened to him?',
         "Victim's Cornelius Kernel, the candy corn king. A barrel of rock "
-        "candy came down the cellar steps and went right over him. We "
+        "candy came down the shelter steps and went right over him. We "
         "traced where he lay in icing sugar.",
       ),
       Topic(
@@ -234,7 +234,7 @@ const pullCase = MysteryCase(
         heard: ['taffy/where'],
       ),
       Topic(
-        'barrels', 'Who moves the barrels in the cellar?',
+        'barrels', 'Who moves the barrels in the shelter?',
         "Me. Nobody else is let. That rock candy weighs as much as a cow. "
         "It takes two to lift it and I've never needed two.",
         needs: ['rockbarrel'],

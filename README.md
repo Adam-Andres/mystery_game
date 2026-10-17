@@ -12,10 +12,12 @@ them alone, or two of them together.
 - **The Senclair Affair:** Mrs. Senclair's gingerbread mansion in Donut
   County. Seven mysteries, and a rare eighth.
 - **The Candy Corn Caper:** the Kernel family's candy corn farm in Candy
-  Land, where Farmer Kernel has been found dead in his root cellar. Most
-  of it is out of doors: you arrive on the front porch and walk the lane
-  from the orchard and the cornfield to the farmyard and the pasture, with
-  the farmhouse, the barn, the press shed and the greenhouse off it. Five
+  Land, where Farmer Kernel has been found dead in his tornado shelter.
+  Most of it is out of doors: you arrive on the front porch, with the
+  shelter dug in beside it, and walk the lane from the orchard and the
+  cornfield to the farmyard and the pasture, with the farmhouse, the barn,
+  the press shed and the greenhouse off it. Up the farmhouse stairs are
+  Lolly's room and her father's, so the farm's map is four floors tall. Five
   new suspects, two new officers, and seven mysteries of its own, with
   each suspect the killer in exactly two.
 

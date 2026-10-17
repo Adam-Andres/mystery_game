@@ -47,7 +47,7 @@ const fwatch = Evidence(
 
 const fclock = Evidence(
   'fclock', 'Fallen Cellar Clock', 'rootcellar', 3,
-  "The root cellar's old wall clock, knocked down among the potato racks "
+  "The tornado shelter's old wall clock, knocked down among the supply shelves "
   "in a struggle. The pendulum has snapped and the hands are frozen at "
   "11:05 PM.",
   icon: Icons.access_time_filled, color: gold,
@@ -123,7 +123,7 @@ const oldWill = Evidence(
 );
 
 const contest = Evidence(
-  'contest', 'Talent Contest Entry', 'frontroom', 7,
+  'contest', 'Talent Contest Entry', 'lollyroom', 0,
   "Tucked in the frame of Lolly's looking glass, an entry form for the Candy City Talent Contest, "
   "stamped FEE OVERDUE in red. The fee would buy a cow.",
   icon: Icons.mic, color: Color(0xFFF8BBD0),
@@ -179,7 +179,7 @@ const markedCards = Evidence(
 );
 
 const lollyDiary = Evidence(
-  'lollydiary', "Lolly's Diary", 'frontroom', 0,
+  'lollydiary', "Lolly's Diary", 'lollyroom', 0,
   "In the drawer of her dressing table, a diary with a heart-shaped lock, left open. "
   "Yesterday's entry: “Daddy says the city will chew me up. I said I'd "
   "rather be chewed up than stay a stalk in a field forever.”",
@@ -204,9 +204,59 @@ const lovePoem = Evidence(
 
 /// The red herrings of every farm mystery, but for those it needs for
 /// itself.
+// Upstairs, in the bedrooms.
+
+const goodbyeLetter = Evidence(
+  'goodbye', 'Torn-up Letter', 'lollyroom', 1,
+  "In the wastepaper basket by Lolly's bed, torn in pieces: “Dear Daddy, "
+  "I'm going. Don't come after me. I'll write when I'm famous. L.” It was "
+  "never sent. She has written it out at least four times.",
+  icon: Icons.mail, color: Color(0xFFF8BBD0),
+  puzzle: Puzzle.torn,
+  pieces: [
+    'Dear Daddy,',
+    "I'm going.",
+    "Don't come after me.",
+    "I'll write when I'm famous.",
+    'L.',
+  ],
+);
+
+const busPass = Evidence(
+  'buspass', 'Bus Pass', 'lollyroom', 0,
+  "Packed on top of the sequins, a one-way pass on the Candy City omnibus, "
+  "for next Friday. Not the train. She meant to go quietly.",
+  icon: Icons.directions_bus, color: paper, inside: 'suitcase',
+);
+
+const notepad = Evidence(
+  'notepad', 'Bedside Notepad', 'kernelroom', 0,
+  "The notepad by his bed. The top sheet is gone, but he pressed hard, and "
+  "a pencil rubbing raises it: “Big Sugar. NEVER. Not while I breathe.”",
+  icon: Icons.sticky_note_2, color: paper,
+  puzzle: Puzzle.rubbing,
+  pieces: ['Big Sugar.', 'NEVER.', 'Not while I breathe.'],
+);
+
+const sleepSyrup = Evidence(
+  'sleepsyrup', 'Sleeping Syrup', 'kernelroom', 1,
+  "On the washstand, a bottle of Dr. Jawbreaker's Sleeping Syrup, half "
+  "empty. “Two spoons at bedtime.” He had not slept well in a month.",
+  icon: Icons.medication, color: Color(0xFFCE93D8),
+);
+
+const unsentLetter = Evidence(
+  'unsent', 'Letter He Never Sent', 'kernelroom', 0,
+  "Under the quilts, with a Junior Corn Queen sash: “Lolly. Sing if you "
+  "must. Only come home after.” He never posted it. Whatever he said to "
+  "her face, this is what he wrote.",
+  icon: Icons.mail, color: paper, inside: 'blanketchest',
+);
+
 const farmHerrings = [
   bigSugar, oldWill, contest, cinnamonFork, honeyJar, licoriceLace,
   wagesDocked, weedKiller, raffle, markedCards, lollyDiary, hotelLetter,
+  goodbyeLetter, busPass, notepad, sleepSyrup, unsentLetter,
 ];
 
 // Things handed over when asked.
@@ -270,7 +320,7 @@ const marshaWhere = Topic(
   'where', whereQ,
   "In my kitchen from half past ten till half past eleven, turning my "
   "Harvest Moon Pie every three minutes, or it catches on the one side. "
-  "Then I went up to bed. I didn't go down to the cellar till six.",
+  "Then I went up to bed. I didn't go down to the shelter till six.",
 );
 
 const marshaCard = Topic(

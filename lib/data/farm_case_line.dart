@@ -12,7 +12,7 @@ const lineCase = MysteryCase(
   title: 'On the Line',
   culprits: {'lolly'},
   nextVictims: ['marsha', 'gus', 'taffy', 'licorice'],
-  herringCount: 10,
+  herringCount: 13,
   solution:
       "Farmer Kernel had written a new will leaving the farm to the Candy "
       "Land Agricultural Society, and had torn up the Talent Bureau's offer "
@@ -21,7 +21,7 @@ const lineCase = MysteryCase(
       "eleven till half past, and the exchange swears the line never "
       "dropped. But she had spliced forty feet of Gus's barn cable into "
       "the telephone cord, and carried the receiver down to the top of the "
-      "cellar steps, singing. At four minutes past eleven she set it down, "
+      "shelter steps, singing. At four minutes past eleven she set it down, "
       "struck her father with the brass doorstop from the front door, and "
       "was back on the line two minutes later, out of breath. The Bureau "
       "marked her down for it. The letter she produced, saying she sang "
@@ -67,17 +67,17 @@ const lineCase = MysteryCase(
         6,
         "Under the telephone table, the cord has been unscrewed from the "
             "wall plate and spliced to a great coil of black barn cable. "
-            "Uncoiled, it would reach out of the front door, across the yard, "
-            "and down into the root cellar.",
+            "Uncoiled, it would reach out of the front door, along the porch, "
+            "and down into the tornado shelter.",
         icon: Icons.cable,
         color: Color(0xFF616161),
       ),
       Evidence(
         'stairgroove',
         'Groove on the Steps',
-        'farmyard',
-        2,
-        "Along the edge of the storm-cellar steps, a thin groove worn through "
+        'porch',
+        7,
+        "Along the edge of the shelter steps, beside the porch, a thin groove worn through "
             "the wax polish, as if a cable had been dragged up and down them. "
             "The wax shavings are fresh.",
         icon: Icons.linear_scale,
@@ -90,7 +90,7 @@ const lineCase = MysteryCase(
         'Brass Doorstop',
         'rootcellar',
         0,
-        "Pushed to the back of the crawlspace: the brass doorstop from the "
+        "Pushed to the back of the escape tunnel: the brass doorstop from the "
             "front door, a candy corn cast in solid brass, with a crust of the "
             "real thing on its point. It wants dusting for fingerprints.",
         inside: 'crawlspace',
@@ -110,9 +110,9 @@ const lineCase = MysteryCase(
       Evidence(
         'newwillf',
         'New Will',
-        'office',
+        'kernelroom',
         0,
-        "In the deed box, signed and witnessed last week: “The farm, the "
+        "In the deed box by his bed, signed and witnessed last week: “The farm, the "
             "corn and the cows to the Candy Land Agricultural Society. My "
             "daughter has made her choice, and it is the city.”",
         icon: Icons.description,
@@ -122,7 +122,7 @@ const lineCase = MysteryCase(
       Evidence(
         'bureauoffer',
         "The Bureau's Offer",
-        'frontroom',
+        'lollyroom',
         0,
         "In Lolly's dressing table, torn in half and taped together: “The Talent "
             "Bureau offers Miss Popwell a place, if she can be in Candy City by "
@@ -176,7 +176,7 @@ const lineCase = MysteryCase(
     ...farmPieHints,
     'stopgap':
         "Heavy, and brass, and kept by the front door, where "
-        "anybody going out across the yard would pass it.",
+        "anybody going down to the shelter would pass it.",
     'puller':
         "A machine that counts, at a rate written on its own side, "
         "and a batch that came out soft. That places the farmhand, I "
@@ -193,7 +193,7 @@ const lineCase = MysteryCase(
         "feet of cable reach from that table?",
     'stairgroove':
         "Something long and thin dragged up and down the "
-        "cellar steps last night. Not a body. A cable.",
+        "shelter steps last night. Not a body. A cable.",
     'stopcrawl':
         "Hidden in the dark, by somebody who knew where the dark "
         "was. I should dust it.",
@@ -222,10 +222,10 @@ const lineCase = MysteryCase(
         "Then find where each of the five was at that minute.",
     "Every one of the five has an alibi on paper. One of them is a "
         "telephone line. A line can be long.",
-    "Look under the telephone table, and at the cellar steps. Then ask the "
+    "Look under the telephone table, and at the shelter steps. Then ask the "
         "Sheriff to ring the other end of that call.",
     "Two minutes of silence in the middle of a song, a cord that reaches "
-        "the cellar, and a doorstop with a fresh hand round it. Name her.",
+        "the shelter, and a doorstop with a fresh hand round it. Name her.",
   ],
   topics: {
     'butterscotch': [
@@ -351,7 +351,7 @@ const lineCase = MysteryCase(
       ),
       Topic(
         'cord',
-        'The telephone cord reaches the cellar.',
+        'The telephone cord reaches the shelter.',
         "I wanted to sing out on the porch. The acoustics are better. Daddy "
             "never let me take the telephone anywhere.",
         needs: ['splicedcord', 'stairgroove'],
@@ -382,7 +382,7 @@ const lineCase = MysteryCase(
         'suspect',
         suspectQ,
         "Couldn't say. I was crankin'. Heard her singin' through the "
-            "floor, mind. Sounded like it was comin' from the cellar, not "
+            "floor, mind. Sounded like it was comin' from the shelter, not "
             "house.",
       ),
       taffyPoem,

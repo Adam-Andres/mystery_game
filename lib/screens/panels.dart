@@ -1235,7 +1235,7 @@ class MapPanel extends StatelessWidget {
               style: TextStyle(color: kCream, fontSize: 13),
             ),
             const SizedBox(height: 8),
-            for (var level = 2; level >= 0; level--)
+            for (var level = topLevel; level >= 0; level--)
               Expanded(
                 child: Row(
                   children: [

@@ -10,16 +10,24 @@ Ambience createPlatformAmbience() => _WebAmbience();
 /// rain passed through a filter that muffles it more the further indoors
 /// Churlock goes, thunder through the same filter, and in the basement the
 /// hum and sputter of the lamps instead.
+/// How long one title tune takes to fade before the next comes in.
+const _fadeOut = 1.2;
+
 class _WebAmbience implements Ambience {
   web.AudioContext? _context;
   web.BiquadFilterNode? _filter;
   web.GainNode? _master;
   web.GainNode? _rain;
   web.GainNode? _hum;
+
   /// A loop for each piece of title music, by asset, once it has loaded.
   final _music = <String, web.GainNode>{};
   final _loading = <String>{};
   String _track = 'title.wav';
+
+  /// When the current tune may start to come up: after the last one has
+  /// faded away, so changing place never plays two tunes at once.
+  double _trackFrom = 0;
   bool _musicOn = false;
   bool _musicMuted = false;
   web.AudioBuffer? _thunder;
@@ -49,6 +57,9 @@ class _WebAmbience implements Ambience {
 
   @override
   void setTrack(String asset) {
+    if (asset != _track) {
+      _trackFrom = (_context?.currentTime ?? 0) + _fadeOut;
+    }
     _track = asset;
     _loadTrack(asset);
     _apply();
@@ -210,15 +221,19 @@ class _WebAmbience implements Ambience {
     _rain?.gain.setTargetAtTime(_weather.volume, now, .35);
     _hum?.gain.setTargetAtTime(_weather.hum, now, .35);
     // The music comes up gently, and fades out over a few seconds as the
-    // opening scene takes over.
-    // Changing place on the title screen fades one tune into the other.
+    // opening scene takes over. Changing place on the title screen fades
+    // the old tune right out before the new one comes in.
     for (final entry in _music.entries) {
       final playing = _musicOn && entry.key == _track;
-      entry.value.gain.setTargetAtTime(
-        playing && !_musicMuted ? .5 : 0,
-        now,
-        playing ? .6 : 1.3,
-      );
+      final gain = entry.value.gain;
+      if (playing) {
+        final from = now > _trackFrom ? now : _trackFrom;
+        gain.cancelScheduledValues(now);
+        if (from > now) gain.setValueAtTime(0, from);
+        gain.setTargetAtTime(_musicMuted ? 0 : .5, from, .6);
+      } else {
+        gain.setTargetAtTime(0, now, now < _trackFrom ? .25 : 1.3);
+      }
     }
   }
 }

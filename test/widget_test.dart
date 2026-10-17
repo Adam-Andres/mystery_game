@@ -565,6 +565,30 @@ void main() {
       },
     );
 
+    test('has a shelter by the porch and bedrooms upstairs', () {
+      world = farm;
+      expect(neighbor(roomById('porch'), Dir.down)?.id, 'rootcellar');
+      expect(roomById('rootcellar').name, 'Tornado Shelter');
+      expect(topLevel, 3);
+      for (final id in ['lollyroom', 'kernelroom']) {
+        expect(roomById(id).level, 3);
+        expect(nooks.where((n) => n.room == id), isNotEmpty, reason: id);
+        for (final c in farm.cases) {
+          expect(c.pool.where((e) => e.room == id), isNotEmpty, reason: id);
+        }
+      }
+      expect(neighbor(roomById('frontroom'), Dir.up)?.id, 'kernelroom');
+      expect(neighbor(roomById('kernelroom'), Dir.left)?.id, 'lollyroom');
+      // The two new tools each open something up there.
+      for (final (tool, place) in [
+        ('boltcutters', 'suitcase'),
+        ('prybar', 'blanketchest'),
+      ]) {
+        expect(nookById(place).needs, tool);
+        expect(items.where((i) => i.id == tool), hasLength(1));
+      }
+    });
+
     test('has five suspects, the police, and no rare mystery', () {
       world = farm;
       expect(residents.map((p) => p.id), [

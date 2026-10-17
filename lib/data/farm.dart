@@ -42,7 +42,7 @@ const farmRooms = <Room>[
     name: 'Farm Office',
     level: 2,
     col: 1,
-    wall: Color(0xFF6F7F5C),
+    wall: Color(0xFF8D7458),
     floor: _plankFloor,
   ),
   Room(
@@ -102,20 +102,37 @@ const farmRooms = <Room>[
     wall: Color(0xFF2B2A3A),
     floor: Color(0xFF4F6A3C),
   ),
-  // Below the farmyard
+  // Under the ground beside the porch
   Room(
     id: 'rootcellar',
-    name: 'Root Cellar',
+    name: 'Tornado Shelter',
     level: 0,
-    col: 1,
+    col: 0,
     wall: _earth,
     floor: _earthFloor,
+  ),
+  // Up the farmhouse stairs
+  Room(
+    id: 'lollyroom',
+    name: "Lolly's Room",
+    level: 3,
+    col: -1,
+    wall: Color(0xFFE8A0BF),
+    floor: _plankFloor,
+  ),
+  Room(
+    id: 'kernelroom',
+    name: "Farmer Kernel's Room",
+    level: 3,
+    col: 0,
+    wall: Color(0xFF9C7A54),
+    floor: _plankFloor,
   ),
 ];
 
 /// Where each place leads. The lane runs left and right; the buildings
-/// are up through their doors, and the root cellar down through the storm
-/// doors in the farmyard.
+/// are up through their doors, the bedrooms up the farmhouse stairs, and
+/// the tornado shelter down through its doors at the side of the porch.
 const farmLinks = <(String, Dir), String>{
   ('orchard', Dir.right): 'cornfield',
   ('cornfield', Dir.left): 'orchard',
@@ -133,8 +150,12 @@ const farmLinks = <(String, Dir), String>{
   ('fkitchen', Dir.right): 'frontroom',
   ('frontroom', Dir.right): 'office',
   ('office', Dir.left): 'frontroom',
-  ('farmyard', Dir.down): 'rootcellar',
-  ('rootcellar', Dir.up): 'farmyard',
+  ('porch', Dir.down): 'rootcellar',
+  ('rootcellar', Dir.up): 'porch',
+  ('frontroom', Dir.up): 'kernelroom',
+  ('kernelroom', Dir.down): 'frontroom',
+  ('kernelroom', Dir.left): 'lollyroom',
+  ('lollyroom', Dir.right): 'kernelroom',
   ('pasture', Dir.up): 'barn',
   ('barn', Dir.down): 'pasture',
   ('barn', Dir.right): 'pressroom',
@@ -145,9 +166,11 @@ const farmLinks = <(String, Dir), String>{
 const farmDoors = <(String, Dir), Rect>{
   ('orchard', Dir.up): Rect.fromLTWH(740, 190, 90, 180),
   ('greenhouse', Dir.down): Rect.fromLTWH(20, 130, 100, 220),
-  ('porch', Dir.up): Rect.fromLTWH(420, 110, 120, 240),
-  ('frontroom', Dir.down): Rect.fromLTWH(630, 120, 80, 230),
-  ('farmyard', Dir.down): Rect.fromLTWH(400, 432, 160, 56),
+  ('porch', Dir.up): Rect.fromLTWH(330, 110, 120, 240),
+  ('porch', Dir.down): Rect.fromLTWH(752, 400, 176, 64),
+  ('frontroom', Dir.down): Rect.fromLTWH(680, 120, 80, 230),
+  ('frontroom', Dir.up): Rect.fromLTWH(400, 60, 170, 290),
+  ('kernelroom', Dir.down): Rect.fromLTWH(390, 410, 180, 70),
   ('pasture', Dir.up): Rect.fromLTWH(130, 150, 140, 210),
   ('barn', Dir.down): Rect.fromLTWH(20, 130, 110, 220),
   ('barn', Dir.right): Rect.fromLTWH(892, 130, 64, 220),
@@ -236,40 +259,58 @@ const farmPlacements = <String, List<(String, double)>>{
 /// Where evidence can sit in each room, in scene coordinates.
 const farmSlots = <String, List<Offset>>{
   'porch': [
-    Offset(300, 450),
-    Offset(600, 190),
-    Offset(250, 300),
-    Offset(590, 320),
-    Offset(640, 360),
-    Offset(760, 450),
+    Offset(200, 450),
+    Offset(510, 200),
+    Offset(245, 300),
+    Offset(497, 312),
+    Offset(300, 368),
+    Offset(560, 450),
+    Offset(800, 300),
+    Offset(690, 470),
   ],
   'frontroom': [
-    Offset(520, 145),
-    Offset(225, 395),
-    Offset(375, 352),
-    Offset(780, 290),
-    Offset(165, 165),
-    Offset(225, 330),
-    Offset(560, 445),
-    Offset(420, 440),
+    Offset(128, 130),
+    Offset(250, 378),
+    Offset(625, 345),
+    Offset(812, 292),
+    Offset(290, 215),
+    Offset(140, 410),
+    Offset(812, 445),
+    Offset(420, 450),
   ],
   'fkitchen': [
     Offset(330, 150),
-    Offset(560, 222),
-    Offset(155, 285),
-    Offset(830, 150),
-    Offset(320, 300),
-    Offset(660, 430),
-    Offset(640, 300),
+    Offset(560, 290),
+    Offset(200, 192),
+    Offset(810, 128),
+    Offset(690, 290),
+    Offset(560, 450),
+    Offset(370, 392),
   ],
   'office': [
     Offset(470, 300),
-    Offset(275, 200),
-    Offset(640, 300),
-    Offset(765, 165),
-    Offset(250, 330),
-    Offset(400, 440),
-    Offset(820, 420),
+    Offset(200, 252),
+    Offset(585, 300),
+    Offset(760, 196),
+    Offset(335, 362),
+    Offset(400, 450),
+    Offset(820, 430),
+  ],
+  'lollyroom': [
+    Offset(620, 236),
+    Offset(340, 440),
+    Offset(470, 232),
+    Offset(700, 440),
+    Offset(560, 452),
+    Offset(190, 320),
+  ],
+  'kernelroom': [
+    Offset(905, 262),
+    Offset(110, 262),
+    Offset(700, 330),
+    Offset(265, 210),
+    Offset(660, 462),
+    Offset(200, 450),
   ],
   'barn': [
     Offset(350, 300),
@@ -305,15 +346,15 @@ const farmSlots = <String, List<Offset>>{
     Offset(380, 330),
     Offset(200, 470),
     Offset(130, 400),
-    Offset(872, 330),
+    Offset(740, 460),
     Offset(585, 470),
   ],
   'farmyard': [
-    Offset(180, 300),
+    Offset(120, 420),
     Offset(330, 400),
     Offset(620, 470),
-    Offset(760, 330),
-    Offset(880, 440),
+    Offset(560, 330),
+    Offset(860, 440),
   ],
   'pasture': [
     Offset(400, 330),
@@ -328,16 +369,16 @@ const farmSlots = <String, List<Offset>>{
     Offset(565, 425),
     Offset(430, 290),
     Offset(805, 230),
-    Offset(600, 300),
+    Offset(880, 470),
   ],
 };
 
-/// The deed on the hall pegs gives away the year, which is not the dial's
+/// The deed on the porch pegs gives away the year, which is not the dial's
 /// combination, but is something to read.
 String farmCertificate(String year) =>
     "A framed deed behind the coats: “Kernel Family Farm. First candy corn "
     "planted $year.” The frame has been polished more than anything else "
-    "in the hall.";
+    "on the porch.";
 
 const farmLooseCorner = Junk(
   'Hidden keepsakes',
@@ -354,7 +395,7 @@ const farmNooks = <Nook>[
     id: 'coatpegs',
     name: 'Coat Pegs',
     room: 'porch',
-    pos: Offset(320, 210),
+    pos: Offset(245, 210),
     icon: Icons.checkroom,
     blurb:
         'Pegs by the front door, hung with oilskins and whatever has '
@@ -371,11 +412,13 @@ const farmNooks = <Nook>[
   ),
   Nook(
     id: 'pantryshelf',
-    name: 'Pantry Shelves',
+    name: 'Pie Safe',
     room: 'fkitchen',
-    pos: Offset(830, 230),
+    pos: Offset(810, 250),
     icon: Icons.kitchen,
-    blurb: 'Jars of everything, labelled in a round, careful hand.',
+    blurb:
+        'A tall cupboard with punched-tin doors, to keep the flies off the '
+        'pies. Jars of everything, labelled in a round, careful hand.',
     junk: [
       Junk(
         'Jam jars',
@@ -465,13 +508,13 @@ const farmNooks = <Nook>[
   ),
   Nook(
     id: 'crawlspace',
-    name: 'Crawlspace',
+    name: 'Escape Tunnel',
     room: 'rootcellar',
     pos: Offset(600, 318),
     icon: Icons.dark_mode,
     blurb:
-        'A low black gap behind the potato racks, running under the '
-        'farmyard.',
+        "The shelter's back way out: a low tin culvert, pitch black, "
+        'running off under the yard.',
     needs: 'lantern',
     barred:
         'It is pitch dark in there, and I am not putting my hand into '
@@ -520,12 +563,12 @@ const farmNooks = <Nook>[
   Nook(
     id: 'vanity',
     name: "Lolly's Dressing Table",
-    room: 'frontroom',
-    pos: Offset(900, 330),
+    room: 'lollyroom',
+    pos: Offset(620, 330),
     icon: Icons.face_retouching_natural,
     blurb:
-        'A dressing table in the corner of the front room, with a '
-        'looking glass ringed in light bulbs.',
+        'A dressing table in the corner of her room, with a looking glass '
+        'ringed in light bulbs, like a dressing room in Candy City.',
     junk: [
       Junk(
         'Song sheets',
@@ -554,10 +597,12 @@ const farmNooks = <Nook>[
   Nook(
     id: 'nightstand',
     name: 'Deed Box',
-    room: 'office',
-    pos: Offset(160, 196),
+    room: 'kernelroom',
+    pos: Offset(905, 330),
     icon: Icons.inventory_2,
-    blurb: 'A black tin deed box on the shelf, where he kept what mattered.',
+    blurb:
+        'A black tin deed box on the shelf of his bedside table, where he '
+        'kept what mattered.',
     junk: [
       Junk(
         'Almanac',
@@ -565,6 +610,52 @@ const farmNooks = <Nook>[
             "the margin. He kept count of his weather like other men keep "
             "count of their money.",
         icon: Icons.menu_book,
+      ),
+    ],
+  ),
+  Nook(
+    id: 'suitcase',
+    name: 'Packed Suitcase',
+    room: 'lollyroom',
+    pos: Offset(790, 420),
+    icon: Icons.luggage,
+    blurb:
+        'A pink suitcase, packed to bursting, by the door. It has a little '
+        'brass padlock on it.',
+    needs: 'boltcutters',
+    barred:
+        'Padlocked. Somebody did not want anybody looking inside, and I '
+        'would very much like to. Something to cut the lock would do.',
+    action: 'Cut the padlock',
+    junk: [
+      Junk(
+        'Sequins',
+        "Three dresses with more sequins than dress, and a hat with a "
+            "whole candy apple on it.",
+        icon: Icons.checkroom,
+      ),
+    ],
+  ),
+  Nook(
+    id: 'blanketchest',
+    name: 'Blanket Chest',
+    room: 'kernelroom',
+    pos: Offset(260, 390),
+    icon: Icons.inventory,
+    blurb:
+        'An old pine chest at the foot of the wall, with a rusted hasp '
+        'hammered shut.',
+    needs: 'prybar',
+    barred:
+        'The hasp has rusted solid. My fingers are pastry. I want '
+        'something to pry it with.',
+    action: 'Pry it open',
+    junk: [
+      Junk(
+        'Quilts',
+        "Patchwork quilts, each square cut from a sack of seed corn. "
+            "Somebody very patient made these.",
+        icon: Icons.bed,
       ),
     ],
   ),
@@ -588,6 +679,28 @@ const farmNooks = <Nook>[
 
 /// Tools that can be picked up and carried. Each opens one place.
 const farmItems = <Item>[
+  Item(
+    id: 'prybar',
+    name: 'Pry Bar',
+    room: 'farmyard',
+    pos: Offset(750, 318),
+    icon: Icons.hardware,
+    color: Color(0xFF90A4AE),
+    description:
+        "A pry bar, left in the woodpile for splitting kindling. Just the "
+        "thing for a hasp that does not want to open.",
+  ),
+  Item(
+    id: 'boltcutters',
+    name: 'Bolt Cutters',
+    room: 'greenhouse',
+    pos: Offset(660, 240),
+    icon: Icons.content_cut,
+    color: Color(0xFFEF9A9A),
+    description:
+        "The Professor's bolt cutters, for the wire on his plant frames. "
+        "They would make short work of a little padlock.",
+  ),
   Item(
     id: 'trowel',
     name: 'Garden Trowel',
@@ -640,7 +753,7 @@ const farmPets = <Pet>[
   Pet(
     person: chicklet,
     room: 'farmyard',
-    feet: Offset(290, 470),
+    feet: Offset(440, 470),
     width: 54,
     remark: chickletRemark,
     sound: 'cheep',
@@ -664,7 +777,7 @@ const farmSights = <Sight>[
   Sight(
     'coop',
     'farmyard',
-    Offset(150, 250),
+    Offset(285, 250),
     Junk(
       'Chicken Coop',
       "A coop made of a gingerbread house with the roof left off. Chicklet "
@@ -698,9 +811,11 @@ const farmSights = <Sight>[
 ];
 
 const farmWindows = <String, Rect>{
-  'frontroom': Rect.fromLTWH(90, 90, 150, 150),
+  'frontroom': Rect.fromLTWH(230, 90, 120, 110),
   'fkitchen': Rect.fromLTWH(540, 60, 130, 110),
-  'office': Rect.fromLTWH(700, 100, 130, 130),
+  'office': Rect.fromLTWH(820, 90, 110, 120),
+  'lollyroom': Rect.fromLTWH(760, 70, 120, 110),
+  'kernelroom': Rect.fromLTWH(430, 70, 110, 110),
   'barn': Rect.fromLTWH(760, 70, 120, 80),
   'pressroom': Rect.fromLTWH(628, 66, 84, 58),
 };
@@ -716,8 +831,8 @@ const farmIntroLines = <VoiceLine>[
   (
     voice: narrator,
     text:
-        "Farmer Cornelius Kernel has been found dead in his own root "
-        "cellar. Five others live on the farm. One of them did it. Or two "
+        "Farmer Cornelius Kernel has been found dead in his own tornado "
+        "shelter. Five others live on the farm. One of them did it. Or two "
         "of them, together.",
   ),
   (
@@ -730,7 +845,7 @@ const farmIntroLines = <VoiceLine>[
   (
     voice: 'churlock',
     text:
-        "When I am certain, I return to the front hall, and declare the "
+        "When I am certain, I return to the front porch, and declare the "
         "case solved.",
   ),
 ];
@@ -784,10 +899,9 @@ const farm = World(
   title: 'The Candy Corn Caper',
   blurb:
       'Farmer Kernel, the candy corn king of Candy Land, has been found '
-      'dead in his own root cellar. Five desserts live on the farm. Search '
-      'the farmhouse, the barn and the field, question the farmhands — and '
-      'name the killer, or killers, before the next harvest. Most of it is '
-      'out of doors.',
+      'dead in his own tornado shelter. Five desserts live on the farm. '
+      'Search the fields, the farmhouse and the barn, question the farmhands '
+      '— and name the killer, or killers, before the next harvest.',
   accuseQuestion: 'Who murdered Farmer Kernel?',
   place: 'Candy Land',
   rooms: farmRooms,
@@ -796,8 +910,8 @@ const farm = World(
   outdoors: {'orchard', 'cornfield', 'porch', 'farmyard', 'pasture'},
   outbuildings: {'barn', 'pressroom', 'greenhouse'},
   links: farmLinks,
-  atticLevel: null,
-  levelNames: ['Underground', 'Outside', 'Indoors'],
+  atticLevel: 3,
+  levelNames: ['Underground', 'Outside', 'Indoors', 'Upstairs'],
   residents: farmResidents,
   police: farmPolice,
   placements: farmPlacements,
