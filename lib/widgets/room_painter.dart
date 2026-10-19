@@ -1992,15 +1992,16 @@ class RoomPainter extends CustomPainter {
   }
 
   /// The side of the farmhouse, its yellow clapboard and two floors of
-  /// windows, standing at the edge of an outdoor place: from [x0] to [x1].
-  void _houseSide(double x0, double x1, {required bool roofLeft}) {
+  /// windows, standing at the edge of the cornfield: from [x0] to [x1],
+  /// with the ridge of the roof over [x1].
+  void _houseSide(double x0, double x1) {
     const clap = Color(0xFFE8C770);
     _rect(x0, 30, x1 - x0, 320, clap);
     for (var y = 44.0; y < 350; y += 16) {
       c.drawLine(Offset(x0, y), Offset(x1, y), stroke(Colors.black12, 2));
     }
     // The gable end, rising to the ridge.
-    final peak = roofLeft ? x0 : x1;
+    final peak = x1;
     c.drawPath(
       Path()
         ..addPolygon([Offset(x0, 30), Offset(x1, 30), Offset(peak, -20)], true),
@@ -2114,8 +2115,6 @@ class RoomPainter extends CustomPainter {
 
   void _farmyard() {
     _outside(const Color(0xFF7A5E3A));
-    // The farmhouse, its gable end on to the yard.
-    _houseSide(0, 160, roofLeft: true);
     // The chicken coop: a gingerbread house with the roof left off.
     _rect(210, 200, 170, 120, const Color(0xFF8A5A2B), 4);
     for (var x = 214.0; x < 380; x += 24) {
@@ -2153,7 +2152,7 @@ class RoomPainter extends CustomPainter {
   void _cornfield() {
     _outside(const Color(0xFF6B4E2A));
     // The farmhouse, at the end of the field.
-    _houseSide(810, sceneW, roofLeft: false);
+    _houseSide(810, sceneW);
     c.drawPath(
       Path()..addPolygon(const [
         Offset(622, 300),
