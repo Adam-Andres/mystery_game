@@ -817,6 +817,8 @@ const farmWindows = <String, Rect>{
   'lollyroom': Rect.fromLTWH(760, 70, 120, 110),
   'kernelroom': Rect.fromLTWH(430, 70, 110, 110),
   'barn': Rect.fromLTWH(760, 70, 120, 80),
+  // The greenhouse is glass all round; the rain shows on its roof panes.
+  'greenhouse': Rect.fromLTWH(0, 0, 960, 120),
   'pressroom': Rect.fromLTWH(628, 66, 84, 58),
 };
 

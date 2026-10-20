@@ -47,7 +47,9 @@ class WindowRainPainter extends CustomPainter {
       c.clipRect(pane);
     }
     final span = pane.height + 30;
-    for (var i = 0; i < 30; i++) {
+    // As many drops for every stretch of glass, however wide the pane.
+    final drops = (30 * pane.width / 130).clamp(30, 200).round();
+    for (var i = 0; i < drops; i++) {
       final x = pane.left + scatter(i, 3) * (pane.width + 16);
       final y =
           pane.top +
@@ -69,6 +71,15 @@ class WindowRainPainter extends CustomPainter {
       );
     }
     c.restore();
+    if (roomId == 'greenhouse') {
+      // The greenhouse's own iron frame, over its roof panes.
+      final frame = stroke(const Color(0xFFE0E0E0), 4);
+      for (var x = 0.0; x <= sceneW; x += 120) {
+        c.drawLine(Offset(x, pane.top), Offset(x, pane.bottom), frame);
+      }
+      c.drawLine(pane.bottomLeft, pane.bottomRight, frame);
+      return;
+    }
     final bar = stroke(_darkWood, 5);
     c.drawLine(pane.topCenter, pane.bottomCenter, bar);
     c.drawLine(pane.centerLeft, pane.centerRight, bar);
@@ -1684,11 +1695,13 @@ class RoomPainter extends CustomPainter {
     _rect(520, 170, 90, 8, _wood);
     _rect(552, 140, 16, 30, const Color(0xFF6D4C41), 3);
     // Specimen cabinet.
+    // Three columns of seven drawers, with the same margin all round.
     _rect(740, 130, 150, 220, _darkWood, 4);
-    for (var y = 145.0; y < 340; y += 30) {
-      for (var x = 752.0; x < 880; x += 42) {
-        _rect(x, y, 34, 22, _wood, 2);
-        c.drawCircle(Offset(x + 17, y + 11), 3, fill(_brass));
+    for (var row = 0; row < 7; row++) {
+      for (var col = 0; col < 3; col++) {
+        final x = 750.0 + col * 46, y = 138.0 + row * 30;
+        _rect(x, y, 38, 24, _wood, 2);
+        c.drawCircle(Offset(x + 19, y + 12), 3, fill(_brass));
       }
     }
     for (var x = 600.0; x < 720; x += 40) {
@@ -1738,8 +1751,10 @@ class RoomPainter extends CustomPainter {
           Rect.fromLTWH(x + 26, 196, 48, 54),
           fill(const Color(0xFF5D3A1A)),
         );
-        c.drawCircle(Offset(x + 40, 216), 4, fill(Colors.white));
-        c.drawCircle(Offset(x + 60, 216), 4, fill(Colors.white));
+        for (final ex in [x + 40, x + 60]) {
+          c.drawCircle(Offset(ex, 216), 4, fill(Colors.white));
+          c.drawCircle(Offset(ex + 1, 217), 2, fill(Colors.black));
+        }
         c.drawOval(
           Rect.fromLTWH(x + 34, 232, 32, 14),
           fill(const Color(0xFFF8BBD0)),
@@ -2365,18 +2380,35 @@ class RoomPainter extends CustomPainter {
 
   void _fkitchen() {
     // The open hearth, its crane and kettle, and the pans over it.
-    _rect(40, 140, 230, 210, const Color(0xFF9E9E9E), 4);
-    for (var y = 150.0; y < 350; y += 26) {
-      for (var x = (y ~/ 26).isEven ? 40.0 : 60.0; x < 270; x += 40) {
+    // Stones laid in courses, each course half a stone along from the one
+    // below, and cut off square at the edges of the chimney breast.
+    const breast = Rect.fromLTWH(40, 140, 230, 210);
+    c.drawRect(breast, fill(const Color(0xFFBDB6AA)));
+    c.save();
+    c.clipRect(breast);
+    const course = 21.0, stone = 46.0;
+    for (var row = 0; row < 10; row++) {
+      final y = breast.top + row * course;
+      final shift = row.isOdd ? stone / 2 : 0.0;
+      for (var x = breast.left - shift; x < breast.right; x += stone) {
+        final tone = (row * 7 + (x / stone).round() * 3) % 4;
         c.drawRRect(
           RRect.fromRectAndRadius(
-            Rect.fromLTWH(x + 1, y, 38, 24),
-            const Radius.circular(6),
+            Rect.fromLTWH(x + 1.5, y + 1.5, stone - 3, course - 3),
+            const Radius.circular(3),
           ),
-          stroke(Colors.black26, 2),
+          fill(
+            [
+              const Color(0xFF9E9E9E),
+              const Color(0xFF8D8D8D),
+              const Color(0xFFA8A29A),
+              const Color(0xFF969089),
+            ][tone],
+          ),
         );
       }
     }
+    c.restore();
     _rect(80, 230, 150, 120, const Color(0xFF1B1B1B), 8);
     c.drawCircle(const Offset(155, 330), 20, fill(const Color(0xFFFF6D00)));
     c.drawLine(
@@ -2514,22 +2546,28 @@ class RoomPainter extends CustomPainter {
       _rect(732, y, 56, 30, const Color(0xFF78909C), 2);
       _rect(752, y + 12, 16, 6, const Color(0xFFCFD8DC), 2);
     }
+    // The beam dips toward the pan with the candy corn in it.
     c.drawLine(
       const Offset(870, 230),
       const Offset(870, 270),
       stroke(_brass, 3),
     );
-    c.drawLine(
-      const Offset(840, 270),
-      const Offset(900, 270),
-      stroke(_brass, 3),
-    );
-    for (final x in [840.0, 900.0]) {
-      c.drawArc(Rect.fromLTWH(x - 16, 280, 32, 20), 0, pi, true, fill(_brass));
-      c.drawLine(Offset(x, 270), Offset(x - 14, 290), stroke(_brass, 1.5));
-      c.drawLine(Offset(x, 270), Offset(x + 14, 290), stroke(_brass, 1.5));
+    const ends = [Offset(840, 276), Offset(900, 264)];
+    c.drawLine(ends[0], ends[1], stroke(_brass, 3));
+    c.drawCircle(const Offset(870, 270), 3, fill(_brass));
+    for (final end in ends) {
+      final x = end.dx, top = end.dy;
+      c.drawArc(
+        Rect.fromLTWH(x - 16, top + 10, 32, 20),
+        0,
+        pi,
+        true,
+        fill(_brass),
+      );
+      c.drawLine(end, Offset(x - 14, top + 20), stroke(_brass, 1.5));
+      c.drawLine(end, Offset(x + 14, top + 20), stroke(_brass, 1.5));
     }
-    _candyCorn(const Offset(840, 282), 12);
+    _candyCorn(const Offset(840, 288), 12);
   }
 
   void _kernelroom() {
