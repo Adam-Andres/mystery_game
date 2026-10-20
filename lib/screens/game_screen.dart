@@ -840,8 +840,11 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     if (d == null) return (null, 0);
     final t = _walk.value;
     final leaving = t < .5;
-    final door = doorOf(g.roomId, leaving ? d : _opposite(d));
-    if (door == null) return (null, 0);
+    final way = leaving ? d : _opposite(d);
+    final door = doorOf(g.roomId, way);
+    if (door == null || world.openings.contains((g.roomId, way))) {
+      return (null, 0);
+    }
     final part = leaving ? t * 2 : t * 2 - 1;
     final open = leaving
         ? ((part - .3) / .3).clamp(0.0, 1.0)

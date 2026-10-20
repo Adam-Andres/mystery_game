@@ -395,6 +395,7 @@ class World {
     this.sights = const [],
     this.pets = const [],
     this.doors = const {},
+    this.openings = const {},
     this.windows = const {},
     required this.cases,
     this.twist,
@@ -447,6 +448,10 @@ class World {
 
   /// Doors drawn in a room, by room and the direction they lead.
   final Map<(String, Dir), Rect> doors;
+
+  /// Ways through in [doors] that have no door to swing: a flight of
+  /// stairs, or a stairhead.
+  final Set<(String, Dir)> openings;
 
   /// The glass of each room's window, in scene coordinates.
   final Map<String, Rect> windows;

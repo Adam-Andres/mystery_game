@@ -1578,6 +1578,11 @@ class RoomPainter extends CustomPainter {
       fill(const Color(0xFF8D6E63)),
     );
     for (final (x, y) in const [(470.0, 290.0), (620.0, 300.0)]) {
+      // Legs drawn first, tucked up under the belly so they join it.
+      for (final dx in [24.0, 40.0, 66.0, 82.0]) {
+        _rect(x + dx, y + 40, 9, 42, const Color(0xFF4E342E), 2);
+        _rect(x + dx - 1, y + 78, 11, 6, const Color(0xFF212121), 2);
+      }
       c.drawOval(Rect.fromLTWH(x, y, 110, 60), fill(const Color(0xFF5D3A1A)));
       c.drawOval(
         Rect.fromLTWH(x + 92, y - 14, 44, 40),
@@ -1587,8 +1592,10 @@ class RoomPainter extends CustomPainter {
         Rect.fromLTWH(x + 104, y + 10, 28, 14),
         fill(const Color(0xFFF8BBD0)),
       );
-      for (final dx in [14.0, 34.0, 74.0, 94.0]) {
-        _rect(x + dx, y + 52, 8, 30, const Color(0xFF4E342E));
+      // Two eyes, looking out over the pond.
+      for (final ex in [x + 106, x + 124]) {
+        c.drawCircle(Offset(ex, y), 5, fill(Colors.white));
+        c.drawCircle(Offset(ex + 1, y + 1), 2.5, fill(Colors.black));
       }
     }
     // The farm gate, with the churn stand beside it.
@@ -2067,11 +2074,40 @@ class RoomPainter extends CustomPainter {
     if (caseId != 'fline') {
       _candyCorn(const Offset(300, 336), 26);
     }
-    _rect(570, 280, 70, 64, _darkWood, 10);
+    // A handle hooked over the rim of the umbrella stand.
+    c.drawLine(
+      const Offset(497, 290),
+      const Offset(497, 262),
+      stroke(const Color(0xFF424242), 4),
+    );
     c.drawArc(
-      const Rect.fromLTWH(554, 330, 104, 34),
-      0,
+      const Rect.fromLTWH(497, 252, 16, 18),
       pi,
+      pi,
+      false,
+      stroke(const Color(0xFF424242), 4),
+    );
+    // The rocking chair: a slatted back, arms, a seat, and its rockers.
+    final chair = stroke(_wood, 6);
+    c.drawLine(const Offset(584, 336), const Offset(578, 236), chair);
+    c.drawLine(const Offset(630, 336), const Offset(636, 236), chair);
+    c.drawLine(const Offset(574, 238), const Offset(640, 238), chair);
+    for (final x in [594.0, 607.0, 620.0]) {
+      c.drawLine(Offset(x, 240), Offset(x, 300), stroke(_wood, 3));
+    }
+    _rect(570, 300, 74, 10, _darkWood, 3);
+    c.drawLine(
+      const Offset(568, 276),
+      const Offset(646, 276),
+      stroke(_wood, 4),
+    );
+    for (final x in [576.0, 638.0]) {
+      c.drawLine(Offset(x, 276), Offset(x, 300), stroke(_wood, 3));
+    }
+    c.drawArc(
+      const Rect.fromLTWH(552, 316, 110, 30),
+      .2,
+      pi - .4,
       false,
       stroke(_darkWood, 5),
     );
@@ -2171,7 +2207,7 @@ class RoomPainter extends CustomPainter {
       );
     }
     c.drawCircle(const Offset(640, 150), 8, fill(_darkWood));
-    for (var row = 0; row < 3; row++) {
+    void cornRow(int row) {
       final y = 250.0 + row * 34;
       for (var x = 20.0 + row * 22; x < 800; x += 46) {
         c.drawLine(
@@ -2186,22 +2222,41 @@ class RoomPainter extends CustomPainter {
         _candyCorn(Offset(x, y - 8), 26);
       }
     }
+
+    // The scarecrow stands out in the middle of the field: behind the
+    // front rows, which grow up round his legs.
+    cornRow(0);
     c.drawLine(
       const Offset(520, 330),
       const Offset(520, 200),
       stroke(_darkWood, 6),
     );
     c.drawLine(
-      const Offset(480, 230),
-      const Offset(560, 230),
+      const Offset(470, 228),
+      const Offset(570, 228),
       stroke(_darkWood, 6),
     );
+    _rect(498, 212, 44, 56, const Color(0xFF8E3B2F), 6);
+    for (final x in [508.0, 532.0]) {
+      c.drawLine(Offset(x, 212), Offset(x, 268), stroke(Colors.black26, 2));
+    }
+    for (final x in [470.0, 570.0]) {
+      for (final dy in [-6.0, 0.0, 6.0]) {
+        c.drawLine(
+          Offset(x, 228),
+          Offset(x + (x < 520 ? -10 : 10), 228 + dy),
+          stroke(const Color(0xFFE6C36A), 2),
+        );
+      }
+    }
     c.drawCircle(const Offset(520, 194), 20, fill(const Color(0xFFC8843C)));
     c.drawOval(
       const Rect.fromLTWH(492, 168, 56, 14),
       fill(const Color(0xFF6D4C41)),
     );
     _rect(506, 150, 28, 22, const Color(0xFF6D4C41), 4);
+    cornRow(1);
+    cornRow(2);
     c.drawOval(
       const Rect.fromLTWH(232, 440, 122, 40),
       fill(const Color(0xFF4A3218)),
@@ -2563,28 +2618,30 @@ class RoomPainter extends CustomPainter {
   }
 
   void _lollyroom() {
-    // A brass bed, and a pink quilt.
-    for (var i = 0; i < 4; i++) {
-      c.drawLine(
-        Offset(70 + i * 14.0, 240),
-        Offset(70 + i * 14.0, 330),
-        stroke(_brass, 4),
+    // A brass bed: a framed headboard with knobs on its posts, a lower
+    // footboard, and a pink quilt between them.
+    void brassEnd(double left, double top, double width) {
+      final panel = Rect.fromLTWH(left, top, width, 330 - top);
+      c.drawRRect(
+        RRect.fromRectAndRadius(panel, const Radius.circular(6)),
+        stroke(_brass, 6),
       );
+      for (var x = left + 14; x < left + width - 8; x += 14) {
+        c.drawLine(Offset(x, top + 4), Offset(x, 326), stroke(_brass, 3));
+      }
+      for (final x in [left, left + width]) {
+        _rect(x - 4, top, 8, 420 - top, _brass, 2);
+        c.drawCircle(Offset(x, top - 6), 8, fill(_brass));
+      }
     }
-    c.drawArc(
-      const Rect.fromLTWH(60, 210, 80, 60),
-      pi,
-      pi,
-      false,
-      stroke(_brass, 5),
-    );
+
+    brassEnd(64, 226, 70);
+    brassEnd(286, 286, 50);
     _rect(80, 320, 240, 70, const Color(0xFFF06292), 10);
-    _rect(90, 296, 64, 28, Colors.white, 10);
-    for (var x = 170.0; x < 320; x += 30) {
+    _rect(96, 296, 64, 28, Colors.white, 10);
+    for (var x = 170.0; x < 300; x += 30) {
       c.drawCircle(Offset(x, 350), 6, fill(const Color(0xFFFFF59D)));
     }
-    _rect(84, 386, 10, 34, _brass);
-    _rect(306, 386, 10, 34, _brass);
     // The wastepaper basket.
     c.drawPath(
       Path()..addPolygon(const [
@@ -2613,6 +2670,7 @@ class RoomPainter extends CustomPainter {
     _rect(566, 336, 108, 40, _wood, 3);
     _rect(566, 376, 10, 50, _wood);
     _rect(664, 376, 10, 50, _wood);
+    _rect(570, 162, 100, 156, _wood, 8);
     _rect(578, 170, 84, 140, const Color(0xFFB3E5FC), 6);
     for (var i = 0; i < 5; i++) {
       c.drawCircle(

@@ -921,6 +921,7 @@ const farm = World(
   sights: farmSights,
   pets: farmPets,
   doors: farmDoors,
+  openings: {('frontroom', Dir.up), ('kernelroom', Dir.down)},
   windows: farmWindows,
   cases: farmCases,
   intro: farmIntroLines,
