@@ -396,9 +396,9 @@ class ExteriorPainter extends CustomPainter {
     }
     _rect(0, 526, sceneW, 14, gloomy ? const Color(0xFF22231C) : const Color(0xFF45603A));
     if (gloomy) {
-      // Fizzing soda puddles.
+      // Puddles: fizzing soda, or on the farm, syrup.
       for (final (x, y, w) in const [(250.0, 508.0, 120.0), (520.0, 470.0, 90.0), (820.0, 510.0, 140.0)]) {
-        c.drawOval(Rect.fromCenter(center: Offset(x, y), width: w, height: w * .16), fill(const Color(0x55D9963A)));
+        c.drawOval(Rect.fromCenter(center: Offset(x, y), width: w, height: w * .16), fill(farm ? const Color(0x557B4A1E) : const Color(0x55D9963A)));
       }
     }
   }
@@ -411,7 +411,7 @@ double scatter(int i, int salt) {
   return v - v.floorToDouble();
 }
 
-/// Soda rain and lightning, painted over everything else in the scene.
+/// The rain and the lightning, painted over everything else in the scene.
 class RainPainter extends CustomPainter {
   RainPainter({required this.cycle, required this.flash, this.heavy = false});
 
@@ -420,11 +420,6 @@ class RainPainter extends CustomPainter {
   final double flash;
   final bool heavy;
 
-  static const _soda = [
-    Color(0x88F2D6A0), Color(0x88D9963A), Color(0x88B8E986), Color(0x88F2D6A0),
-    Color(0x88FF9EBB),
-  ];
-
   @override
   void paint(Canvas c, Size size) {
     const span = sceneH + 60;
@@ -432,7 +427,7 @@ class RainPainter extends CustomPainter {
     for (var i = 0; i < count; i++) {
       final x = scatter(i, 1) * (sceneW + 120) - 20;
       final y = (scatter(i, 2) * span + cycle * span * (1 + i % 2)) % span - 30;
-      c.drawLine(Offset(x, y), Offset(x - 7, y + 24), stroke(_soda[i % _soda.length], i % 4 == 0 ? 2.4 : 1.4));
+      c.drawLine(Offset(x, y), Offset(x - 7, y + 24), stroke(world.rain[i % world.rain.length].withValues(alpha: .53), i % 4 == 0 ? 2.4 : 1.4));
     }
     // Fizz where the drops land on the lane.
     for (var i = 0; i < 26; i++) {
@@ -440,9 +435,9 @@ class RainPainter extends CustomPainter {
       final centre = Offset((i * 173.9) % sceneW, 452 + (i * 29.3) % 70);
       c.drawOval(
         Rect.fromCenter(center: centre, width: 6 + life * 22, height: 2 + life * 6),
-        stroke(Colors.white.withValues(alpha: .5 * (1 - life)), 1.4),
+        stroke(world.splash.withValues(alpha: .5 * (1 - life)), 1.4),
       );
-      c.drawCircle(centre.translate(0, -4 - life * 14), 1.8, fill(Colors.white.withValues(alpha: .6 * (1 - life))));
+      c.drawCircle(centre.translate(0, -4 - life * 14), 1.8, fill(world.splash.withValues(alpha: .6 * (1 - life))));
     }
     if (flash > 0) {
       c.drawRect(Offset.zero & size, fill(Colors.white.withValues(alpha: .7 * flash)));

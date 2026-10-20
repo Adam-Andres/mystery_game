@@ -628,8 +628,9 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                           animation: _lightning,
                           builder: (context, _) => CustomPaint(
                             painter: _LightningPainter(
-                              roomWindows[room.id],
-                              round: room.id == 'landing',
+                              roomWindows.containsKey(room.id)
+                                  ? windowGlass(room.id)
+                                  : null,
                               glare: _glare(_lightning.value),
                             ),
                           ),
@@ -1499,29 +1500,27 @@ class _DoorPainter extends CustomPainter {
 
 /// A flash of lightning: in a window pane, or with no pane, over everything.
 class _LightningPainter extends CustomPainter {
-  _LightningPainter(this.pane, {required this.round, required this.glare});
+  _LightningPainter(this.glass, {required this.glare});
 
-  final Rect? pane;
-  final bool round;
+  final Path? glass;
   final double glare;
 
   @override
   void paint(Canvas canvas, Size size) {
     if (glare <= 0) return;
-    final pane = this.pane;
+    final glass = this.glass;
     final light = Paint()
       ..color = Colors.white.withValues(
-        alpha: (pane == null ? .32 : .75) * glare,
+        alpha: (glass == null ? .32 : .75) * glare,
       );
-    if (pane == null) {
+    if (glass == null) {
       canvas.drawRect(Offset.zero & size, light);
-    } else if (round) {
-      canvas.drawOval(pane, light);
     } else {
-      canvas.drawRect(pane, light);
+      canvas.drawPath(glass, light);
     }
   }
 
   @override
-  bool shouldRepaint(_LightningPainter old) => old.glare != glare;
+  bool shouldRepaint(_LightningPainter old) =>
+      old.glare != glare || old.glass != glass;
 }

@@ -817,8 +817,8 @@ const farmWindows = <String, Rect>{
   'lollyroom': Rect.fromLTWH(760, 70, 120, 110),
   'kernelroom': Rect.fromLTWH(430, 70, 110, 110),
   'barn': Rect.fromLTWH(760, 70, 120, 80),
-  // The greenhouse is glass all round; the rain shows on its roof panes.
-  'greenhouse': Rect.fromLTWH(0, 0, 960, 120),
+  // The greenhouse is glass all round, down to the floor.
+  'greenhouse': Rect.fromLTWH(0, 0, 960, 350),
   'pressroom': Rect.fromLTWH(628, 66, 84, 58),
 };
 
@@ -934,4 +934,7 @@ const farm = World(
   certificate: farmCertificate,
   looseCorner: farmLooseCorner,
   titleColors: [Color(0xFF7A4A12), Color(0xFF1C1206)],
+  // Maple syrup: brown, and nothing but brown.
+  rain: [Color(0xFF7B4A1E)],
+  splash: Color(0xFF8D5A2B),
 );

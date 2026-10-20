@@ -407,6 +407,13 @@ class World {
     required this.certificate,
     required this.looseCorner,
     this.titleColors = const [Color(0xFF4A2A3A), Color(0xFF140A10)],
+    this.rain = const [
+      Color(0xFFF2D6A0),
+      Color(0xFFD9963A),
+      Color(0xFFB8E986),
+      Color(0xFFFF9EBB),
+    ],
+    this.splash = Colors.white,
     this.links = const {},
     this.atticLevel = 2,
     this.levelNames = const ['Basement', 'Ground Floor', 'Attic'],
@@ -475,6 +482,10 @@ class World {
 
   /// The glow behind the title screen.
   final List<Color> titleColors;
+
+  /// The colours of the falling rain, and of the drops where it lands.
+  final List<Color> rain;
+  final Color splash;
 
   /// Where each room leads, by room and direction, for a place that is not
   /// laid out like a house with one staircase. Empty for one that is.

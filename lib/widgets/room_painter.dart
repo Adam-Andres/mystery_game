@@ -21,34 +21,52 @@ const _stormSky = LinearGradient(
 /// The glass of each room's window, in scene coordinates.
 Map<String, Rect> get roomWindows => world.windows;
 
-/// Soda rain streaking past a room's window. [cycle] loops 0..1.
+/// The glass of a room's window, where rain runs and lightning shows: the
+/// landing's round porthole, the greenhouse's glass walls, or a pane.
+Path windowGlass(String roomId) {
+  final pane = roomWindows[roomId]!;
+  return switch (roomId) {
+    'landing' => Path()..addOval(pane),
+    'greenhouse' => _greenhouseGlass(pane),
+    _ => Path()..addRect(pane),
+  };
+}
+
+/// The greenhouse's glass, less the door, the cot, the bench, the shelf,
+/// the pots and the cabinet that stand in front of it.
+Path _greenhouseGlass(Rect pane) {
+  final inFront = Path();
+  for (final r in const [
+    Rect.fromLTWH(12, 122, 116, 228),
+    Rect.fromLTWH(128, 312, 204, 38),
+    Rect.fromLTWH(378, 258, 186, 92),
+    Rect.fromLTWH(516, 136, 98, 46),
+    Rect.fromLTWH(596, 302, 124, 48),
+    Rect.fromLTWH(736, 126, 158, 224),
+  ]) {
+    inFront.addRect(r);
+  }
+  return Path.combine(PathOperation.difference, Path()..addRect(pane), inFront);
+}
+
+/// Rain streaking past a room's window. [cycle] loops 0..1.
 class WindowRainPainter extends CustomPainter {
   WindowRainPainter(this.roomId, this.cycle);
 
   final String roomId;
   final double cycle;
 
-  static const _soda = [
-    Color(0xAAF2D6A0),
-    Color(0xAAD9963A),
-    Color(0xAAB8E986),
-    Color(0xAAFF9EBB),
-  ];
-
   @override
   void paint(Canvas c, Size size) {
     final pane = roomWindows[roomId];
     if (pane == null) return;
-    final round = roomId == 'landing';
     c.save();
-    if (round) {
-      c.clipPath(Path()..addOval(pane));
-    } else {
-      c.clipRect(pane);
-    }
+    c.clipPath(windowGlass(roomId));
     final span = pane.height + 30;
     // As many drops for every stretch of glass, however wide the pane.
-    final drops = (30 * pane.width / 130).clamp(30, 200).round();
+    final drops = (30 * pane.width * pane.height / (130 * 110))
+        .clamp(30, 400)
+        .round();
     for (var i = 0; i < drops; i++) {
       final x = pane.left + scatter(i, 3) * (pane.width + 16);
       final y =
@@ -58,7 +76,7 @@ class WindowRainPainter extends CustomPainter {
       c.drawLine(
         Offset(x, y),
         Offset(x - 4, y + 15),
-        stroke(_soda[i % _soda.length], 1.6),
+        stroke(world.rain[i % world.rain.length].withValues(alpha: .67), 1.6),
       );
     }
     // Drops fizzing on the sill.
@@ -67,17 +85,21 @@ class WindowRainPainter extends CustomPainter {
       c.drawCircle(
         Offset(pane.left + (i * 53.1) % pane.width, pane.bottom - 3 - life * 8),
         1.6,
-        fill(Colors.white.withValues(alpha: .7 * (1 - life))),
+        fill(world.splash.withValues(alpha: .7 * (1 - life))),
       );
     }
     c.restore();
     if (roomId == 'greenhouse') {
-      // The greenhouse's own iron frame, over its roof panes.
+      // The greenhouse's own iron frame, over the glass but not over what
+      // stands in front of it.
+      c.save();
+      c.clipPath(_greenhouseGlass(pane));
       final frame = stroke(const Color(0xFFE0E0E0), 4);
       for (var x = 0.0; x <= sceneW; x += 120) {
         c.drawLine(Offset(x, pane.top), Offset(x, pane.bottom), frame);
       }
-      c.drawLine(pane.bottomLeft, pane.bottomRight, frame);
+      c.drawLine(const Offset(0, 120), const Offset(sceneW, 120), frame);
+      c.restore();
       return;
     }
     final bar = stroke(_darkWood, 5);
